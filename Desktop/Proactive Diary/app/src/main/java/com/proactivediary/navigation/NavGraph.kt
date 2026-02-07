@@ -1,0 +1,162 @@
+package com.proactivediary.navigation
+
+import android.app.Activity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.proactivediary.ui.designstudio.DesignStudioScreen
+import com.proactivediary.ui.journal.EntryDetailScreen
+import com.proactivediary.ui.onboarding.OnboardingGoalsScreen
+import com.proactivediary.ui.paywall.BillingViewModel
+import com.proactivediary.ui.paywall.PaywallDialog
+import com.proactivediary.ui.typewriter.TypewriterScreen
+import com.proactivediary.ui.write.WriteScreen
+
+@Composable
+fun ProactiveDiaryNavHost(
+    navController: NavHostController = rememberNavController(),
+    viewModel: NavViewModel = hiltViewModel(),
+    billingViewModel: BillingViewModel = hiltViewModel(),
+    deepLinkDestination: String? = null
+) {
+    val startDestination by viewModel.startDestination.collectAsState()
+    val subscriptionState by billingViewModel.subscriptionState.collectAsState()
+    var showPaywall by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val activity = context as? Activity
+
+    if (startDestination == null) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+        return
+    }
+
+    NavHost(
+        navController = navController,
+        startDestination = startDestination!!
+    ) {
+        composable(Routes.Typewriter.route) {
+            TypewriterScreen(
+                onNavigateToDesignStudio = {
+                    navController.navigate(Routes.DesignStudio.createRoute(edit = false)) {
+                        popUpTo(Routes.Typewriter.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(
+            route = Routes.DesignStudio.route,
+            arguments = listOf(
+                navArgument("edit") {
+                    type = NavType.BoolType
+                    defaultValue = false
+                }
+            )
+        ) { backStackEntry ->
+            val isEdit = backStackEntry.arguments?.getBoolean("edit") ?: false
+            DesignStudioScreen(
+                onNavigateToGoals = {
+                    if (isEdit) {
+                        navController.popBackStack()
+                    } else {
+                        navController.navigate(Routes.OnboardingGoals.route) {
+                            popUpTo(Routes.DesignStudio.route) { inclusive = true }
+                        }
+                    }
+                },
+                isEditMode = isEdit
+            )
+        }
+
+        composable(Routes.OnboardingGoals.route) {
+            OnboardingGoalsScreen(
+                onDone = {
+                    navController.navigate(Routes.Main.route) {
+                        popUpTo(Routes.OnboardingGoals.route) { inclusive = true }
+                    }
+                },
+                onSkip = {
+                    navController.navigate(Routes.Main.route) {
+                        popUpTo(Routes.OnboardingGoals.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Routes.Main.route) {
+            MainScreen(
+                rootNavController = navController,
+                deepLinkDestination = deepLinkDestination,
+                billingViewModel = billingViewModel
+            )
+        }
+
+        composable(
+            route = Routes.EntryDetail.route,
+            arguments = listOf(
+                navArgument("entryId") { type = NavType.StringType }
+            )
+        ) {
+            EntryDetailScreen(
+                onBack = { navController.popBackStack() },
+                onEdit = { entryId ->
+                    navController.navigate(Routes.Write.create(entryId))
+                },
+                canEdit = subscriptionState.isActive
+            )
+        }
+
+        // Write with entryId — for editing from EntryDetail
+        composable(
+            route = Routes.Write.route,
+            arguments = listOf(
+                navArgument("entryId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                }
+            )
+        ) {
+            WriteScreen()
+        }
+    }
+
+    // Paywall dialog for edit gate
+    if (showPaywall) {
+        PaywallDialog(
+            onDismiss = { showPaywall = false },
+            onSelectPlan = { sku ->
+                activity?.let { billingViewModel.launchPurchase(it, sku) }
+                showPaywall = false
+            },
+            onRestore = {
+                billingViewModel.restorePurchases()
+                showPaywall = false
+            }
+        )
+    }
+}

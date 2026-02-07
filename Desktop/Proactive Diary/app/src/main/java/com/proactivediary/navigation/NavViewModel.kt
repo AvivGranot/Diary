@@ -1,0 +1,38 @@
+package com.proactivediary.navigation
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.proactivediary.data.db.dao.PreferenceDao
+import com.proactivediary.data.db.entities.PreferenceEntity
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class NavViewModel @Inject constructor(
+    private val preferenceDao: PreferenceDao
+) : ViewModel() {
+
+    private val _startDestination = MutableStateFlow<String?>(null)
+    val startDestination: StateFlow<String?> = _startDestination
+
+    init {
+        viewModelScope.launch {
+            // Initialize trial on first launch
+            if (preferenceDao.get("trial_start_date") == null) {
+                preferenceDao.insert(
+                    PreferenceEntity("trial_start_date", System.currentTimeMillis().toString())
+                )
+            }
+
+            val onboardingCompleted = preferenceDao.get("onboarding_completed")?.value == "true"
+            _startDestination.value = if (onboardingCompleted) {
+                Routes.Main.route
+            } else {
+                Routes.Typewriter.route
+            }
+        }
+    }
+}
