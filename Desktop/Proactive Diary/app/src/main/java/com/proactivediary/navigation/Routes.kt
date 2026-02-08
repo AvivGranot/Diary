@@ -13,6 +13,7 @@ sealed class Routes(val route: String) {
     }
     object Journal : Routes("journal")
     object Goals : Routes("goals")
+    object Reminders : Routes("reminders")
     object Settings : Routes("settings")
     object EntryDetail : Routes("entry/{entryId}") {
         fun createRoute(entryId: String) = "entry/$entryId"

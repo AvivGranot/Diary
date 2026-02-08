@@ -59,6 +59,7 @@ import com.proactivediary.ui.theme.CormorantGaramond
 fun SettingsScreen(
     onOpenDesignStudio: () -> Unit = {},
     onNavigateToGoals: () -> Unit = {},
+    onNavigateToReminders: () -> Unit = {},
     onNavigateToTypewriter: () -> Unit = {},
     onNavigateToYearInReview: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
@@ -214,7 +215,8 @@ fun SettingsScreen(
             SettingsCard {
                 SettingsRow(
                     label = "Writing Reminders",
-                    value = "$activeReminderCount active"
+                    value = "$activeReminderCount active",
+                    onClick = onNavigateToReminders
                 )
                 SettingsDivider()
                 SettingsRow(

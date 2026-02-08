@@ -54,9 +54,18 @@ import com.proactivediary.ui.theme.CormorantGaramond
 fun WriteScreen(
     viewModel: WriteViewModel = hiltViewModel(),
     onOpenDesignStudio: (() -> Unit)? = null,
-    onShareStreak: ((Int) -> Unit)? = null
+    onShareStreak: ((Int) -> Unit)? = null,
+    onEntrySaved: (() -> Unit)? = null
 ) {
     val state by viewModel.uiState.collectAsState()
+
+    // Notify parent when a new entry is saved (for billing refresh)
+    LaunchedEffect(state.newEntrySaved) {
+        if (state.newEntrySaved) {
+            onEntrySaved?.invoke()
+            viewModel.clearNewEntrySaved()
+        }
+    }
 
     if (!state.isLoaded) return
 

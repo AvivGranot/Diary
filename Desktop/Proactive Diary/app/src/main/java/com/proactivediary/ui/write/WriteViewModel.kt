@@ -13,6 +13,7 @@ import com.proactivediary.data.repository.EntryRepository
 import com.proactivediary.data.repository.StreakRepository
 import com.proactivediary.domain.WritingGoalService
 import com.proactivediary.domain.model.Mood
+import com.proactivediary.playstore.InAppReviewService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -24,7 +25,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.UUID
@@ -97,9 +97,8 @@ data class WriteUiState(
     val showDesignStudioPrompt: Boolean = false,
     val goalCompletedMessage: String? = null,
     val weeklyGoalProgress: String? = null,
-    val freeEntryLimitReached: Boolean = false,
-    val monthlyEntryCount: Int = 0,
-    val showStreakCelebration: Int = 0
+    val showStreakCelebration: Int = 0,
+    val newEntrySaved: Boolean = false
 )
 
 @OptIn(FlowPreview::class)
@@ -110,6 +109,7 @@ class WriteViewModel @Inject constructor(
     private val analyticsService: AnalyticsService,
     private val writingGoalService: WritingGoalService,
     private val streakRepository: StreakRepository,
+    private val inAppReviewService: InAppReviewService,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -127,7 +127,6 @@ class WriteViewModel @Inject constructor(
         loadOrCreateEntry(entryIdArg)
         setupAutoSave()
         loadGoalProgress()
-        checkFreeEntryLimit()
     }
 
     private fun loadThemePreferences() {
@@ -345,7 +344,7 @@ class WriteViewModel @Inject constructor(
                         preferenceDao.insert(PreferenceEntity("first_entry_logged", "true"))
                     }
 
-                    _uiState.value = _uiState.value.copy(isNewEntry = false, isSaving = false)
+                    _uiState.value = _uiState.value.copy(isNewEntry = false, isSaving = false, newEntrySaved = true)
 
                     // After first entry save, prompt Design Studio if not yet completed
                     val designDone = preferenceDao.get("design_studio_completed")?.value == "true"
@@ -362,6 +361,9 @@ class WriteViewModel @Inject constructor(
                         val progress = writingGoalService.getWritingGoalProgress()
                         _uiState.value = _uiState.value.copy(weeklyGoalProgress = progress)
                     }
+
+                    // Track entries for in-app review prompt
+                    inAppReviewService.incrementEntryCount()
 
                     // Check streak milestone
                     val streak = streakRepository.calculateWritingStreak()
@@ -425,31 +427,11 @@ class WriteViewModel @Inject constructor(
         }
     }
 
-    private fun checkFreeEntryLimit() {
-        viewModelScope.launch {
-            val (count, limitReached) = withContext(Dispatchers.IO) {
-                val now = LocalDate.now()
-                val zone = ZoneId.systemDefault()
-                val startOfMonth = now.withDayOfMonth(1).atStartOfDay(zone).toInstant().toEpochMilli()
-                val endOfMonth = now.plusMonths(1).withDayOfMonth(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
-
-                val entries = entryRepository.getAllSync().filter { it.createdAt in startOfMonth..endOfMonth }
-                val c = entries.size
-                Pair(c, c >= FREE_TIER_MONTHLY_LIMIT)
-            }
-
-            _uiState.value = _uiState.value.copy(
-                monthlyEntryCount = count,
-                freeEntryLimitReached = limitReached
-            )
-        }
-    }
-
     fun hasFeature(feature: String): Boolean {
         return feature in _uiState.value.features
     }
 
-    companion object {
-        const val FREE_TIER_MONTHLY_LIMIT = 10
+    fun clearNewEntrySaved() {
+        _uiState.value = _uiState.value.copy(newEntrySaved = false)
     }
 }

@@ -121,8 +121,6 @@ class AuthService @Inject constructor(
     }
 
     companion object {
-        // TODO: Replace with your Web Client ID from Firebase Console
-        // Firebase Console → Authentication → Sign-in method → Google → Web client ID
-        const val WEB_CLIENT_ID = "YOUR_WEB_CLIENT_ID.apps.googleusercontent.com"
+        const val WEB_CLIENT_ID = "434907129966-s3rb5i0lgntm82pd6bii1k84vool7rni.apps.googleusercontent.com"
     }
 }

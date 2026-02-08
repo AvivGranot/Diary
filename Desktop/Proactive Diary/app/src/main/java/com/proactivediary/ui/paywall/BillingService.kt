@@ -22,6 +22,7 @@ class BillingService(private val context: Context) : PurchasesUpdatedListener {
         const val MONTHLY_SKU = "pd_monthly"
         const val ANNUAL_SKU = "pd_annual"
         const val LIFETIME_SKU = "pd_lifetime"
+        private const val MAX_RETRY_COUNT = 3
     }
 
     private lateinit var billingClient: BillingClient
@@ -29,12 +30,20 @@ class BillingService(private val context: Context) : PurchasesUpdatedListener {
     private val _purchaseState = MutableStateFlow<PurchaseResult>(PurchaseResult.Idle)
     val purchaseState: StateFlow<PurchaseResult> = _purchaseState
 
+    private val _isConnected = MutableStateFlow(false)
+    val isConnected: StateFlow<Boolean> = _isConnected
+
     private var monthlyDetails: ProductDetails? = null
     private var annualDetails: ProductDetails? = null
     private var lifetimeDetails: ProductDetails? = null
 
     private var activePurchase: Purchase? = null
     private var activeProductId: String? = null
+
+    private var retryCount = 0
+
+    /** Callback invoked after queryExistingPurchases completes (or fails). */
+    var onPurchasesQueried: (() -> Unit)? = null
 
     fun initialize() {
         billingClient = BillingClient.newBuilder(context)
@@ -46,18 +55,40 @@ class BillingService(private val context: Context) : PurchasesUpdatedListener {
             )
             .build()
 
+        startConnection()
+    }
+
+    private fun startConnection() {
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(billingResult: BillingResult) {
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    _isConnected.value = true
+                    retryCount = 0
                     queryProductDetails()
                     queryExistingPurchases()
+                } else {
+                    _isConnected.value = false
+                    onPurchasesQueried?.invoke()
                 }
             }
 
             override fun onBillingServiceDisconnected() {
-                // Retry connection on next user action
+                _isConnected.value = false
+                // Auto-reconnect with bounded retries
+                if (retryCount < MAX_RETRY_COUNT) {
+                    retryCount++
+                    startConnection()
+                }
             }
         })
+    }
+
+    /** Re-establish connection if disconnected (e.g. called before a user action). */
+    fun ensureConnected() {
+        if (::billingClient.isInitialized && !billingClient.isReady) {
+            retryCount = 0
+            startConnection()
+        }
     }
 
     private fun queryProductDetails() {
@@ -128,24 +159,26 @@ class BillingService(private val context: Context) : PurchasesUpdatedListener {
                     acknowledgePurchaseIfNeeded(active)
                 }
             }
-        }
 
-        // Check one-time (lifetime) purchases
-        val inappParams = QueryPurchasesParams.newBuilder()
-            .setProductType(BillingClient.ProductType.INAPP)
-            .build()
+            // Check one-time (lifetime) purchases
+            val inappParams = QueryPurchasesParams.newBuilder()
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
 
-        billingClient.queryPurchasesAsync(inappParams) { billingResult, purchases ->
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                val lifetime = purchases.firstOrNull { purchase ->
-                    purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
-                        purchase.products.contains(LIFETIME_SKU)
+            billingClient.queryPurchasesAsync(inappParams) { inappResult, inappPurchases ->
+                if (inappResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    val lifetime = inappPurchases.firstOrNull { purchase ->
+                        purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
+                            purchase.products.contains(LIFETIME_SKU)
+                    }
+                    if (lifetime != null) {
+                        activePurchase = lifetime
+                        activeProductId = LIFETIME_SKU
+                        acknowledgePurchaseIfNeeded(lifetime)
+                    }
                 }
-                if (lifetime != null) {
-                    activePurchase = lifetime
-                    activeProductId = LIFETIME_SKU
-                    acknowledgePurchaseIfNeeded(lifetime)
-                }
+                // Notify ViewModel that purchase query is done (so it can cache)
+                onPurchasesQueried?.invoke()
             }
         }
     }
@@ -160,6 +193,12 @@ class BillingService(private val context: Context) : PurchasesUpdatedListener {
     }
 
     fun launchPurchaseFlow(activity: Activity, sku: String) {
+        // Ensure connected before launching
+        if (!billingClient.isReady) {
+            ensureConnected()
+            return
+        }
+
         val details = when (sku) {
             MONTHLY_SKU -> monthlyDetails
             ANNUAL_SKU -> annualDetails
@@ -198,6 +237,11 @@ class BillingService(private val context: Context) : PurchasesUpdatedListener {
     }
 
     fun restorePurchases(onResult: (Boolean) -> Unit = {}) {
+        if (!billingClient.isReady) {
+            onResult(false)
+            return
+        }
+
         var foundActive = false
 
         // Check subscriptions

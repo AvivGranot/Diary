@@ -28,6 +28,8 @@ object DatabaseModule {
             AppDatabase.DATABASE_NAME
         )
             .addCallback(AppDatabase.createCallback())
+            .addMigrations(*AppDatabase.MIGRATIONS)
+            .fallbackToDestructiveMigrationOnDowngrade()
             .build()
     }
 

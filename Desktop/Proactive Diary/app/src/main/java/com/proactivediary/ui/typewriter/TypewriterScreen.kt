@@ -198,21 +198,6 @@ fun TypewriterScreen(
                 )
             }
 
-            // Practice day number — just a number, no chrome
-            if (uiState.practiceDayAlpha > 0f && uiState.practiceDay > 0) {
-                Spacer(modifier = Modifier.height(32.dp))
-                Text(
-                    text = "${uiState.practiceDay}.",
-                    style = TextStyle(
-                        fontFamily = CormorantGaramond,
-                        fontSize = 48.sp,
-                        fontStyle = FontStyle.Normal,
-                        color = inkColor
-                    ),
-                    modifier = Modifier.alpha(uiState.practiceDayAlpha)
-                )
-            }
-
             // CTA: "Now write yours."
             if (uiState.ctaAlpha > 0f) {
                 Spacer(modifier = Modifier.height(16.dp))

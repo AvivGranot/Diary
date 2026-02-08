@@ -30,6 +30,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,10 +48,13 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.proactivediary.ui.goals.GoalsScreen
 import com.proactivediary.ui.journal.JournalScreen
+import com.proactivediary.ui.settings.ReminderManagementScreen
 import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
+import com.proactivediary.ui.paywall.PurchaseResult
 import com.proactivediary.ui.settings.SettingsScreen
 import com.proactivediary.ui.write.WriteScreen
+import kotlinx.coroutines.launch
 
 data class BottomNavItem(
     val route: String,
@@ -81,8 +85,22 @@ fun MainScreen(
     val currentStreak by mainScreenViewModel.currentStreak.collectAsState()
     val streakEnabled by mainScreenViewModel.streakEnabled.collectAsState()
     var showPaywall by remember { mutableStateOf(false) }
+    val purchaseResult by billingViewModel.purchaseResult.collectAsState()
+    val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val activity = context as? Activity
+
+    // After successful payment, navigate to Write tab
+    LaunchedEffect(purchaseResult) {
+        if (purchaseResult is PurchaseResult.Success) {
+            billingViewModel.refreshSubscriptionState()
+            innerNavController.navigate(WRITE_TAB) {
+                popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    }
 
     // Handle deep link from notification (with paywall gate)
     LaunchedEffect(deepLinkDestination) {
@@ -209,6 +227,11 @@ fun MainScreen(
                 WriteScreen(
                     onOpenDesignStudio = {
                         rootNavController.navigate(Routes.DesignStudio.createRoute(edit = true))
+                    },
+                    onEntrySaved = {
+                        scope.launch {
+                            billingViewModel.refreshSubscriptionState()
+                        }
                     }
                 )
             }
@@ -222,6 +245,11 @@ fun MainScreen(
             composable(Routes.Goals.route) {
                 GoalsScreen()
             }
+            composable(Routes.Reminders.route) {
+                ReminderManagementScreen(
+                    onBack = { innerNavController.popBackStack() }
+                )
+            }
             composable(Routes.Settings.route) {
                 SettingsScreen(
                     onOpenDesignStudio = {
@@ -229,6 +257,13 @@ fun MainScreen(
                     },
                     onNavigateToGoals = {
                         innerNavController.navigate(Routes.Goals.route) {
+                            popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onNavigateToReminders = {
+                        innerNavController.navigate(Routes.Reminders.route) {
                             popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
                             launchSingleTop = true
                             restoreState = true

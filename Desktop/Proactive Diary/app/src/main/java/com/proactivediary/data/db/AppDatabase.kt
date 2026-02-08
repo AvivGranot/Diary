@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.proactivediary.data.db.converters.Converters
 import com.proactivediary.data.db.dao.EntryDao
@@ -27,7 +28,7 @@ import com.proactivediary.data.db.entities.WritingReminderEntity
         PreferenceEntity::class
     ],
     version = 1,
-    exportSchema = true
+    exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -40,6 +41,14 @@ abstract class AppDatabase : RoomDatabase() {
 
     companion object {
         const val DATABASE_NAME = "proactive_diary.db"
+
+        // Add migrations here as schema evolves. Example:
+        // val MIGRATION_1_2 = Migration(1, 2) { db ->
+        //     db.execSQL("ALTER TABLE entries ADD COLUMN image_uri TEXT")
+        // }
+        val MIGRATIONS: Array<Migration> = arrayOf(
+            // MIGRATION_1_2,
+        )
 
         fun createCallback(): Callback {
             return object : Callback() {
