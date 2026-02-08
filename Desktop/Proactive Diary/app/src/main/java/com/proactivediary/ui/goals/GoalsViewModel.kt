@@ -2,6 +2,7 @@ package com.proactivediary.ui.goals
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.db.entities.GoalCheckInEntity
 import com.proactivediary.data.db.entities.GoalEntity
 import com.proactivediary.data.repository.GoalRepository
@@ -35,7 +36,8 @@ data class GoalUiState(
 @HiltViewModel
 class GoalsViewModel @Inject constructor(
     private val goalRepository: GoalRepository,
-    private val notificationService: NotificationService
+    private val notificationService: NotificationService,
+    private val analyticsService: AnalyticsService
 ) : ViewModel() {
 
     private val _checkInTimestamps = MutableStateFlow(0L)
@@ -63,6 +65,11 @@ class GoalsViewModel @Inject constructor(
             )
             goalRepository.insertCheckIn(checkIn)
             _checkInTimestamps.value = System.currentTimeMillis()
+
+            // Compute streak after check-in for analytics
+            val allCheckIns = goalRepository.getCompletedCheckIns(goalId)
+            val streak = calculateStreak(allCheckIns, LocalDate.now())
+            analyticsService.logGoalCheckedIn(goalId, streak)
         }
     }
 
@@ -80,6 +87,7 @@ class GoalsViewModel @Inject constructor(
             )
             goalRepository.insertGoal(goal)
             notificationService.scheduleGoalReminder(goal)
+            analyticsService.logGoalCreated(frequency.name.lowercase())
         }
     }
 

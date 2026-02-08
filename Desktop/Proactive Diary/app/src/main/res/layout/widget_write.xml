@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFF3EEE7"
+    android:padding="16dp"
+    android:gravity="center_vertical">
+
+    <TextView
+        android:id="@+id/widget_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:textColor="#FF585858"
+        android:fontFamily="serif" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="#1A585858" />
+
+    <TextView
+        android:id="@+id/widget_prompt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="18sp"
+        android:textColor="#FF313131"
+        android:textStyle="italic"
+        android:fontFamily="serif"
+        android:maxLines="3"
+        android:ellipsize="end" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Tap to write"
+        android:textSize="11sp"
+        android:textColor="#80585858"
+        android:fontFamily="serif"
+        android:textStyle="italic" />
+
+</LinearLayout>

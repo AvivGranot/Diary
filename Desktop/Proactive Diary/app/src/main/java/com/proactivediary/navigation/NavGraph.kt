@@ -60,8 +60,8 @@ fun ProactiveDiaryNavHost(
     ) {
         composable(Routes.Typewriter.route) {
             TypewriterScreen(
-                onNavigateToDesignStudio = {
-                    navController.navigate(Routes.DesignStudio.createRoute(edit = false)) {
+                onNavigateForward = {
+                    navController.navigate(Routes.Main.route) {
                         popUpTo(Routes.Typewriter.route) { inclusive = true }
                     }
                 }

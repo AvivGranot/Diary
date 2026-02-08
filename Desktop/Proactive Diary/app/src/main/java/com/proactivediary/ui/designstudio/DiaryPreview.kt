@@ -79,24 +79,6 @@ fun DiaryPreview(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    // Texture indicator line
-                    val textureLabel = when (texture) {
-                        "parchment" -> "\u2234 \u2234 \u2234"
-                        "linen" -> "\u2500\u2500\u2500"
-                        "smooth" -> ""
-                        "dark" -> "\u25AA \u25AA \u25AA"
-                        else -> "\u2022 \u2022 \u2022"
-                    }
-                    if (textureLabel.isNotEmpty()) {
-                        Text(
-                            text = textureLabel,
-                            fontSize = 10.sp,
-                            color = secColor.copy(alpha = 0.5f),
-                            letterSpacing = 2.sp
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-
                     // Diary title
                     Text(
                         text = "My Diary",
@@ -104,14 +86,6 @@ fun DiaryPreview(
                         fontSize = 18.sp,
                         color = txtColor,
                         textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Canvas line style preview
-                    DiaryLinePreview(
-                        canvas = canvas,
-                        lineColor = secColor.copy(alpha = 0.3f)
                     )
 
                     // Mark text if present

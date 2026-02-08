@@ -33,7 +33,7 @@
 
     <!-- Write -->
     <string name="tap_to_add_title">tap to add title</string>
-    <string name="search_diary">Search your diary…</string>
+    <string name="search_diary">Search your writing…</string>
 
     <!-- Goals -->
     <string name="your_goals">Your Goals</string>
@@ -63,12 +63,12 @@
     <string name="channel_writing">Writing Reminders</string>
     <string name="channel_goals">Goal Reminders</string>
     <string name="notification_write_title">Time to write</string>
-    <string name="notification_write_body">Open your diary</string>
+    <string name="notification_write_body">Continue your practice</string>
     <string name="notification_fallback_title">You haven\'t written yet today</string>
-    <string name="notification_fallback_body">Even a few words count. Open your diary?</string>
+    <string name="notification_fallback_body">Even a few words count. Continue your practice?</string>
 
     <!-- Paywall -->
-    <string name="trial_ended">Your free trial has ended</string>
+    <string name="trial_ended">Keep your practice alive</string>
     <string name="monthly_plan">Monthly</string>
     <string name="annual_plan">Annual</string>
     <string name="monthly_price">$2/month</string>
@@ -77,11 +77,11 @@
     <string name="best_value">BEST VALUE</string>
 
     <!-- Privacy -->
-    <string name="privacy_text">All your data stays on this device. We never collect, transmit, or analyze your diary entries. Your writing is yours alone.</string>
+    <string name="privacy_text">All your data stays on this device. We never collect, transmit, or analyze what you write. Your words are yours alone.</string>
 
     <!-- Empty States -->
-    <string name="empty_journal_title">Your diary is empty</string>
-    <string name="empty_journal_subtitle">Start writing to see your entries here</string>
+    <string name="empty_journal_title">Your writing starts here</string>
+    <string name="empty_journal_subtitle">Begin your daily practice to see your entries</string>
     <string name="empty_goals_title">No goals yet</string>
     <string name="empty_goals_subtitle">Set a goal to start tracking your progress</string>
     <string name="empty_search_title">Nothing found</string>

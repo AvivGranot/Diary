@@ -49,6 +49,7 @@ private val canvasOptions = listOf(
     CanvasOption("numbered", "Numbered", "Every line counts. Literally.")
 )
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun CanvasSection(
     selectedCanvas: String,

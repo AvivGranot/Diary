@@ -1,13 +1,18 @@
 package com.proactivediary.navigation
 
 import android.app.Activity
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.TrackChanges
@@ -26,9 +31,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -57,7 +64,6 @@ private const val WRITE_TAB = "write_tab"
 val bottomNavItems = listOf(
     BottomNavItem(WRITE_TAB, "Write", Icons.Outlined.Edit, iconSize = 24),
     BottomNavItem(Routes.Journal.route, "Journal", Icons.Outlined.MenuBook),
-    BottomNavItem(Routes.Goals.route, "Goals", Icons.Outlined.TrackChanges),
     BottomNavItem(Routes.Settings.route, "Settings", Icons.Outlined.Settings),
 )
 
@@ -65,12 +71,15 @@ val bottomNavItems = listOf(
 fun MainScreen(
     rootNavController: NavHostController,
     deepLinkDestination: String? = null,
-    billingViewModel: BillingViewModel = hiltViewModel()
+    billingViewModel: BillingViewModel = hiltViewModel(),
+    mainScreenViewModel: MainScreenViewModel = hiltViewModel()
 ) {
     val innerNavController = rememberNavController()
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val subscriptionState by billingViewModel.subscriptionState.collectAsState()
+    val currentStreak by mainScreenViewModel.currentStreak.collectAsState()
+    val streakEnabled by mainScreenViewModel.streakEnabled.collectAsState()
     var showPaywall by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val activity = context as? Activity
@@ -90,10 +99,13 @@ fun MainScreen(
                         showPaywall = true
                     }
                 }
-                "goals" -> innerNavController.navigate(Routes.Goals.route) {
-                    popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
+                "goals" -> {
+                    innerNavController.navigate(Routes.Settings.route) {
+                        popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                    innerNavController.navigate(Routes.Goals.route)
                 }
             }
         }
@@ -134,17 +146,46 @@ fun MainScreen(
                                 }
                             },
                             icon = {
-                                Icon(
-                                    imageVector = item.icon,
-                                    contentDescription = item.label,
-                                    modifier = Modifier.size(item.iconSize.dp)
-                                )
+                                Box {
+                                    Icon(
+                                        imageVector = item.icon,
+                                        contentDescription = item.label,
+                                        modifier = Modifier.size(item.iconSize.dp)
+                                    )
+                                    if (item.route == WRITE_TAB && !subscriptionState.isActive) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Lock,
+                                            contentDescription = "Pro",
+                                            modifier = Modifier
+                                                .size(12.dp)
+                                                .align(Alignment.TopEnd)
+                                                .offset(x = 4.dp, y = (-2).dp),
+                                            tint = MaterialTheme.colorScheme.secondary
+                                        )
+                                    }
+                                }
                             },
                             label = {
-                                Text(
-                                    text = item.label,
-                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp)
-                                )
+                                if (item.route == WRITE_TAB && streakEnabled && currentStreak > 0) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(3.dp)
+                                    ) {
+                                        Text(
+                                            text = item.label,
+                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp)
+                                        )
+                                        Text(
+                                            text = "Day $currentStreak",
+                                            style = TextStyle(fontSize = 10.sp)
+                                        )
+                                    }
+                                } else {
+                                    Text(
+                                        text = item.label,
+                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp)
+                                    )
+                                }
                             },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = MaterialTheme.colorScheme.onSurface,
@@ -165,7 +206,11 @@ fun MainScreen(
             modifier = Modifier.padding(padding)
         ) {
             composable(WRITE_TAB) {
-                WriteScreen()
+                WriteScreen(
+                    onOpenDesignStudio = {
+                        rootNavController.navigate(Routes.DesignStudio.createRoute(edit = true))
+                    }
+                )
             }
             composable(Routes.Journal.route) {
                 JournalScreen(
@@ -199,10 +244,12 @@ fun MainScreen(
         }
     }
 
-    // Paywall dialog
+    // Paywall dialog — no auth gate, take payment first
     if (showPaywall) {
         PaywallDialog(
             onDismiss = { showPaywall = false },
+            entryCount = subscriptionState.entryCount,
+            totalWords = subscriptionState.totalWords,
             onSelectPlan = { sku ->
                 activity?.let { billingViewModel.launchPurchase(it, sku) }
                 showPaywall = false

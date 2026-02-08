@@ -17,4 +17,7 @@ interface EntryRepository {
     suspend fun deleteAll()
     suspend fun getAllSync(): List<EntryEntity>
     suspend fun hasEntryToday(): Boolean
+    suspend fun getTotalEntryCount(): Int
+    fun getTotalEntryCountSync(): Int
+    fun getTotalWordCountSync(): Int
 }

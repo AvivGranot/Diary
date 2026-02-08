@@ -3,6 +3,7 @@ package com.proactivediary.ui.designstudio
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
+import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.db.dao.PreferenceDao
 import com.proactivediary.data.db.entities.PreferenceEntity
 import com.proactivediary.domain.model.DiaryThemeConfig
@@ -71,7 +72,8 @@ data class DesignStudioState(
 
 @HiltViewModel
 class DesignStudioViewModel @Inject constructor(
-    private val preferenceDao: PreferenceDao
+    private val preferenceDao: PreferenceDao,
+    private val analyticsService: AnalyticsService
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DesignStudioState())
@@ -187,6 +189,14 @@ class DesignStudioViewModel @Inject constructor(
                 preferenceDao.insert(PreferenceEntity("diary_mark_font", current.markFont))
 
                 preferenceDao.insert(PreferenceEntity("design_completed", "true"))
+                preferenceDao.insert(PreferenceEntity("design_studio_completed", "true"))
+
+                analyticsService.logDesignStudioCompleted(
+                    color = current.selectedColor,
+                    form = current.selectedForm,
+                    canvas = current.selectedCanvas,
+                    texture = current.selectedTexture
+                )
 
                 onComplete()
             } catch (e: Exception) {

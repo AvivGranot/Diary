@@ -6,9 +6,11 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.proactivediary.data.db.entities.EntryEntity
 import com.proactivediary.data.repository.EntryRepository
+import com.proactivediary.data.repository.StreakRepository
 import com.proactivediary.domain.model.Mood
 import com.proactivediary.domain.search.SearchEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,10 +18,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle as JavaTextStyle
+import java.time.temporal.TemporalAdjusters
 import java.util.Locale
 import javax.inject.Inject
 
@@ -30,13 +36,18 @@ data class JournalUiState(
     val isSearching: Boolean = false,
     val isLoading: Boolean = true,
     val isEmpty: Boolean = false,
-    val isSearchEmpty: Boolean = false
+    val isSearchEmpty: Boolean = false,
+    val insights: JournalInsights = JournalInsights(),
+    val writingDays: Set<LocalDate> = emptySet(),
+    val moodTrend: List<MoodDataPoint> = emptyList(),
+    val weeklyDigest: WeeklyDigest = WeeklyDigest()
 )
 
 @HiltViewModel
 class JournalViewModel @Inject constructor(
     private val entryRepository: EntryRepository,
-    private val searchEngine: SearchEngine
+    private val searchEngine: SearchEngine,
+    private val streakRepository: StreakRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(JournalUiState())
@@ -48,6 +59,8 @@ class JournalViewModel @Inject constructor(
 
     init {
         loadAllEntries()
+        loadInsights()
+        loadWeeklyDigest()
     }
 
     private fun loadAllEntries() {
@@ -202,6 +215,124 @@ class JournalViewModel @Inject constructor(
                 yesterday -> "Yesterday"
                 else -> date.format(formatter)
             }
+        }
+    }
+
+    private fun loadInsights() {
+        viewModelScope.launch {
+            val (insights, writingDays, moodTrend) = withContext(Dispatchers.IO) {
+                val allEntries = entryRepository.getAllSync()
+                val zone = ZoneId.systemDefault()
+
+                // Writing days for heatmap
+                val writingDays = allEntries.map { entry ->
+                    Instant.ofEpochMilli(entry.createdAt).atZone(zone).toLocalDate()
+                }.toSet()
+
+                // Mood trend (last 30 days)
+                val thirtyDaysAgo = LocalDate.now().minusDays(30)
+                val moodTrend = allEntries
+                    .filter { it.mood != null }
+                    .map { entry ->
+                        val date = Instant.ofEpochMilli(entry.createdAt).atZone(zone).toLocalDate()
+                        MoodDataPoint(date, Mood.fromString(entry.mood)!!)
+                    }
+                    .filter { it.date.isAfter(thirtyDaysAgo) }
+                    .sortedBy { it.date }
+
+                // Most common mood
+                val mostCommonMood = allEntries
+                    .mapNotNull { it.mood }
+                    .groupingBy { it }
+                    .eachCount()
+                    .maxByOrNull { it.value }
+                    ?.key
+
+                // Most active day of week
+                val dayOfWeekCounts = allEntries.map { entry ->
+                    Instant.ofEpochMilli(entry.createdAt).atZone(zone).toLocalDate().dayOfWeek
+                }.groupingBy { it }.eachCount()
+                val mostActiveDay = dayOfWeekCounts.maxByOrNull { it.value }?.key?.getDisplayName(
+                    JavaTextStyle.FULL, Locale.getDefault()
+                )
+
+                val totalWords = allEntries.sumOf { it.wordCount }
+                val avgWords = if (allEntries.isNotEmpty()) totalWords / allEntries.size else 0
+
+                // Use StreakRepository instead of duplicate calculation
+                val streak = streakRepository.calculateWritingStreak()
+
+                val insights = JournalInsights(
+                    totalEntries = allEntries.size,
+                    totalWords = totalWords,
+                    averageWordsPerEntry = avgWords,
+                    mostCommonMood = mostCommonMood,
+                    currentStreak = streak,
+                    mostActiveDay = mostActiveDay?.plus("s") // "Tuesdays"
+                )
+
+                Triple(insights, writingDays, moodTrend)
+            }
+
+            _uiState.value = _uiState.value.copy(
+                insights = insights,
+                writingDays = writingDays,
+                moodTrend = moodTrend
+            )
+        }
+    }
+
+    private fun loadWeeklyDigest() {
+        viewModelScope.launch {
+            val today = LocalDate.now()
+            // Show digest on Sundays only
+            val isSunday = today.dayOfWeek == DayOfWeek.SUNDAY
+            if (!isSunday) return@launch
+
+            val digest = withContext(Dispatchers.IO) {
+                val lastSunday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
+                val weekStart = lastSunday.minusDays(6) // Monday of the week being reviewed
+
+                val zone = ZoneId.systemDefault()
+                val startMs = weekStart.atStartOfDay(zone).toInstant().toEpochMilli()
+                val endMs = lastSunday.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
+
+                val allEntries = entryRepository.getAllSync()
+                val weekEntries = allEntries.filter { it.createdAt in startMs..endMs }
+
+                if (weekEntries.isEmpty()) return@withContext null
+
+                val totalWords = weekEntries.sumOf { it.wordCount }
+                val mostCommonMood = weekEntries
+                    .mapNotNull { it.mood }
+                    .groupingBy { it }
+                    .eachCount()
+                    .maxByOrNull { it.value }
+                    ?.key
+
+                WeeklyDigest(
+                    entryCount = weekEntries.size,
+                    totalWords = totalWords,
+                    mostCommonMood = mostCommonMood,
+                    isVisible = true
+                )
+            }
+
+            if (digest != null) {
+                _uiState.value = _uiState.value.copy(weeklyDigest = digest)
+            }
+        }
+    }
+
+    fun dismissWeeklyDigest() {
+        _uiState.value = _uiState.value.copy(
+            weeklyDigest = _uiState.value.weeklyDigest.copy(isVisible = false)
+        )
+    }
+
+    fun deleteEntry(entryId: String) {
+        viewModelScope.launch {
+            entryRepository.delete(entryId)
         }
     }
 }

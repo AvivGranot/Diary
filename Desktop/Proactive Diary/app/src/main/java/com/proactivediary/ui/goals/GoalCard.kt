@@ -17,7 +17,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,7 +37,9 @@ import com.proactivediary.ui.components.parseStoredTime
 fun GoalCard(
     goal: GoalUiState,
     onCheckIn: () -> Unit,
-    onLongPress: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit,
+    onLongPress: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val inkColor = MaterialTheme.colorScheme.onBackground
@@ -53,6 +58,36 @@ fun GoalCard(
             )
             .padding(16.dp)
     ) {
+        // Edit / Delete icons at top-right
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopEnd),
+            horizontalArrangement = Arrangement.End
+        ) {
+            IconButton(
+                onClick = onEdit,
+                modifier = Modifier.size(28.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = "Edit goal",
+                    modifier = Modifier.size(18.dp),
+                    tint = pencilColor.copy(alpha = 0.5f)
+                )
+            }
+            IconButton(
+                onClick = onDelete,
+                modifier = Modifier.size(28.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Delete,
+                    contentDescription = "Delete goal",
+                    modifier = Modifier.size(18.dp),
+                    tint = pencilColor.copy(alpha = 0.5f)
+                )
+            }
+        }
+
         Column {
             // Title
             Text(
@@ -111,7 +146,7 @@ fun GoalCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (goal.streak > 0) "\uD83D\uDD25 ${goal.streak} day streak" else "No streak",
+                    text = if (goal.streak > 0) "Day ${goal.streak} of your practice" else "Start your practice",
                     style = MaterialTheme.typography.bodyMedium,
                     color = pencilColor
                 )

@@ -95,6 +95,8 @@ fun GoalsScreen(
                     GoalCard(
                         goal = goal,
                         onCheckIn = { viewModel.checkIn(goal.id) },
+                        onEdit = { editingGoal = goal },
+                        onDelete = { showDeleteConfirm = goal },
                         onLongPress = { longPressedGoal = goal }
                     )
                 }

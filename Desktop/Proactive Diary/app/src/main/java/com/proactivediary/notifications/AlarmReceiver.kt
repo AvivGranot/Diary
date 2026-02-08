@@ -12,6 +12,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.proactivediary.MainActivity
 import com.proactivediary.R
+import com.proactivediary.data.repository.StreakRepository
+import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -111,6 +113,7 @@ class AlarmReceiver : BroadcastReceiver() {
     /**
      * Fallback check: use goAsync() to perform an async DB check,
      * then show a nudge notification only if the user hasn't written today.
+     * If the user has an active streak, personalize the message.
      */
     private fun handleFallbackCheck(context: Context, reminderId: String, label: String) {
         val pendingResult = goAsync()
@@ -119,7 +122,18 @@ class AlarmReceiver : BroadcastReceiver() {
             try {
                 val hasWritten = FallbackChecker.hasWrittenToday(context)
                 if (!hasWritten) {
-                    showFallbackNotification(context, reminderId)
+                    // Query streak to personalize the notification
+                    val streak = try {
+                        val entryPoint = EntryPointAccessors.fromApplication(
+                            context.applicationContext,
+                            AlarmReceiverEntryPoint::class.java
+                        )
+                        val streakRepository = entryPoint.streakRepository()
+                        streakRepository.calculateWritingStreak()
+                    } catch (_: Exception) {
+                        0
+                    }
+                    showFallbackNotification(context, reminderId, streak)
                 }
             } finally {
                 pendingResult.finish()
@@ -127,7 +141,7 @@ class AlarmReceiver : BroadcastReceiver() {
         }
     }
 
-    private fun showFallbackNotification(context: Context, reminderId: String) {
+    private fun showFallbackNotification(context: Context, reminderId: String, streak: Int) {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -143,10 +157,16 @@ class AlarmReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val body = if (streak > 0) {
+            "You're on a $streak-day streak. Don't break it."
+        } else {
+            "You haven't written in your diary today. Even a few words count."
+        }
+
         val notification = NotificationCompat.Builder(context, NotificationChannels.CHANNEL_WRITING)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle("Still time to write")
-            .setContentText("You haven't written in your diary today. Even a few words count.")
+            .setContentText(body)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)

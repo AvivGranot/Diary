@@ -54,4 +54,13 @@ interface EntryDao {
 
     @Query("SELECT * FROM entries ORDER BY created_at DESC LIMIT :limit OFFSET :offset")
     suspend fun getPage(limit: Int, offset: Int): List<EntryEntity>
+
+    @Query("SELECT COUNT(*) FROM entries")
+    suspend fun getTotalCount(): Int
+
+    @Query("SELECT COUNT(*) FROM entries")
+    fun getTotalCountSync(): Int
+
+    @Query("SELECT COALESCE(SUM(word_count), 0) FROM entries")
+    fun getTotalWordCountSync(): Int
 }

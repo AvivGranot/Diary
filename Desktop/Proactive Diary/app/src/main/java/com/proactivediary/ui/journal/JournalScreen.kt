@@ -1,5 +1,6 @@
 package com.proactivediary.ui.journal
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,13 +13,27 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -28,12 +43,14 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.theme.CormorantGaramond
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JournalScreen(
     onEntryClick: (String) -> Unit = {},
     viewModel: JournalViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    var entryToDelete by remember { mutableStateOf<DiaryCardData?>(null) }
 
     Column(
         modifier = Modifier
@@ -57,8 +74,8 @@ fun JournalScreen(
             state.isEmpty && state.searchQuery.isBlank() -> {
                 // Empty state - no entries at all
                 EmptyState(
-                    title = "Your diary is empty",
-                    subtitle = "Start writing to see your entries here"
+                    title = "Your writing starts here",
+                    subtitle = "Begin your daily practice to see your entries"
                 )
             }
 
@@ -74,9 +91,34 @@ fun JournalScreen(
                 // Entry list grouped by date
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    contentPadding = PaddingValues(horizontal = 0.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    // Insights, heatmap, and mood trend at the top
+                    item(key = "insights") {
+                        InsightsCard(insights = state.insights)
+                    }
+
+                    item(key = "heatmap") {
+                        CalendarHeatmap(writingDays = state.writingDays)
+                    }
+
+                    if (state.moodTrend.size >= 2) {
+                        item(key = "mood_trend") {
+                            MoodTrendChart(dataPoints = state.moodTrend)
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+
+                    if (state.weeklyDigest.isVisible) {
+                        item(key = "weekly_digest") {
+                            WeeklyDigestCard(
+                                digest = state.weeklyDigest,
+                                onDismiss = { viewModel.dismissWeeklyDigest() }
+                            )
+                        }
+                    }
+
                     state.groupedEntries.forEach { (dateGroup, entries) ->
                         // Date group header
                         item(key = "header_$dateGroup") {
@@ -90,20 +132,56 @@ fun JournalScreen(
                                 modifier = Modifier.padding(
                                     top = 12.dp,
                                     bottom = 4.dp,
-                                    start = 4.dp
+                                    start = 20.dp
                                 )
                             )
                         }
 
-                        // Entry cards
+                        // Entry cards with swipe-to-delete
                         items(
                             items = entries,
                             key = { it.id }
                         ) { cardData ->
-                            DiaryCard(
-                                data = cardData,
-                                onClick = { onEntryClick(cardData.id) }
+                            val dismissState = rememberSwipeToDismissBoxState(
+                                confirmValueChange = { value ->
+                                    if (value == SwipeToDismissBoxValue.EndToStart) {
+                                        entryToDelete = cardData
+                                        false // Don't auto-dismiss; wait for confirmation
+                                    } else false
+                                }
                             )
+
+                            SwipeToDismissBox(
+                                state = dismissState,
+                                backgroundContent = {
+                                    val color by animateColorAsState(
+                                        targetValue = if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart)
+                                            Color(0xFFE57373).copy(alpha = 0.3f)
+                                        else Color.Transparent,
+                                        label = "swipe_bg"
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .background(color)
+                                            .padding(end = 24.dp),
+                                        contentAlignment = Alignment.CenterEnd
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Delete,
+                                            contentDescription = "Delete",
+                                            tint = Color(0xFFD32F2F).copy(alpha = 0.7f)
+                                        )
+                                    }
+                                },
+                                enableDismissFromStartToEnd = false,
+                                modifier = Modifier.padding(horizontal = 16.dp)
+                            ) {
+                                DiaryCard(
+                                    data = cardData,
+                                    onClick = { onEntryClick(cardData.id) }
+                                )
+                            }
                         }
                     }
 
@@ -112,6 +190,46 @@ fun JournalScreen(
                 }
             }
         }
+    }
+
+    // Delete confirmation dialog
+    entryToDelete?.let { entry ->
+        AlertDialog(
+            onDismissRequest = { entryToDelete = null },
+            title = {
+                Text(
+                    text = "Delete entry?",
+                    style = TextStyle(
+                        fontFamily = CormorantGaramond,
+                        fontSize = 20.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                )
+            },
+            text = {
+                Text(
+                    text = "This entry will be permanently deleted.",
+                    style = TextStyle(
+                        fontFamily = FontFamily.Default,
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteEntry(entry.id)
+                    entryToDelete = null
+                }) {
+                    Text("Delete", color = Color(0xFFD32F2F))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { entryToDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

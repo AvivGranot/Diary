@@ -27,8 +27,25 @@ class NavViewModel @Inject constructor(
                 )
             }
 
-            val onboardingCompleted = preferenceDao.get("onboarding_completed")?.value == "true"
-            _startDestination.value = if (onboardingCompleted) {
+            val typewriterCompleted = preferenceDao.get("first_launch_completed")?.value == "true"
+
+            // Set beautiful defaults for first-time users so Write tab looks great immediately
+            if (!typewriterCompleted) {
+                val defaults = listOf(
+                    "diary_color" to "cream",
+                    "diary_form" to "focused",
+                    "diary_texture" to "paper",
+                    "diary_canvas" to "lined",
+                    "diary_details" to "[\"auto_save\",\"word_count\",\"date_header\",\"daily_quote\"]"
+                )
+                defaults.forEach { (key, value) ->
+                    if (preferenceDao.get(key) == null) {
+                        preferenceDao.insert(PreferenceEntity(key, value))
+                    }
+                }
+            }
+
+            _startDestination.value = if (typewriterCompleted) {
                 Routes.Main.route
             } else {
                 Routes.Typewriter.route

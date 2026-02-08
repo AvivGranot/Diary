@@ -63,6 +63,15 @@ class EntryRepositoryImpl @Inject constructor(
         return entryDao.countEntriesForDay(start, end) > 0
     }
 
+    override suspend fun getTotalEntryCount(): Int =
+        entryDao.getTotalCount()
+
+    override fun getTotalEntryCountSync(): Int =
+        entryDao.getTotalCountSync()
+
+    override fun getTotalWordCountSync(): Int =
+        entryDao.getTotalWordCountSync()
+
     private fun todayRange(): Pair<Long, Long> {
         val zone = ZoneId.systemDefault()
         val today = LocalDate.now()

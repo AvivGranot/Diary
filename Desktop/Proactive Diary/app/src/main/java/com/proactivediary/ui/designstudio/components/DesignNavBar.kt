@@ -67,9 +67,9 @@ fun DesignNavBar(
             }
         }
 
-        // Center: UNCOMMON
+        // Center: App title
         Text(
-            text = "UNCOMMON",
+            text = "PROACTIVE DIARY",
             fontFamily = CormorantGaramond,
             fontSize = 16.sp,
             letterSpacing = 3.sp,

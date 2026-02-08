@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -42,6 +43,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -51,6 +53,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.domain.model.DiaryThemeConfig
+import com.proactivediary.ui.share.ShareCardData
+import com.proactivediary.ui.share.ShareCardDialog
+import com.proactivediary.ui.share.shareCardAsImage
 import com.proactivediary.ui.theme.CormorantGaramond
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -62,6 +67,7 @@ fun EntryDetailScreen(
     viewModel: EntryDetailViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     LaunchedEffect(state.isDeleted) {
         if (state.isDeleted) onBack()
@@ -90,6 +96,7 @@ fun EntryDetailScreen(
 
     var showMenu by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -118,6 +125,13 @@ fun EntryDetailScreen(
                         )
                     }
                 }
+                IconButton(onClick = { showShareDialog = true }) {
+                    Icon(
+                        imageVector = Icons.Outlined.Share,
+                        contentDescription = "Share",
+                        tint = textColor
+                    )
+                }
                 Box {
                     IconButton(onClick = { showMenu = true }) {
                         Icon(
@@ -130,6 +144,13 @@ fun EntryDetailScreen(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false }
                     ) {
+                        DropdownMenuItem(
+                            text = { Text("Share as image") },
+                            onClick = {
+                                showMenu = false
+                                showShareDialog = true
+                            }
+                        )
                         DropdownMenuItem(
                             text = { Text("Delete") },
                             onClick = {
@@ -372,6 +393,30 @@ fun EntryDetailScreen(
                 TextButton(onClick = { showDeleteDialog = false }) {
                     Text("Cancel")
                 }
+            }
+        )
+    }
+
+    // Share card dialog
+    if (showShareDialog) {
+        val excerpt = if (state.content.length > 300) {
+            state.content.take(300).trimEnd() + "..."
+        } else {
+            state.content
+        }
+
+        ShareCardDialog(
+            data = ShareCardData(
+                excerpt = excerpt,
+                title = state.title,
+                dateFormatted = state.dateHeader,
+                colorKey = state.colorKey,
+                mood = state.mood?.key
+            ),
+            onDismiss = { showShareDialog = false },
+            onShare = { bitmap ->
+                shareCardAsImage(context, bitmap)
+                showShareDialog = false
             }
         )
     }

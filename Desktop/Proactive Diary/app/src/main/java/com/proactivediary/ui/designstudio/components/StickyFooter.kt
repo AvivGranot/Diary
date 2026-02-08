@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -38,7 +39,17 @@ fun StickyFooter(
         modifier = modifier
             .fillMaxWidth()
             .height(72.dp)
-            .background(DiaryColors.Paper)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        DiaryColors.Paper.copy(alpha = 0f),
+                        DiaryColors.Paper.copy(alpha = 0.85f),
+                        DiaryColors.Paper
+                    ),
+                    startY = 0f,
+                    endY = Float.POSITIVE_INFINITY
+                )
+            )
             .padding(horizontal = 32.dp, vertical = 12.dp)
             .navigationBarsPadding()
     ) {
