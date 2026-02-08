@@ -86,4 +86,12 @@
     <string name="empty_goals_subtitle">Set a goal to start tracking your progress</string>
     <string name="empty_search_title">Nothing found</string>
     <string name="empty_search_subtitle">Try different words or check the date</string>
+
+    <!-- Year in Review / Book Export -->
+    <string name="year_in_review">Year in Review</string>
+    <string name="generate_book">GENERATE BOOK</string>
+    <string name="book_generating">Generating your book\u2026</string>
+    <string name="book_saved">Book saved to Downloads</string>
+    <string name="book_subtitle">A beautiful PDF of your year\'s writing</string>
+    <string name="no_entries_for_year">No entries for %d</string>
 </resources>

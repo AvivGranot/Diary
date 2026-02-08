@@ -79,6 +79,11 @@ class AnalyticsService @Inject constructor() {
     // ─── App lifecycle ───
     fun logAppOpened() = log("app_opened")
 
+    // ─── Book Export ───
+    fun logBookExported(year: Int, entryCount: Int) {
+        log("book_exported", bundleOf("year" to year, "entry_count" to entryCount))
+    }
+
     // ─── Helpers ───
     private fun log(event: String, params: Bundle? = null) {
         analytics.logEvent(event, params)

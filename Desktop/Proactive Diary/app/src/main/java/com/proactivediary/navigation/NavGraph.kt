@@ -27,6 +27,7 @@ import com.proactivediary.ui.onboarding.OnboardingGoalsScreen
 import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.typewriter.TypewriterScreen
+import com.proactivediary.ui.export.YearInReviewScreen
 import com.proactivediary.ui.write.WriteScreen
 
 @Composable
@@ -142,6 +143,31 @@ fun ProactiveDiaryNavHost(
             )
         ) {
             WriteScreen()
+        }
+
+        composable(Routes.YearInReview.route) {
+            var showYearPaywall by remember { mutableStateOf(false) }
+            val yearActivity = (LocalContext.current as? Activity)
+
+            YearInReviewScreen(
+                onBack = { navController.popBackStack() },
+                isPremium = subscriptionState.isActive,
+                onShowPaywall = { showYearPaywall = true }
+            )
+
+            if (showYearPaywall) {
+                PaywallDialog(
+                    onDismiss = { showYearPaywall = false },
+                    onSelectPlan = { sku ->
+                        yearActivity?.let { billingViewModel.launchPurchase(it, sku) }
+                        showYearPaywall = false
+                    },
+                    onRestore = {
+                        billingViewModel.restorePurchases()
+                        showYearPaywall = false
+                    }
+                )
+            }
         }
     }
 

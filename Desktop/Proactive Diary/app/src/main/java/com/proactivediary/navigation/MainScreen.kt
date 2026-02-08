@@ -238,6 +238,9 @@ fun MainScreen(
                         rootNavController.navigate(Routes.Typewriter.route) {
                             popUpTo(Routes.Main.route) { inclusive = true }
                         }
+                    },
+                    onNavigateToYearInReview = {
+                        rootNavController.navigate(Routes.YearInReview.route)
                     }
                 )
             }

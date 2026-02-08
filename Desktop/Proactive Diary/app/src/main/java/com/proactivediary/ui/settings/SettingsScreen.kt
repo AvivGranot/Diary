@@ -48,6 +48,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.proactivediary.auth.AuthViewModel
+import com.proactivediary.ui.auth.AuthDialog
 import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.paywall.Plan
@@ -58,20 +60,25 @@ fun SettingsScreen(
     onOpenDesignStudio: () -> Unit = {},
     onNavigateToGoals: () -> Unit = {},
     onNavigateToTypewriter: () -> Unit = {},
+    onNavigateToYearInReview: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
-    billingViewModel: BillingViewModel = hiltViewModel()
+    billingViewModel: BillingViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val isDarkMode by viewModel.isDarkMode.collectAsState()
     val fontSize by viewModel.fontSize.collectAsState()
+    val isStreakEnabled by viewModel.isStreakEnabled.collectAsState()
     val designSummary by viewModel.diaryDesignSummary.collectAsState()
     val activeReminderCount by viewModel.activeReminderCount.collectAsState()
     val activeGoalCount by viewModel.activeGoalCount.collectAsState()
     val exportMessage by viewModel.exportMessage.collectAsState()
     val deleteStep by viewModel.deleteStep.collectAsState()
     val subscriptionState by billingViewModel.subscriptionState.collectAsState()
+    val authState by authViewModel.uiState.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     var showPaywall by remember { mutableStateOf(false) }
+    var showAuthDialog by remember { mutableStateOf(false) }
     var showExportOptions by remember { mutableStateOf(false) }
     var showFontSizeMenu by remember { mutableStateOf(false) }
     var showPrivacyPolicy by remember { mutableStateOf(false) }
@@ -166,6 +173,37 @@ fun SettingsScreen(
                         }
                     }
                 }
+                SettingsDivider()
+
+                // Writing Streak toggle
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Writing Practice",
+                            style = TextStyle(fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                        )
+                        Text(
+                            text = "Show practice day counter on Write tab",
+                            style = TextStyle(fontSize = 11.sp, color = MaterialTheme.colorScheme.secondary)
+                        )
+                    }
+                    Switch(
+                        checked = isStreakEnabled,
+                        onCheckedChange = { viewModel.toggleStreak(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.onBackground,
+                            checkedTrackColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
+                            uncheckedThumbColor = MaterialTheme.colorScheme.secondary,
+                            uncheckedTrackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                        )
+                    )
+                }
             }
 
             Spacer(Modifier.height(24.dp))
@@ -177,6 +215,12 @@ fun SettingsScreen(
                 SettingsRow(
                     label = "Writing Reminders",
                     value = "$activeReminderCount active"
+                )
+                SettingsDivider()
+                SettingsRow(
+                    label = "My Goals",
+                    value = "$activeGoalCount goals",
+                    onClick = onNavigateToGoals
                 )
                 SettingsDivider()
                 SettingsRow(
@@ -201,9 +245,10 @@ fun SettingsScreen(
                     Text(
                         text = "Plan: ${
                             when (subscriptionState.plan) {
-                                Plan.TRIAL -> "Free Trial (${subscriptionState.trialDaysLeft} days left)"
+                                Plan.TRIAL -> "Free (${subscriptionState.trialDaysLeft} entries left)"
                                 Plan.MONTHLY -> "Monthly plan"
                                 Plan.ANNUAL -> "Annual plan"
+                                Plan.LIFETIME -> "Lifetime plan"
                                 Plan.EXPIRED -> "Trial expired"
                             }
                         }",
@@ -259,7 +304,7 @@ fun SettingsScreen(
             SettingsCard {
                 Box {
                     SettingsRow(
-                        label = "Export Diary",
+                        label = "Export Writing",
                         value = "JSON / Text",
                         onClick = { showExportOptions = true }
                     )
@@ -290,6 +335,60 @@ fun SettingsScreen(
                     onClick = { viewModel.startDeleteFlow() },
                     isDestructive = true
                 )
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            // YOUR BOOK section
+            SectionHeader("YOUR BOOK")
+            Spacer(Modifier.height(8.dp))
+            SettingsCard {
+                SettingsRow(
+                    label = "Year in Review",
+                    value = "${java.time.LocalDate.now().year}",
+                    onClick = onNavigateToYearInReview
+                )
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            // ACCOUNT section
+            SectionHeader("ACCOUNT")
+            Spacer(Modifier.height(8.dp))
+            SettingsCard {
+                if (authViewModel.isAuthenticated) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = authState.userDisplayName ?: "Signed in",
+                                style = TextStyle(fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                            )
+                            if (authState.userEmail != null) {
+                                Text(
+                                    text = authState.userEmail!!,
+                                    style = TextStyle(fontSize = 11.sp, color = MaterialTheme.colorScheme.secondary)
+                                )
+                            }
+                        }
+                    }
+                    SettingsDivider()
+                    SettingsRow(
+                        label = "Sign Out",
+                        onClick = { authViewModel.signOut() }
+                    )
+                } else {
+                    SettingsRow(
+                        label = "Sign In",
+                        value = "Optional",
+                        onClick = { showAuthDialog = true }
+                    )
+                }
             }
 
             Spacer(Modifier.height(24.dp))
@@ -325,10 +424,13 @@ fun SettingsScreen(
         )
     }
 
-    // Paywall dialog
+    // Paywall dialog — no auth gate before purchase
     if (showPaywall) {
+        val subState by billingViewModel.subscriptionState.collectAsState()
         PaywallDialog(
             onDismiss = { showPaywall = false },
+            entryCount = subState.entryCount,
+            totalWords = subState.totalWords,
             onSelectPlan = { sku ->
                 activity?.let { billingViewModel.launchPurchase(it, sku) }
                 showPaywall = false
@@ -337,6 +439,14 @@ fun SettingsScreen(
                 billingViewModel.restorePurchases()
                 showPaywall = false
             }
+        )
+    }
+
+    // Auth dialog — for optional account sign-in
+    if (showAuthDialog) {
+        AuthDialog(
+            onDismiss = { showAuthDialog = false },
+            onAuthenticated = { showAuthDialog = false }
         )
     }
 
@@ -356,7 +466,7 @@ fun SettingsScreen(
             },
             text = {
                 Text(
-                    text = "All your data stays on this device. We never collect, transmit, or analyze your diary entries. Your writing is yours alone.\n\nThe only network connection this app makes is to Google Play for subscription management. No diary content ever leaves your device.",
+                    text = "A private daily writing practice.\n\nAll your data stays on this device. We never collect, transmit, or analyze what you write. Your words are yours alone.\n\nThe only network connection this app makes is to Google Play for subscription management. Nothing you write ever leaves your device.",
                     style = TextStyle(fontSize = 13.sp, color = MaterialTheme.colorScheme.secondary)
                 )
             },
@@ -385,7 +495,7 @@ fun SettingsScreen(
             },
             text = {
                 Text(
-                    text = "This will permanently delete all diary entries, goals, and settings. This cannot be undone.",
+                    text = "This will permanently delete all entries, goals, and settings. This cannot be undone.",
                     style = TextStyle(fontSize = 13.sp, color = MaterialTheme.colorScheme.secondary)
                 )
             },
