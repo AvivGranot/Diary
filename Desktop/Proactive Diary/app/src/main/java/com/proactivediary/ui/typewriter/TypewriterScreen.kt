@@ -56,7 +56,7 @@ import com.proactivediary.ui.theme.DiaryColors
 
 @Composable
 fun TypewriterScreen(
-    onNavigateToDesignStudio: () -> Unit,
+    onNavigateForward: () -> Unit,
     viewModel: TypewriterViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -85,7 +85,7 @@ fun TypewriterScreen(
     // Navigate when fade-out completes
     LaunchedEffect(uiState.screenAlpha, uiState.isNavigating) {
         if (viewModel.isNavigationComplete()) {
-            onNavigateToDesignStudio()
+            onNavigateForward()
         }
     }
 
@@ -165,12 +165,13 @@ fun TypewriterScreen(
             )
         }
 
-        // Main content — centered horizontally and vertically
+        // Main content — top-aligned, centered horizontally
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 32.dp),
-            verticalArrangement = Arrangement.Center,
+                .padding(horizontal = 32.dp)
+                .padding(top = 80.dp),
+            verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Typewriter quote canvas
@@ -197,9 +198,24 @@ fun TypewriterScreen(
                 )
             }
 
+            // Practice day number — just a number, no chrome
+            if (uiState.practiceDayAlpha > 0f && uiState.practiceDay > 0) {
+                Spacer(modifier = Modifier.height(32.dp))
+                Text(
+                    text = "${uiState.practiceDay}.",
+                    style = TextStyle(
+                        fontFamily = CormorantGaramond,
+                        fontSize = 48.sp,
+                        fontStyle = FontStyle.Normal,
+                        color = inkColor
+                    ),
+                    modifier = Modifier.alpha(uiState.practiceDayAlpha)
+                )
+            }
+
             // CTA: "Now write yours."
             if (uiState.ctaAlpha > 0f) {
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
                     text = TypewriterViewModel.CTA,
                     style = TextStyle(

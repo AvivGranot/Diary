@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -29,7 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -42,12 +40,21 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.delay
 import com.proactivediary.domain.model.DiaryThemeConfig
+import com.proactivediary.ui.share.ShareCardDialog
+import com.proactivediary.ui.share.ShareCardData
+import com.proactivediary.ui.share.StreakShareData
+import com.proactivediary.ui.share.StreakCardPreview
+import com.proactivediary.ui.share.shareCardAsImage
 import com.proactivediary.ui.theme.CormorantGaramond
 
 @Composable
 fun WriteScreen(
-    viewModel: WriteViewModel = hiltViewModel()
+    viewModel: WriteViewModel = hiltViewModel(),
+    onOpenDesignStudio: (() -> Unit)? = null,
+    onShareStreak: ((Int) -> Unit)? = null
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -113,6 +120,21 @@ fun WriteScreen(
                         ),
                         modifier = Modifier.padding(horizontal = horizontalPadding)
                     )
+
+                    // Goal progress indicator below date
+                    if (state.weeklyGoalProgress != null) {
+                        Text(
+                            text = state.weeklyGoalProgress!!,
+                            style = TextStyle(
+                                fontSize = 12.sp,
+                                fontStyle = FontStyle.Italic,
+                                color = secondaryTextColor.copy(alpha = 0.7f)
+                            ),
+                            modifier = Modifier.padding(horizontal = horizontalPadding)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+
                     Spacer(modifier = Modifier.height(12.dp))
                 }
 
@@ -179,6 +201,7 @@ fun WriteScreen(
                     horizontalPadding = horizontalPadding,
                     fontSizeSp = state.fontSize,
                     lineHeightMultiplier = lineHeightMultiplier,
+                    placeholderText = state.dailyPrompt,
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
@@ -209,16 +232,90 @@ fun WriteScreen(
             )
         }
 
-        // Auto-save indicator dot (top-right)
+        // Auto-save "Saved" indicator (top-right)
         if (showAutoSave) {
-            AutoSaveDot(
+            SavedIndicator(
                 isSaving = state.isSaving,
-                color = secondaryTextColor.copy(alpha = 0.4f),
+                color = secondaryTextColor.copy(alpha = 0.5f),
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(top = 20.dp, end = 16.dp)
             )
         }
+
+        // Goal completion message (top-left, below header area)
+        if (state.goalCompletedMessage != null) {
+            LaunchedEffect(state.goalCompletedMessage) {
+                delay(3000)
+                viewModel.dismissGoalCompleted()
+            }
+
+            Text(
+                text = state.goalCompletedMessage!!,
+                style = TextStyle(
+                    fontFamily = CormorantGaramond,
+                    fontSize = 13.sp,
+                    fontStyle = FontStyle.Italic,
+                    color = Color(0xFF5B8C5A).copy(alpha = 0.8f)
+                ),
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = horizontalPadding, top = 20.dp)
+            )
+        }
+    }
+
+    // Design Studio prompt after first entry save
+    if (state.showDesignStudioPrompt && onOpenDesignStudio != null) {
+        DesignStudioPrompt(
+            onOpenDesignStudio = {
+                viewModel.dismissDesignStudioPrompt()
+                onOpenDesignStudio()
+            },
+            onDismiss = { viewModel.dismissDesignStudioPrompt() }
+        )
+    }
+
+    // Streak share dialog state
+    var streakShareCount by remember { mutableStateOf(0) }
+    val context = LocalContext.current
+
+    // Streak milestone celebration overlay
+    if (state.showStreakCelebration > 0) {
+        StreakCelebration(
+            streakCount = state.showStreakCelebration,
+            onDismiss = { viewModel.dismissStreakCelebration() },
+            onShare = { count ->
+                streakShareCount = count
+                viewModel.dismissStreakCelebration()
+            }
+        )
+    }
+
+    // Practice share card dialog
+    if (streakShareCount > 0) {
+        val milestone = when (streakShareCount) {
+            7 -> "One week of practice"
+            14 -> "Two weeks of practice"
+            30 -> "One month of practice"
+            50 -> "Fifty days of practice"
+            100 -> "One hundred days of practice"
+            365 -> "One year of practice"
+            else -> "Day $streakShareCount of practice"
+        }
+        val shareData = ShareCardData(
+            excerpt = "Day $streakShareCount of my writing practice.",
+            title = milestone,
+            colorKey = state.colorKey
+        )
+        ShareCardDialog(
+            data = shareData,
+            onDismiss = { streakShareCount = 0 },
+            onShare = { bitmap ->
+                shareCardAsImage(context, bitmap)
+                streakShareCount = 0
+            }
+        )
     }
 }
 
@@ -257,6 +354,7 @@ private fun WriteArea(
     horizontalPadding: Dp,
     fontSizeSp: Int,
     lineHeightMultiplier: Float,
+    placeholderText: String = "Start writing...",
     modifier: Modifier = Modifier
 ) {
     val fontSize = fontSizeSp.sp
@@ -390,9 +488,10 @@ private fun WriteArea(
                 Box {
                     if (content.isEmpty()) {
                         Text(
-                            text = "Start writing...",
+                            text = placeholderText,
                             style = TextStyle(
-                                fontFamily = FontFamily.Default,
+                                fontFamily = CormorantGaramond,
+                                fontStyle = FontStyle.Italic,
                                 fontSize = fontSize,
                                 color = secondaryTextColor.copy(alpha = 0.35f),
                                 lineHeight = lineHeightSp
@@ -407,33 +506,35 @@ private fun WriteArea(
 }
 
 @Composable
-private fun AutoSaveDot(
+private fun SavedIndicator(
     isSaving: Boolean,
     color: Color,
     modifier: Modifier = Modifier
 ) {
-    val scale = remember { Animatable(1f) }
+    var showSaved by remember { mutableStateOf(false) }
+    val alpha = remember { Animatable(0f) }
 
     LaunchedEffect(isSaving) {
         if (isSaving) {
-            scale.animateTo(
-                targetValue = 1.3f,
-                animationSpec = tween(durationMillis = 150)
-            )
-            scale.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(durationMillis = 150)
-            )
+            showSaved = true
+            alpha.snapTo(0f)
+            alpha.animateTo(1f, animationSpec = tween(200))
+        } else if (showSaved) {
+            delay(2000)
+            alpha.animateTo(0f, animationSpec = tween(400))
+            showSaved = false
         }
     }
 
-    Box(
-        modifier = modifier
-            .size(6.dp)
-            .scale(scale.value)
-            .background(
-                color = color,
-                shape = CircleShape
-            )
-    )
+    if (showSaved || alpha.value > 0f) {
+        Text(
+            text = "Saved",
+            style = TextStyle(
+                fontFamily = FontFamily.Default,
+                fontSize = 12.sp,
+                color = color.copy(alpha = alpha.value)
+            ),
+            modifier = modifier
+        )
+    }
 }

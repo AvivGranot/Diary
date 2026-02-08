@@ -33,21 +33,21 @@ fun MoodSelector(
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Mood.entries.forEach { mood ->
             val isSelected = selectedMood == mood
 
             val circleSize by animateDpAsState(
-                targetValue = if (isSelected) 32.dp else 28.dp,
+                targetValue = if (isSelected) 18.dp else 12.dp,
                 animationSpec = tween(durationMillis = 200),
                 label = "moodSize"
             )
 
             Box(
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(24.dp)
                     .semantics { contentDescription = mood.label }
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
@@ -62,14 +62,14 @@ fun MoodSelector(
                         .size(circleSize)
                         .clip(CircleShape)
                         .background(
-                            color = if (isSelected) mood.color else mood.color.copy(alpha = 0.4f),
+                            color = if (isSelected) mood.color else mood.color.copy(alpha = 0.25f),
                             shape = CircleShape
                         )
                         .then(
                             if (isSelected) {
                                 Modifier.border(
-                                    width = 2.dp,
-                                    color = InkColor,
+                                    width = 1.5.dp,
+                                    color = InkColor.copy(alpha = 0.4f),
                                     shape = CircleShape
                                 )
                             } else {

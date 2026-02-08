@@ -72,9 +72,24 @@ class SettingsViewModel @Inject constructor(
     private val _exportMessage = MutableStateFlow<String?>(null)
     val exportMessage: StateFlow<String?> = _exportMessage
 
+    // Writing streak toggle
+    private val _isStreakEnabled = MutableStateFlow(true)
+    val isStreakEnabled: StateFlow<Boolean> = _isStreakEnabled
+
     // Delete confirmation state
     private val _deleteStep = MutableStateFlow(0) // 0=none, 1=first dialog, 2=type DELETE
     val deleteStep: StateFlow<Int> = _deleteStep
+
+    init {
+        loadStreakPref()
+    }
+
+    private fun loadStreakPref() {
+        viewModelScope.launch {
+            val pref = preferenceDao.get("streak_enabled")
+            _isStreakEnabled.value = pref?.value != "false"
+        }
+    }
 
     fun toggleDarkMode(enabled: Boolean) {
         viewModelScope.launch {
@@ -85,6 +100,13 @@ class SettingsViewModel @Inject constructor(
     fun setFontSize(size: String) {
         viewModelScope.launch {
             preferenceDao.insert(PreferenceEntity("font_size", size))
+        }
+    }
+
+    fun toggleStreak(enabled: Boolean) {
+        _isStreakEnabled.value = enabled
+        viewModelScope.launch {
+            preferenceDao.insert(PreferenceEntity("streak_enabled", if (enabled) "true" else "false"))
         }
     }
 
@@ -190,7 +212,7 @@ class SettingsViewModel @Inject constructor(
                         os.write(content.toByteArray())
                     }
                 }
-                _exportMessage.value = "Diary exported to Downloads"
+                _exportMessage.value = "Writing exported to Downloads"
             } catch (e: Exception) {
                 _exportMessage.value = "Export failed: ${e.message}"
             }

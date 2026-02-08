@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -79,6 +80,14 @@ fun TypewriterCanvas(
             // How many characters of this particular line should be visible
             val charsToShow = (visibleCharCount - charsBeforeLine).coerceIn(0, line.length)
 
+            // Measure the full line to calculate center offset
+            val fullLineResult = textMeasurer.measure(
+                text = line,
+                style = textStyle
+            )
+            val lineWidth = fullLineResult.size.width.toFloat()
+            val centerOffsetX = (size.width - lineWidth) / 2f
+
             if (charsToShow > 0) {
                 val visibleText = line.substring(0, charsToShow)
                 val textResult = textMeasurer.measure(
@@ -87,16 +96,16 @@ fun TypewriterCanvas(
                 )
                 drawText(
                     textLayoutResult = textResult,
-                    topLeft = Offset(0f, baselineY)
+                    topLeft = Offset(centerOffsetX, baselineY)
                 )
 
                 // Place cursor right after the last drawn character on this line
-                cursorX = textResult.size.width.toFloat() + cursorPaddingPx
+                cursorX = centerOffsetX + textResult.size.width.toFloat() + cursorPaddingPx
                 cursorY = baselineY
             } else if (charsBeforeLine <= visibleCharCount && lineIndex > 0) {
                 // The newline before this line has been "typed" but no chars on this line yet.
-                // Cursor should sit at the beginning of this line.
-                cursorX = cursorPaddingPx
+                // Cursor should sit at the beginning of this line (centered).
+                cursorX = centerOffsetX + cursorPaddingPx
                 cursorY = baselineY
             }
         }

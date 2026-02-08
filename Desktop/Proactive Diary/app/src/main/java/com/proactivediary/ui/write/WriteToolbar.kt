@@ -51,7 +51,7 @@ fun WriteToolbar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(48.dp)
+            .height(40.dp)
             .background(bgColor)
     ) {
         // Top divider
@@ -66,7 +66,7 @@ fun WriteToolbar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
+                .height(40.dp)
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween

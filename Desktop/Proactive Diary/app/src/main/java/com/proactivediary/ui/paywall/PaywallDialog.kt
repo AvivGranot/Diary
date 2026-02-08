@@ -1,7 +1,7 @@
 package com.proactivediary.ui.paywall
 
-import android.app.Activity
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,7 +11,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,8 +36,14 @@ import com.proactivediary.ui.theme.CormorantGaramond
 fun PaywallDialog(
     onDismiss: () -> Unit,
     onSelectPlan: (String) -> Unit,
-    onRestore: () -> Unit
+    onRestore: () -> Unit,
+    onNeedsAuth: ((String) -> Unit)? = null,
+    isAuthenticated: Boolean = true,
+    entryCount: Int = 0,
+    totalWords: Int = 0
 ) {
+    // Remove auth gate: always go directly to purchase
+    val handlePlanSelect: (String) -> Unit = { sku -> onSelectPlan(sku) }
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false)
@@ -46,12 +56,20 @@ fun PaywallDialog(
             color = MaterialTheme.colorScheme.background
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
+                modifier = Modifier
+                    .padding(24.dp)
+                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Title
+                // Header — personalized based on engagement
                 Text(
-                    text = "Your free trial has ended",
+                    text = if (entryCount >= 7) {
+                        "You\u2019ve written every day this week.\nKeep your practice alive."
+                    } else if (entryCount > 0) {
+                        "You\u2019ve written $entryCount entries.\n$totalWords words so far."
+                    } else {
+                        "A private daily writing practice."
+                    },
                     style = TextStyle(
                         fontFamily = CormorantGaramond,
                         fontSize = 24.sp,
@@ -60,11 +78,11 @@ fun PaywallDialog(
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(8.dp))
 
-                // Quote
+                // Subheader
                 Text(
-                    text = "\u201CEither write things worth reading,\nor do things worth writing\u201D",
+                    text = "Your words deserve a home.",
                     style = TextStyle(
                         fontFamily = CormorantGaramond,
                         fontStyle = FontStyle.Italic,
@@ -74,13 +92,29 @@ fun PaywallDialog(
                     textAlign = TextAlign.Center
                 )
 
+                Spacer(Modifier.height(20.dp))
+
+                // Feature list
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FeatureRow("Unlimited writing")
+                    FeatureRow("All Design Studio themes")
+                    FeatureRow("Goal tracking & practice counter")
+                    FeatureRow("Export your writing")
+                    FeatureRow("Everything stays on your device")
+                }
+
                 Spacer(Modifier.height(24.dp))
 
                 // Monthly plan card
                 PlanCard(
                     title = "Monthly",
-                    price = "$2/month",
-                    onClick = { onSelectPlan(BillingService.MONTHLY_SKU) }
+                    price = "\$4.99/month",
+                    onClick = { handlePlanSelect(BillingService.MONTHLY_SKU) }
                 )
 
                 Spacer(Modifier.height(12.dp))
@@ -88,10 +122,34 @@ fun PaywallDialog(
                 // Annual plan card
                 PlanCard(
                     title = "Annual",
-                    price = "$20/year",
-                    badge = "Save 17%",
+                    price = "\$29.99/year",
+                    badge = "Save 50%",
                     bestValue = true,
-                    onClick = { onSelectPlan(BillingService.ANNUAL_SKU) }
+                    onClick = { handlePlanSelect(BillingService.ANNUAL_SKU) }
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                // Lifetime plan card
+                PlanCard(
+                    title = "Lifetime",
+                    price = "\$79.99",
+                    badge = "One-time",
+                    onClick = { handlePlanSelect(BillingService.LIFETIME_SKU) }
+                )
+
+                Spacer(Modifier.height(12.dp))
+
+                // Urgency line
+                Text(
+                    text = "Your entries are safe. Upgrade to keep your practice going.",
+                    style = TextStyle(
+                        fontFamily = CormorantGaramond,
+                        fontStyle = FontStyle.Italic,
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.secondary
+                    ),
+                    textAlign = TextAlign.Center
                 )
 
                 Spacer(Modifier.height(16.dp))
@@ -111,7 +169,7 @@ fun PaywallDialog(
 
                 // Privacy note
                 Text(
-                    text = "Your data stays on your device.\nWe never see your diary.",
+                    text = "Your data stays on your device.\nWe never see what you write.",
                     style = TextStyle(
                         fontSize = 12.sp,
                         fontStyle = FontStyle.Italic,
@@ -121,6 +179,30 @@ fun PaywallDialog(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun FeatureRow(text: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "\u2713",
+            style = TextStyle(
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        )
+        Spacer(Modifier.width(10.dp))
+        Text(
+            text = text,
+            style = TextStyle(
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        )
     }
 }
 
@@ -135,6 +217,17 @@ private fun PlanCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
+            .then(
+                if (bestValue) {
+                    Modifier.border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                } else {
+                    Modifier
+                }
+            )
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(8.dp),
         color = MaterialTheme.colorScheme.surface

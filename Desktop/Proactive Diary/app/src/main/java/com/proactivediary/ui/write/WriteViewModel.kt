@@ -5,11 +5,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.db.dao.PreferenceDao
+import com.proactivediary.data.db.entities.PreferenceEntity
 import com.proactivediary.data.db.entities.EntryEntity
 import com.proactivediary.data.repository.EntryRepository
+import com.proactivediary.data.repository.StreakRepository
+import com.proactivediary.domain.WritingGoalService
 import com.proactivediary.domain.model.Mood
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,11 +22,55 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
+
+object WritingPrompts {
+    val prompts = listOf(
+        "What's on your mind right now?",
+        "One thing you're grateful for today.",
+        "What would you tell yourself a year from now?",
+        "Describe a moment that made you feel something today.",
+        "What's something you're putting off? Why?",
+        "Write about someone who matters to you.",
+        "What did you learn today?",
+        "If today had a color, what would it be and why?",
+        "What's a small win from today?",
+        "Write the first thing that comes to mind. Don't stop for 2 minutes.",
+        "What are you looking forward to?",
+        "Describe the last time you laughed hard.",
+        "What's a belief you've changed recently?",
+        "Write a letter to your future self.",
+        "What does your ideal morning look like?",
+        "What's the bravest thing you did recently?",
+        "Describe your current mood in detail.",
+        "What would you do if you weren't afraid?",
+        "Write about a place that feels like home.",
+        "What's one thing you'd change about today?",
+        "What's a memory that always makes you smile?",
+        "What are you avoiding thinking about?",
+        "Describe a conversation that stuck with you.",
+        "What's something you're proud of but never talk about?",
+        "If you could relive one day, which would it be?",
+        "What does success look like to you right now?",
+        "Write about someone you miss.",
+        "What's a question you wish someone would ask you?",
+        "Describe your happiest moment this week.",
+        "What advice would you give your younger self?",
+        "What's making you feel alive lately?",
+        "Write about something beautiful you noticed today."
+    )
+
+    fun dailyPrompt(): String {
+        val dayOfYear = LocalDate.now().dayOfYear
+        return prompts[dayOfYear % prompts.size]
+    }
+}
 
 data class WriteUiState(
     val entryId: String = "",
@@ -34,6 +83,7 @@ data class WriteUiState(
     val saveError: String? = null,
     val isLoaded: Boolean = false,
     val dateHeader: String = "",
+    val dailyPrompt: String = WritingPrompts.dailyPrompt(),
     val colorKey: String = "cream",
     val form: String = "focused",
     val texture: String = "paper",
@@ -43,7 +93,13 @@ data class WriteUiState(
     val markText: String = "",
     val markPosition: String = "header",
     val markFont: String = "serif",
-    val isNewEntry: Boolean = true
+    val isNewEntry: Boolean = true,
+    val showDesignStudioPrompt: Boolean = false,
+    val goalCompletedMessage: String? = null,
+    val weeklyGoalProgress: String? = null,
+    val freeEntryLimitReached: Boolean = false,
+    val monthlyEntryCount: Int = 0,
+    val showStreakCelebration: Int = 0
 )
 
 @OptIn(FlowPreview::class)
@@ -51,6 +107,9 @@ data class WriteUiState(
 class WriteViewModel @Inject constructor(
     private val entryRepository: EntryRepository,
     private val preferenceDao: PreferenceDao,
+    private val analyticsService: AnalyticsService,
+    private val writingGoalService: WritingGoalService,
+    private val streakRepository: StreakRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -59,6 +118,7 @@ class WriteViewModel @Inject constructor(
 
     private val _contentFlow = MutableStateFlow("")
     private val gson = Gson()
+    private val sessionStartMs = System.currentTimeMillis()
 
     private val entryIdArg: String? = savedStateHandle.get<String>("entryId")
 
@@ -66,19 +126,30 @@ class WriteViewModel @Inject constructor(
         loadThemePreferences()
         loadOrCreateEntry(entryIdArg)
         setupAutoSave()
+        loadGoalProgress()
+        checkFreeEntryLimit()
     }
 
     private fun loadThemePreferences() {
         viewModelScope.launch {
-            val colorKey = preferenceDao.get("diary_color")?.value ?: "cream"
-            val form = preferenceDao.get("diary_form")?.value ?: "focused"
-            val texture = preferenceDao.get("diary_texture")?.value ?: "paper"
-            val canvas = preferenceDao.get("diary_canvas")?.value ?: "lined"
-            val detailsJson = preferenceDao.get("diary_details")?.value
-            val markText = preferenceDao.get("diary_mark_text")?.value ?: ""
-            val markPosition = preferenceDao.get("diary_mark_position")?.value ?: "header"
-            val markFont = preferenceDao.get("diary_mark_font")?.value ?: "serif"
-            val fontSizePref = preferenceDao.get("font_size")?.value ?: "medium"
+            val prefs = withContext(Dispatchers.IO) {
+                val keys = listOf(
+                    "diary_color", "diary_form", "diary_texture", "diary_canvas",
+                    "diary_details", "diary_mark_text", "diary_mark_position",
+                    "diary_mark_font", "font_size"
+                )
+                preferenceDao.getBatch(keys).associate { it.key to it.value }
+            }
+
+            val colorKey = prefs["diary_color"] ?: "cream"
+            val form = prefs["diary_form"] ?: "focused"
+            val texture = prefs["diary_texture"] ?: "paper"
+            val canvas = prefs["diary_canvas"] ?: "lined"
+            val detailsJson = prefs["diary_details"]
+            val markText = prefs["diary_mark_text"] ?: ""
+            val markPosition = prefs["diary_mark_position"] ?: "header"
+            val markFont = prefs["diary_mark_font"] ?: "serif"
+            val fontSizePref = prefs["font_size"] ?: "medium"
 
             val fontSize = when (fontSizePref) {
                 "small" -> 14
@@ -232,28 +303,84 @@ class WriteViewModel @Inject constructor(
         _uiState.value = state.copy(isSaving = true, saveError = null)
 
         try {
-            val now = System.currentTimeMillis()
-            val tagsJson = gson.toJson(state.tags)
+            withContext(Dispatchers.IO) {
+                val now = System.currentTimeMillis()
+                val tagsJson = gson.toJson(state.tags)
 
-            val entry = EntryEntity(
-                id = state.entryId,
-                title = state.title,
-                content = text,
-                mood = state.mood?.key,
-                tags = tagsJson,
-                wordCount = computeWordCount(text),
-                createdAt = if (state.isNewEntry) now else {
-                    entryRepository.getByIdSync(state.entryId)?.createdAt ?: now
-                },
-                updatedAt = now
-            )
+                val entry = EntryEntity(
+                    id = state.entryId,
+                    title = state.title,
+                    content = text,
+                    mood = state.mood?.key,
+                    tags = tagsJson,
+                    wordCount = computeWordCount(text),
+                    createdAt = if (state.isNewEntry) now else {
+                        entryRepository.getByIdSync(state.entryId)?.createdAt ?: now
+                    },
+                    updatedAt = now
+                )
 
-            if (state.isNewEntry) {
-                entryRepository.insert(entry)
-                _uiState.value = _uiState.value.copy(isNewEntry = false, isSaving = false)
-            } else {
-                entryRepository.update(entry)
-                _uiState.value = _uiState.value.copy(isSaving = false)
+                if (state.isNewEntry) {
+                    entryRepository.insert(entry)
+
+                    val sessionDuration = System.currentTimeMillis() - sessionStartMs
+                    analyticsService.logEntrySaved(
+                        wordCount = computeWordCount(text),
+                        mood = state.mood?.key,
+                        hasTitle = state.title.isNotBlank(),
+                        sessionDurationMs = sessionDuration
+                    )
+
+                    // Check if this is the user's very first entry ever
+                    val firstEntryLogged = preferenceDao.get("first_entry_logged")?.value
+                    if (firstEntryLogged == null) {
+                        val installTime = preferenceDao.get("trial_start_date")?.value?.toLongOrNull()
+                            ?: System.currentTimeMillis()
+                        val timeSinceInstall = System.currentTimeMillis() - installTime
+                        analyticsService.logFirstEntryWritten(
+                            wordCount = computeWordCount(text),
+                            mood = state.mood?.key,
+                            timeSinceInstallMs = timeSinceInstall
+                        )
+                        preferenceDao.insert(PreferenceEntity("first_entry_logged", "true"))
+                    }
+
+                    _uiState.value = _uiState.value.copy(isNewEntry = false, isSaving = false)
+
+                    // After first entry save, prompt Design Studio if not yet completed
+                    val designDone = preferenceDao.get("design_studio_completed")?.value == "true"
+                    val designLegacy = preferenceDao.get("design_completed")?.value == "true"
+                    if (!designDone && !designLegacy) {
+                        _uiState.value = _uiState.value.copy(showDesignStudioPrompt = true)
+                    }
+
+                    // Auto-check-in writing-related goals
+                    val checkedInGoals = writingGoalService.autoCheckInWritingGoals()
+                    if (checkedInGoals.isNotEmpty()) {
+                        _uiState.value = _uiState.value.copy(goalCompletedMessage = "Goal complete!")
+                        // Refresh goal progress after check-in
+                        val progress = writingGoalService.getWritingGoalProgress()
+                        _uiState.value = _uiState.value.copy(weeklyGoalProgress = progress)
+                    }
+
+                    // Check streak milestone
+                    val streak = streakRepository.calculateWritingStreak()
+                    if (isMilestone(streak)) {
+                        _uiState.value = _uiState.value.copy(showStreakCelebration = streak)
+                    }
+                } else {
+                    entryRepository.update(entry)
+                    _uiState.value = _uiState.value.copy(isSaving = false)
+
+                    // Auto-check-in writing-related goals on update too
+                    val checkedInGoals = writingGoalService.autoCheckInWritingGoals()
+                    if (checkedInGoals.isNotEmpty()) {
+                        _uiState.value = _uiState.value.copy(goalCompletedMessage = "Goal complete!")
+                        // Refresh goal progress after check-in
+                        val progress = writingGoalService.getWritingGoalProgress()
+                        _uiState.value = _uiState.value.copy(weeklyGoalProgress = progress)
+                    }
+                }
             }
         } catch (e: Exception) {
             _uiState.value = _uiState.value.copy(
@@ -277,7 +404,52 @@ class WriteViewModel @Inject constructor(
         return text.trim().split("\\s+".toRegex()).filter { it.isNotEmpty() }.size
     }
 
+    fun dismissDesignStudioPrompt() {
+        _uiState.value = _uiState.value.copy(showDesignStudioPrompt = false)
+    }
+
+    fun dismissGoalCompleted() {
+        _uiState.value = _uiState.value.copy(goalCompletedMessage = null)
+    }
+
+    fun dismissStreakCelebration() {
+        _uiState.value = _uiState.value.copy(showStreakCelebration = 0)
+    }
+
+    private fun loadGoalProgress() {
+        viewModelScope.launch {
+            val progress = writingGoalService.getWritingGoalProgress()
+            if (progress != null) {
+                _uiState.value = _uiState.value.copy(weeklyGoalProgress = progress)
+            }
+        }
+    }
+
+    private fun checkFreeEntryLimit() {
+        viewModelScope.launch {
+            val (count, limitReached) = withContext(Dispatchers.IO) {
+                val now = LocalDate.now()
+                val zone = ZoneId.systemDefault()
+                val startOfMonth = now.withDayOfMonth(1).atStartOfDay(zone).toInstant().toEpochMilli()
+                val endOfMonth = now.plusMonths(1).withDayOfMonth(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
+
+                val entries = entryRepository.getAllSync().filter { it.createdAt in startOfMonth..endOfMonth }
+                val c = entries.size
+                Pair(c, c >= FREE_TIER_MONTHLY_LIMIT)
+            }
+
+            _uiState.value = _uiState.value.copy(
+                monthlyEntryCount = count,
+                freeEntryLimitReached = limitReached
+            )
+        }
+    }
+
     fun hasFeature(feature: String): Boolean {
         return feature in _uiState.value.features
+    }
+
+    companion object {
+        const val FREE_TIER_MONTHLY_LIMIT = 10
     }
 }

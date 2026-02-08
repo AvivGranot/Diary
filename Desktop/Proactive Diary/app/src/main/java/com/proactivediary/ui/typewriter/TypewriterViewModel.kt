@@ -2,8 +2,10 @@ package com.proactivediary.ui.typewriter
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.db.dao.PreferenceDao
 import com.proactivediary.data.db.entities.PreferenceEntity
+import com.proactivediary.data.repository.StreakRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,16 +34,20 @@ data class TypewriterUiState(
     val attributionAlpha: Float = 0f,
     val ctaAlpha: Float = 0f,
     val ctaTranslateY: Float = 24f,
-    val skipVisible: Boolean = false,
+    val skipVisible: Boolean = true,
     val screenAlpha: Float = 1f,
     val isFirstLaunch: Boolean = true,
     val isNavigating: Boolean = false,
-    val isLoaded: Boolean = false
+    val isLoaded: Boolean = false,
+    val practiceDay: Int = 0,
+    val practiceDayAlpha: Float = 0f
 )
 
 @HiltViewModel
 class TypewriterViewModel @Inject constructor(
-    private val preferenceDao: PreferenceDao
+    private val preferenceDao: PreferenceDao,
+    private val analyticsService: AnalyticsService,
+    private val streakRepository: StreakRepository
 ) : ViewModel() {
 
     companion object {
@@ -52,17 +58,17 @@ class TypewriterViewModel @Inject constructor(
         const val ATTRIBUTION = "Benjamin Franklin"
         const val CTA = "Now write yours."
 
-        private const val CHAR_DELAY_MS = 40L
+        private const val CHAR_DELAY_MS = 20L
         private const val INITIAL_DELAY_MS = 200L
         private const val CURSOR_HOLD_MS = 200L
         private const val CURSOR_FADE_MS = 200L
-        private const val PAUSE_1_MS = 600L
+        private const val PAUSE_1_MS = 200L
         private const val ATTRIBUTION_FADE_MS = 500L
-        private const val PAUSE_2_MS = 800L
-        private const val CTA_SLIDE_MS = 600L
-        private const val SKIP_APPEAR_MS = 1500L
+        private const val PAUSE_2_MS = 300L
+        private const val CTA_SLIDE_MS = 400L
+        private const val SKIP_APPEAR_MS = 0L
         private const val SCREEN_FADE_MS = 400L
-        private const val RETURN_AUTO_ADVANCE_MS = 1000L
+        private const val RETURN_AUTO_ADVANCE_MS = 500L
 
         private const val PREF_KEY = "first_launch_completed"
     }
@@ -72,8 +78,17 @@ class TypewriterViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            loadPracticeDay()
             checkFirstLaunch()
         }
+    }
+
+    private suspend fun loadPracticeDay() {
+        val streak = streakRepository.calculateWritingStreak()
+        // Practice day = streak count + 1 (today is the next day of practice)
+        // For first-time users, show "1." — their first day
+        val day = if (streak > 0) streak else 1
+        _uiState.value = _uiState.value.copy(practiceDay = day)
     }
 
     private suspend fun checkFirstLaunch() {
@@ -183,6 +198,20 @@ class TypewriterViewModel @Inject constructor(
         }
         _uiState.value = _uiState.value.copy(ctaAlpha = 1f, ctaTranslateY = 0f)
 
+        if (_uiState.value.state == TypewriterState.NAVIGATING) return
+
+        // Fade in practice day number
+        val pdSteps = 15
+        val pdStepDuration = 300L / pdSteps
+        for (step in 1..pdSteps) {
+            if (_uiState.value.state == TypewriterState.NAVIGATING) return
+            val t = step.toFloat() / pdSteps
+            val eased = 1f - (1f - t) * (1f - t)
+            _uiState.value = _uiState.value.copy(practiceDayAlpha = eased)
+            delay(pdStepDuration)
+        }
+        _uiState.value = _uiState.value.copy(practiceDayAlpha = 1f)
+
         // READY: user can interact, chevron appears
         _uiState.value = _uiState.value.copy(state = TypewriterState.READY)
     }
@@ -196,7 +225,8 @@ class TypewriterViewModel @Inject constructor(
             attributionAlpha = 1f,
             ctaAlpha = 1f,
             ctaTranslateY = 0f,
-            skipVisible = false
+            skipVisible = false,
+            practiceDayAlpha = 1f
         )
 
         delay(RETURN_AUTO_ADVANCE_MS)
@@ -207,6 +237,7 @@ class TypewriterViewModel @Inject constructor(
 
     fun onSkip() {
         viewModelScope.launch {
+            analyticsService.logTypewriterSkipped()
             _uiState.value = _uiState.value.copy(state = TypewriterState.NAVIGATING)
             navigateAway()
         }
@@ -215,6 +246,7 @@ class TypewriterViewModel @Inject constructor(
     fun onUserInteraction() {
         if (_uiState.value.state == TypewriterState.READY) {
             viewModelScope.launch {
+                analyticsService.logTypewriterCompleted()
                 navigateAway()
             }
         }

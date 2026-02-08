@@ -7,6 +7,7 @@ import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
@@ -20,6 +21,7 @@ class BillingService(private val context: Context) : PurchasesUpdatedListener {
     companion object {
         const val MONTHLY_SKU = "pd_monthly"
         const val ANNUAL_SKU = "pd_annual"
+        const val LIFETIME_SKU = "pd_lifetime"
     }
 
     private lateinit var billingClient: BillingClient
@@ -29,6 +31,7 @@ class BillingService(private val context: Context) : PurchasesUpdatedListener {
 
     private var monthlyDetails: ProductDetails? = null
     private var annualDetails: ProductDetails? = null
+    private var lifetimeDetails: ProductDetails? = null
 
     private var activePurchase: Purchase? = null
     private var activeProductId: String? = null
@@ -36,7 +39,11 @@ class BillingService(private val context: Context) : PurchasesUpdatedListener {
     fun initialize() {
         billingClient = BillingClient.newBuilder(context)
             .setListener(this)
-            .enablePendingPurchases()
+            .enablePendingPurchases(
+                PendingPurchasesParams.newBuilder()
+                    .enableOneTimeProducts()
+                    .build()
+            )
             .build()
 
         billingClient.startConnection(object : BillingClientStateListener {
@@ -54,7 +61,8 @@ class BillingService(private val context: Context) : PurchasesUpdatedListener {
     }
 
     private fun queryProductDetails() {
-        val productList = listOf(
+        // Query subscription products (monthly + annual)
+        val subsList = listOf(
             QueryProductDetailsParams.Product.newBuilder()
                 .setProductId(MONTHLY_SKU)
                 .setProductType(BillingClient.ProductType.SUBS)
@@ -65,11 +73,11 @@ class BillingService(private val context: Context) : PurchasesUpdatedListener {
                 .build()
         )
 
-        val params = QueryProductDetailsParams.newBuilder()
-            .setProductList(productList)
+        val subsParams = QueryProductDetailsParams.newBuilder()
+            .setProductList(subsList)
             .build()
 
-        billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+        billingClient.queryProductDetailsAsync(subsParams) { billingResult, productDetailsList ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                 productDetailsList.forEach { details ->
                     when (details.productId) {
@@ -79,23 +87,65 @@ class BillingService(private val context: Context) : PurchasesUpdatedListener {
                 }
             }
         }
+
+        // Query one-time product (lifetime)
+        val inappList = listOf(
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId(LIFETIME_SKU)
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+        )
+
+        val inappParams = QueryProductDetailsParams.newBuilder()
+            .setProductList(inappList)
+            .build()
+
+        billingClient.queryProductDetailsAsync(inappParams) { billingResult, productDetailsList ->
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                productDetailsList.forEach { details ->
+                    if (details.productId == LIFETIME_SKU) {
+                        lifetimeDetails = details
+                    }
+                }
+            }
+        }
     }
 
     private fun queryExistingPurchases() {
-        val params = QueryPurchasesParams.newBuilder()
+        // Check subscription purchases
+        val subsParams = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.SUBS)
             .build()
 
-        billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
+        billingClient.queryPurchasesAsync(subsParams) { billingResult, purchases ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                 val active = purchases.firstOrNull { purchase ->
                     purchase.purchaseState == Purchase.PurchaseState.PURCHASED
                 }
-                activePurchase = active
-                activeProductId = active?.products?.firstOrNull()
+                if (active != null) {
+                    activePurchase = active
+                    activeProductId = active.products.firstOrNull()
+                    acknowledgePurchaseIfNeeded(active)
+                }
+            }
+        }
 
-                // Acknowledge any unacknowledged purchases to prevent auto-refund
-                active?.let { acknowledgePurchaseIfNeeded(it) }
+        // Check one-time (lifetime) purchases
+        val inappParams = QueryPurchasesParams.newBuilder()
+            .setProductType(BillingClient.ProductType.INAPP)
+            .build()
+
+        billingClient.queryPurchasesAsync(inappParams) { billingResult, purchases ->
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                val lifetime = purchases.firstOrNull { purchase ->
+                    purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
+                        purchase.products.contains(LIFETIME_SKU)
+                }
+                if (lifetime != null) {
+                    activePurchase = lifetime
+                    activeProductId = LIFETIME_SKU
+                    acknowledgePurchaseIfNeeded(lifetime)
+                }
             }
         }
     }
@@ -113,17 +163,20 @@ class BillingService(private val context: Context) : PurchasesUpdatedListener {
         val details = when (sku) {
             MONTHLY_SKU -> monthlyDetails
             ANNUAL_SKU -> annualDetails
+            LIFETIME_SKU -> lifetimeDetails
             else -> null
         } ?: return
 
-        val offerToken = details.subscriptionOfferDetails?.firstOrNull()?.offerToken ?: return
+        val productDetailsParamsBuilder = BillingFlowParams.ProductDetailsParams.newBuilder()
+            .setProductDetails(details)
 
-        val productDetailsParamsList = listOf(
-            BillingFlowParams.ProductDetailsParams.newBuilder()
-                .setProductDetails(details)
-                .setOfferToken(offerToken)
-                .build()
-        )
+        // Subscriptions require an offer token; one-time purchases do not
+        if (sku != LIFETIME_SKU) {
+            val offerToken = details.subscriptionOfferDetails?.firstOrNull()?.offerToken ?: return
+            productDetailsParamsBuilder.setOfferToken(offerToken)
+        }
+
+        val productDetailsParamsList = listOf(productDetailsParamsBuilder.build())
 
         val billingFlowParams = BillingFlowParams.newBuilder()
             .setProductDetailsParamsList(productDetailsParamsList)
@@ -140,21 +193,48 @@ class BillingService(private val context: Context) : PurchasesUpdatedListener {
         return activeProductId == ANNUAL_SKU
     }
 
+    fun isLifetime(): Boolean {
+        return activeProductId == LIFETIME_SKU
+    }
+
     fun restorePurchases(onResult: (Boolean) -> Unit = {}) {
-        val params = QueryPurchasesParams.newBuilder()
+        var foundActive = false
+
+        // Check subscriptions
+        val subsParams = QueryPurchasesParams.newBuilder()
             .setProductType(BillingClient.ProductType.SUBS)
             .build()
 
-        billingClient.queryPurchasesAsync(params) { billingResult, purchases ->
+        billingClient.queryPurchasesAsync(subsParams) { billingResult, purchases ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                 val active = purchases.firstOrNull { purchase ->
                     purchase.purchaseState == Purchase.PurchaseState.PURCHASED
                 }
-                activePurchase = active
-                activeProductId = active?.products?.firstOrNull()
-                onResult(active != null)
-            } else {
-                onResult(false)
+                if (active != null) {
+                    activePurchase = active
+                    activeProductId = active.products.firstOrNull()
+                    foundActive = true
+                }
+            }
+
+            // Check one-time (lifetime) purchases
+            val inappParams = QueryPurchasesParams.newBuilder()
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+
+            billingClient.queryPurchasesAsync(inappParams) { inappResult, inappPurchases ->
+                if (inappResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    val lifetime = inappPurchases.firstOrNull { purchase ->
+                        purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
+                            purchase.products.contains(LIFETIME_SKU)
+                    }
+                    if (lifetime != null) {
+                        activePurchase = lifetime
+                        activeProductId = LIFETIME_SKU
+                        foundActive = true
+                    }
+                }
+                onResult(foundActive)
             }
         }
     }
