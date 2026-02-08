@@ -98,7 +98,9 @@ data class WriteUiState(
     val goalCompletedMessage: String? = null,
     val weeklyGoalProgress: String? = null,
     val showStreakCelebration: Int = 0,
-    val newEntrySaved: Boolean = false
+    val newEntrySaved: Boolean = false,
+    val requestInAppReview: Boolean = false,
+    val showFirstEntryCelebration: Boolean = false
 )
 
 @OptIn(FlowPreview::class)
@@ -127,6 +129,7 @@ class WriteViewModel @Inject constructor(
         loadOrCreateEntry(entryIdArg)
         setupAutoSave()
         loadGoalProgress()
+        analyticsService.logWriteScreenViewed()
     }
 
     private fun loadThemePreferences() {
@@ -248,8 +251,21 @@ class WriteViewModel @Inject constructor(
         }
     }
 
+    private var firstEntryStartLogged = false
+
     fun onContentChanged(newContent: String) {
-        _uiState.value = _uiState.value.copy(
+        val state = _uiState.value
+        // Log when a first-time user starts writing (content goes from empty to non-empty)
+        if (!firstEntryStartLogged && state.isNewEntry && state.content.isEmpty() && newContent.isNotEmpty()) {
+            viewModelScope.launch {
+                val logged = preferenceDao.get("first_entry_logged")?.value
+                if (logged == null) {
+                    analyticsService.logFirstEntryStarted(computeWordCount(newContent))
+                }
+            }
+            firstEntryStartLogged = true
+        }
+        _uiState.value = state.copy(
             content = newContent,
             wordCount = computeWordCount(newContent)
         )
@@ -342,6 +358,8 @@ class WriteViewModel @Inject constructor(
                             timeSinceInstallMs = timeSinceInstall
                         )
                         preferenceDao.insert(PreferenceEntity("first_entry_logged", "true"))
+                        // Show "Day 1" celebration for the very first entry
+                        _uiState.value = _uiState.value.copy(showFirstEntryCelebration = true)
                     }
 
                     _uiState.value = _uiState.value.copy(isNewEntry = false, isSaving = false, newEntrySaved = true)
@@ -415,7 +433,25 @@ class WriteViewModel @Inject constructor(
     }
 
     fun dismissStreakCelebration() {
-        _uiState.value = _uiState.value.copy(showStreakCelebration = 0)
+        _uiState.value = _uiState.value.copy(
+            showStreakCelebration = 0,
+            requestInAppReview = true
+        )
+    }
+
+    fun clearInAppReviewRequest() {
+        _uiState.value = _uiState.value.copy(requestInAppReview = false)
+    }
+
+    fun requestInAppReview(activity: android.app.Activity) {
+        viewModelScope.launch {
+            inAppReviewService.maybeRequestReview(activity)
+            clearInAppReviewRequest()
+        }
+    }
+
+    fun dismissFirstEntryCelebration() {
+        _uiState.value = _uiState.value.copy(showFirstEntryCelebration = false)
     }
 
     private fun loadGoalProgress() {

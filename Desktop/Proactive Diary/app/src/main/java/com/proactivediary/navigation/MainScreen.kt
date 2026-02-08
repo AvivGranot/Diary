@@ -82,6 +82,7 @@ fun MainScreen(
     val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val subscriptionState by billingViewModel.subscriptionState.collectAsState()
+    val isFirstPaywallView by billingViewModel.isFirstPaywallView.collectAsState()
     val currentStreak by mainScreenViewModel.currentStreak.collectAsState()
     val streakEnabled by mainScreenViewModel.streakEnabled.collectAsState()
     var showPaywall by remember { mutableStateOf(false) }
@@ -285,10 +286,15 @@ fun MainScreen(
     // Paywall dialog — no auth gate, take payment first
     if (showPaywall) {
         PaywallDialog(
-            onDismiss = { showPaywall = false },
+            onDismiss = {
+                billingViewModel.markPaywallViewed()
+                showPaywall = false
+            },
             entryCount = subscriptionState.entryCount,
             totalWords = subscriptionState.totalWords,
+            isFirstPaywallView = isFirstPaywallView,
             onSelectPlan = { sku ->
+                billingViewModel.markPaywallViewed()
                 activity?.let { billingViewModel.launchPurchase(it, sku) }
                 showPaywall = false
             },

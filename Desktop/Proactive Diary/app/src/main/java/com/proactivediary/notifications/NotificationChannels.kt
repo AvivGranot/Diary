@@ -7,6 +7,7 @@ import android.content.Context
 object NotificationChannels {
     const val CHANNEL_WRITING = "writing_reminders"
     const val CHANNEL_GOALS = "goal_reminders"
+    const val CHANNEL_LAPSED = "lapsed_user"
 
     fun createChannels(context: Context) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -27,7 +28,16 @@ object NotificationChannels {
             description = "Reminders for your goal check-ins"
         }
 
+        val lapsedChannel = NotificationChannel(
+            CHANNEL_LAPSED,
+            "Gentle Reminders",
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = "A quiet nudge if you haven't written in a while"
+        }
+
         notificationManager.createNotificationChannel(writingChannel)
         notificationManager.createNotificationChannel(goalsChannel)
+        notificationManager.createNotificationChannel(lapsedChannel)
     }
 }

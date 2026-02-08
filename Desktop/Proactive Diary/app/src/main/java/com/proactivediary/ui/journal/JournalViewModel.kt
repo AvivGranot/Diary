@@ -29,6 +29,13 @@ import java.time.temporal.TemporalAdjusters
 import java.util.Locale
 import javax.inject.Inject
 
+data class OnThisDayEntry(
+    val entryId: String,
+    val firstLine: String,
+    val label: String, // e.g. "One month ago, you wrote:"
+    val daysAgo: Long
+)
+
 data class JournalUiState(
     val entries: List<DiaryCardData> = emptyList(),
     val groupedEntries: Map<String, List<DiaryCardData>> = emptyMap(),
@@ -40,7 +47,8 @@ data class JournalUiState(
     val insights: JournalInsights = JournalInsights(),
     val writingDays: Set<LocalDate> = emptySet(),
     val moodTrend: List<MoodDataPoint> = emptyList(),
-    val weeklyDigest: WeeklyDigest = WeeklyDigest()
+    val weeklyDigest: WeeklyDigest = WeeklyDigest(),
+    val onThisDay: OnThisDayEntry? = null
 )
 
 @HiltViewModel
@@ -61,6 +69,7 @@ class JournalViewModel @Inject constructor(
         loadAllEntries()
         loadInsights()
         loadWeeklyDigest()
+        loadOnThisDay()
     }
 
     private fun loadAllEntries() {
@@ -320,6 +329,43 @@ class JournalViewModel @Inject constructor(
 
             if (digest != null) {
                 _uiState.value = _uiState.value.copy(weeklyDigest = digest)
+            }
+        }
+    }
+
+    private fun loadOnThisDay() {
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                val today = LocalDate.now()
+                val daysAgoList = listOf(30L, 90L, 180L, 365L)
+                val labels = mapOf(
+                    30L to "One month ago, you wrote:",
+                    90L to "Three months ago, you wrote:",
+                    180L to "Six months ago, you wrote:",
+                    365L to "One year ago, you wrote:"
+                )
+
+                for (daysAgo in daysAgoList) {
+                    val pastDate = today.minusDays(daysAgo)
+                    val entry = entryRepository.getEntryForDate(pastDate)
+                    if (entry != null) {
+                        val firstLine = entry.content.lines()
+                            .firstOrNull { it.isNotBlank() }
+                            ?.take(120)
+                            ?: continue
+                        return@withContext OnThisDayEntry(
+                            entryId = entry.id,
+                            firstLine = firstLine,
+                            label = labels[daysAgo] ?: "You wrote:",
+                            daysAgo = daysAgo
+                        )
+                    }
+                }
+                null
+            }
+
+            if (result != null) {
+                _uiState.value = _uiState.value.copy(onThisDay = result)
             }
         }
     }

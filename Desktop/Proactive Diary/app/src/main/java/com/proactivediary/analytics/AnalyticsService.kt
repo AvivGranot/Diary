@@ -31,6 +31,17 @@ class AnalyticsService @Inject constructor() {
 
     fun logOnboardingGoalsSkipped() = log("onboarding_goals_skipped")
 
+    // ─── Activation funnel ───
+    fun logWriteScreenViewed() = log("write_screen_viewed")
+
+    fun logFirstEntryStarted(wordCount: Int) {
+        log("first_entry_started", bundleOf("word_count" to wordCount))
+    }
+
+    fun logShareCompleted(shareType: String) {
+        log("share_completed", bundleOf("share_type" to shareType))
+    }
+
     // ─── Writing ───
     fun logFirstEntryWritten(wordCount: Int, mood: String?, timeSinceInstallMs: Long) {
         log("first_entry_written", bundleOf(

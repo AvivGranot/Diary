@@ -40,7 +40,8 @@ fun PaywallDialog(
     onNeedsAuth: ((String) -> Unit)? = null,
     isAuthenticated: Boolean = true,
     entryCount: Int = 0,
-    totalWords: Int = 0
+    totalWords: Int = 0,
+    isFirstPaywallView: Boolean = true
 ) {
     // Remove auth gate: always go directly to purchase
     val handlePlanSelect: (String) -> Unit = { sku -> onSelectPlan(sku) }
@@ -63,8 +64,8 @@ fun PaywallDialog(
             ) {
                 // Header — personalized based on engagement
                 Text(
-                    text = if (entryCount >= 7) {
-                        "You\u2019ve written every day this week.\nKeep your practice alive."
+                    text = if (entryCount >= 10) {
+                        "You\u2019ve built a writing practice.\nKeep it alive."
                     } else if (entryCount > 0) {
                         "You\u2019ve written $entryCount entries.\n$totalWords words so far."
                     } else {
@@ -109,6 +110,41 @@ fun PaywallDialog(
                 }
 
                 Spacer(Modifier.height(24.dp))
+
+                // Free trial CTA for first-time paywall viewers
+                if (isFirstPaywallView) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = { handlePlanSelect(BillingService.ANNUAL_SKU) }),
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.onSurface
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Start 7-day free trial",
+                                style = TextStyle(
+                                    fontFamily = CormorantGaramond,
+                                    fontSize = 18.sp,
+                                    color = MaterialTheme.colorScheme.surface
+                                )
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = "Try everything. Then decide.",
+                                style = TextStyle(
+                                    fontSize = 12.sp,
+                                    fontStyle = FontStyle.Italic,
+                                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
+                                )
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(16.dp))
+                }
 
                 // Monthly plan card
                 PlanCard(

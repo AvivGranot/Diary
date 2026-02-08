@@ -63,4 +63,10 @@ interface EntryDao {
 
     @Query("SELECT COALESCE(SUM(word_count), 0) FROM entries")
     fun getTotalWordCountSync(): Int
+
+    @Query("SELECT * FROM entries WHERE created_at BETWEEN :startOfDay AND :endOfDay ORDER BY created_at DESC LIMIT 1")
+    suspend fun getEntryForDay(startOfDay: Long, endOfDay: Long): EntryEntity?
+
+    @Query("SELECT created_at FROM entries ORDER BY created_at DESC LIMIT 1")
+    suspend fun getLastEntryTimestamp(): Long?
 }

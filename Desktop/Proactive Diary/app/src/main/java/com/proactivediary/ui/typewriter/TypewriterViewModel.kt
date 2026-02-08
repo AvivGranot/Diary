@@ -5,13 +5,19 @@ import androidx.lifecycle.viewModelScope
 import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.db.dao.PreferenceDao
 import com.proactivediary.data.db.entities.PreferenceEntity
+import com.proactivediary.data.repository.EntryRepository
 import com.proactivediary.data.repository.StreakRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
 
 enum class TypewriterState {
@@ -25,6 +31,11 @@ enum class TypewriterState {
     READY,
     NAVIGATING
 }
+
+data class WelcomeBackData(
+    val entryCount: Int = 0,
+    val totalWords: Int = 0
+)
 
 data class TypewriterUiState(
     val state: TypewriterState = TypewriterState.IDLE,
@@ -40,14 +51,18 @@ data class TypewriterUiState(
     val isNavigating: Boolean = false,
     val isLoaded: Boolean = false,
     val practiceDay: Int = 0,
-    val practiceDayAlpha: Float = 0f
+    val practiceDayAlpha: Float = 0f,
+    val showWelcomeBack: Boolean = false,
+    val welcomeBackData: WelcomeBackData = WelcomeBackData(),
+    val welcomeBackAlpha: Float = 0f
 )
 
 @HiltViewModel
 class TypewriterViewModel @Inject constructor(
     private val preferenceDao: PreferenceDao,
     private val analyticsService: AnalyticsService,
-    private val streakRepository: StreakRepository
+    private val streakRepository: StreakRepository,
+    private val entryRepository: EntryRepository
 ) : ViewModel() {
 
     companion object {
@@ -71,6 +86,7 @@ class TypewriterViewModel @Inject constructor(
         private const val RETURN_AUTO_ADVANCE_MS = 500L
 
         private const val PREF_KEY = "first_launch_completed"
+        private const val LAPSED_THRESHOLD_DAYS = 7L
     }
 
     private val _uiState = MutableStateFlow(TypewriterUiState())
@@ -217,22 +233,67 @@ class TypewriterViewModel @Inject constructor(
     }
 
     private suspend fun startReturnSequence() {
+        // Check if user is lapsed (7+ days since last entry)
+        val isLapsed = withContext(Dispatchers.IO) {
+            val lastEntryMs = entryRepository.getLastEntryTimestamp()
+            if (lastEntryMs != null) {
+                val lastEntryDate = Instant.ofEpochMilli(lastEntryMs)
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalDate()
+                val daysSince = LocalDate.now().toEpochDay() - lastEntryDate.toEpochDay()
+                daysSince >= LAPSED_THRESHOLD_DAYS
+            } else {
+                false
+            }
+        }
+
+        if (isLapsed) {
+            startWelcomeBackSequence()
+        } else {
+            _uiState.value = _uiState.value.copy(
+                state = TypewriterState.READY,
+                visibleCharCount = QUOTE.length,
+                cursorVisible = false,
+                cursorAlpha = 0f,
+                attributionAlpha = 1f,
+                ctaAlpha = 1f,
+                ctaTranslateY = 0f,
+                skipVisible = false,
+                practiceDayAlpha = 1f
+            )
+
+            delay(RETURN_AUTO_ADVANCE_MS)
+            if (!_uiState.value.isNavigating) {
+                navigateAway()
+            }
+        }
+    }
+
+    private suspend fun startWelcomeBackSequence() {
+        val data = withContext(Dispatchers.IO) {
+            val entryCount = entryRepository.getTotalEntryCountSync()
+            val totalWords = entryRepository.getTotalWordCountSync()
+            WelcomeBackData(entryCount = entryCount, totalWords = totalWords)
+        }
+
         _uiState.value = _uiState.value.copy(
             state = TypewriterState.READY,
-            visibleCharCount = QUOTE.length,
-            cursorVisible = false,
-            cursorAlpha = 0f,
-            attributionAlpha = 1f,
-            ctaAlpha = 1f,
-            ctaTranslateY = 0f,
-            skipVisible = false,
-            practiceDayAlpha = 1f
+            showWelcomeBack = true,
+            welcomeBackData = data,
+            skipVisible = false
         )
 
-        delay(RETURN_AUTO_ADVANCE_MS)
-        if (!_uiState.value.isNavigating) {
-            navigateAway()
+        // Fade in welcome back
+        val steps = 20
+        val stepDuration = 400L / steps
+        for (step in 1..steps) {
+            if (_uiState.value.isNavigating) return
+            val t = step.toFloat() / steps
+            _uiState.value = _uiState.value.copy(welcomeBackAlpha = t)
+            delay(stepDuration)
         }
+        _uiState.value = _uiState.value.copy(welcomeBackAlpha = 1f)
+        // Wait for user interaction — don't auto-advance
     }
 
     fun onSkip() {

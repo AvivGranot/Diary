@@ -38,6 +38,7 @@ fun StreakCelebration(
     val milestone = when {
         streakCount == 7 -> "One week"
         streakCount == 14 -> "Two weeks"
+        streakCount == 21 -> "Three weeks"
         streakCount == 30 -> "One month"
         streakCount == 50 -> "Fifty days"
         streakCount == 100 -> "One hundred days"
@@ -48,6 +49,7 @@ fun StreakCelebration(
     val message = when {
         streakCount == 7 -> "A week of writing.\nYour practice is taking root."
         streakCount == 14 -> "Two weeks in.\nYou\u2019re building something."
+        streakCount == 21 -> "Three weeks.\nThe practice is becoming part of you."
         streakCount == 30 -> "A month of writing.\nThis is who you are now."
         streakCount == 50 -> "Fifty days.\nMost people never get here."
         streakCount == 100 -> "One hundred days of practice.\nYour words are a treasure."
@@ -149,5 +151,76 @@ fun StreakCelebration(
 }
 
 fun isMilestone(streak: Int): Boolean {
-    return streak in listOf(7, 14, 30, 50, 100, 365)
+    return streak in listOf(7, 14, 21, 30, 50, 100, 365)
+}
+
+@Composable
+fun FirstEntryCelebration(
+    onDismiss: () -> Unit
+) {
+    var alpha by remember { mutableFloatStateOf(0f) }
+
+    LaunchedEffect(Unit) {
+        // Fade in
+        val steps = 20
+        for (i in 1..steps) {
+            alpha = i.toFloat() / steps
+            delay(20)
+        }
+        // Hold for 3 seconds
+        delay(3000)
+        // Fade out
+        for (i in steps downTo 0) {
+            alpha = i.toFloat() / steps
+            delay(20)
+        }
+        onDismiss()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .alpha(alpha)
+            .background(Color(0xFFF3EEE7))
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) { onDismiss() },
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(48.dp)
+        ) {
+            Text(
+                text = "1.",
+                style = TextStyle(
+                    fontFamily = CormorantGaramond,
+                    fontSize = 56.sp,
+                    color = Color(0xFF313131)
+                )
+            )
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = "Day one",
+                style = TextStyle(
+                    fontFamily = CormorantGaramond,
+                    fontSize = 32.sp,
+                    color = Color(0xFF313131)
+                ),
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = "Your writing practice has begun.",
+                style = TextStyle(
+                    fontFamily = CormorantGaramond,
+                    fontSize = 18.sp,
+                    fontStyle = FontStyle.Italic,
+                    color = Color(0xFF585858)
+                ),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
 }

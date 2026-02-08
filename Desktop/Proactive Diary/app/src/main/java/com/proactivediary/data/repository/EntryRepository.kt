@@ -20,4 +20,6 @@ interface EntryRepository {
     suspend fun getTotalEntryCount(): Int
     fun getTotalEntryCountSync(): Int
     fun getTotalWordCountSync(): Int
+    suspend fun getEntryForDate(date: java.time.LocalDate): EntryEntity?
+    suspend fun getLastEntryTimestamp(): Long?
 }

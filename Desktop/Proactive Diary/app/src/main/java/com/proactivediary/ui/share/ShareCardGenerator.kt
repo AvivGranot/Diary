@@ -228,7 +228,7 @@ fun StreakCardPreview(
     }
 }
 
-fun shareCardAsImage(context: Context, bitmap: Bitmap) {
+fun shareCardAsImage(context: Context, bitmap: Bitmap, shareType: String = "entry") {
     val cachePath = File(context.cacheDir, "share_cards")
     cachePath.mkdirs()
     val file = File(cachePath, "diary_card.png")
@@ -245,6 +245,7 @@ fun shareCardAsImage(context: Context, bitmap: Bitmap) {
     val shareIntent = Intent().apply {
         action = Intent.ACTION_SEND
         putExtra(Intent.EXTRA_STREAM, uri)
+        putExtra(Intent.EXTRA_TEXT, "Written in Proactive Diary \u2014 https://play.google.com/store/apps/details?id=com.proactivediary")
         type = "image/png"
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }

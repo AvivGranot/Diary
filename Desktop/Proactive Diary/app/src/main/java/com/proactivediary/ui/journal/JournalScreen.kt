@@ -38,8 +38,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.theme.CormorantGaramond
 
@@ -94,6 +98,16 @@ fun JournalScreen(
                     contentPadding = PaddingValues(horizontal = 0.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    // "On This Day" nostalgia card
+                    if (state.onThisDay != null) {
+                        item(key = "on_this_day") {
+                            OnThisDayCard(
+                                entry = state.onThisDay!!,
+                                onClick = { onEntryClick(state.onThisDay!!.entryId) }
+                            )
+                        }
+                    }
+
                     // Insights, heatmap, and mood trend at the top
                     item(key = "insights") {
                         InsightsCard(insights = state.insights)
@@ -230,6 +244,48 @@ fun JournalScreen(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun OnThisDayCard(
+    entry: OnThisDayEntry,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = entry.label,
+                style = TextStyle(
+                    fontFamily = CormorantGaramond,
+                    fontSize = 14.sp,
+                    fontStyle = FontStyle.Italic,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "\u201C${entry.firstLine}\u201D",
+                style = TextStyle(
+                    fontFamily = CormorantGaramond,
+                    fontSize = 18.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 

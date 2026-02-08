@@ -45,9 +45,12 @@ class BillingViewModel @Inject constructor(
     private val _purchaseResult = MutableStateFlow<PurchaseResult>(PurchaseResult.Idle)
     val purchaseResult: StateFlow<PurchaseResult> = _purchaseResult
 
+    private val _isFirstPaywallView = MutableStateFlow(true)
+    val isFirstPaywallView: StateFlow<Boolean> = _isFirstPaywallView
+
     companion object {
         /** Show paywall after this many entries (engagement-gated, not time-gated) */
-        const val ENTRY_GATE_THRESHOLD = 7
+        const val ENTRY_GATE_THRESHOLD = 10
 
         // Preference keys for offline cache
         private const val KEY_CACHED_PLAN = "billing_cached_plan"
@@ -58,6 +61,11 @@ class BillingViewModel @Inject constructor(
         // Load cached state first (instant, works offline)
         viewModelScope.launch {
             loadCachedState()
+            // Check if user has seen the paywall before
+            val seen = withContext(Dispatchers.IO) {
+                preferenceDao.getSync("paywall_viewed")?.value == "true"
+            }
+            _isFirstPaywallView.value = !seen
         }
 
         // Set callback so BillingService notifies us after querying purchases
@@ -161,6 +169,15 @@ class BillingViewModel @Inject constructor(
             entryCount = entryCount,
             totalWords = totalWords
         )
+    }
+
+    fun markPaywallViewed() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                preferenceDao.insertSync(PreferenceEntity("paywall_viewed", "true"))
+            }
+            _isFirstPaywallView.value = false
+        }
     }
 
     fun canWrite(): Boolean = _subscriptionState.value.isActive

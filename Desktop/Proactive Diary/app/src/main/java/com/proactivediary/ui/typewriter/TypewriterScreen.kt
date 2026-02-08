@@ -138,97 +138,170 @@ fun TypewriterScreen(
                 }
             }
     ) {
-        // Skip button — top right, 300ms fade-in ease-out
-        AnimatedVisibility(
-            visible = uiState.skipVisible && !uiState.isNavigating,
-            enter = fadeIn(animationSpec = tween(300, easing = LinearOutSlowInEasing)),
-            exit = fadeOut(animationSpec = tween(0)),
-            modifier = Modifier.align(Alignment.TopEnd)
-        ) {
-            Text(
-                text = "Skip",
-                style = TextStyle(
-                    fontFamily = FontFamily.Default,
-                    fontSize = 12.sp,
-                    color = pencilColor
-                ),
-                modifier = Modifier
-                    .padding(16.dp)
-                    .size(48.dp)
-                    .clickable(
-                        indication = null,
-                        interactionSource = remember { MutableInteractionSource() }
-                    ) {
-                        viewModel.onSkip()
-                    }
-                    .padding(top = 14.dp)
+        if (uiState.showWelcomeBack) {
+            // Welcome back screen for lapsed users (7+ days inactive)
+            WelcomeBackContent(
+                data = uiState.welcomeBackData,
+                alpha = uiState.welcomeBackAlpha,
+                chevronAlpha = chevronAlpha,
+                inkColor = inkColor,
+                pencilColor = pencilColor
             )
-        }
-
-        // Main content — top-aligned, centered horizontally
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 32.dp)
-                .padding(top = 80.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // Typewriter quote canvas
-            TypewriterCanvas(
-                quote = TypewriterViewModel.QUOTE,
-                visibleCharCount = uiState.visibleCharCount,
-                cursorVisible = uiState.cursorVisible,
-                cursorAlpha = uiState.cursorAlpha,
-                cursorBlinkOn = cursorBlinkOn
-            )
-
-            // Attribution: "Benjamin Franklin"
-            if (uiState.attributionAlpha > 0f) {
-                Spacer(modifier = Modifier.height(16.dp))
+        } else {
+            // Skip button — top right, 300ms fade-in ease-out
+            AnimatedVisibility(
+                visible = uiState.skipVisible && !uiState.isNavigating,
+                enter = fadeIn(animationSpec = tween(300, easing = LinearOutSlowInEasing)),
+                exit = fadeOut(animationSpec = tween(0)),
+                modifier = Modifier.align(Alignment.TopEnd)
+            ) {
                 Text(
-                    text = TypewriterViewModel.ATTRIBUTION,
+                    text = "Skip",
                     style = TextStyle(
                         fontFamily = FontFamily.Default,
                         fontSize = 12.sp,
-                        letterSpacing = 0.7.sp,
                         color = pencilColor
                     ),
-                    modifier = Modifier.alpha(uiState.attributionAlpha)
-                )
-            }
-
-            // CTA: "Now write yours."
-            if (uiState.ctaAlpha > 0f) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = TypewriterViewModel.CTA,
-                    style = TextStyle(
-                        fontFamily = CormorantGaramond,
-                        fontSize = 24.sp,
-                        fontStyle = FontStyle.Normal,
-                        color = inkColor
-                    ),
                     modifier = Modifier
-                        .alpha(uiState.ctaAlpha)
-                        .graphicsLayer {
-                            translationY = uiState.ctaTranslateY * density
+                        .padding(16.dp)
+                        .size(48.dp)
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) {
+                            viewModel.onSkip()
                         }
+                        .padding(top = 14.dp)
                 )
             }
 
-            // Downward chevron — pulsing, appears with READY state
-            if (uiState.ctaAlpha > 0f && uiState.state == TypewriterState.READY) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Icon(
-                    imageVector = Icons.Filled.KeyboardArrowDown,
-                    contentDescription = "Continue",
-                    tint = inkColor,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .alpha(chevronAlpha)
+            // Main content — top-aligned, centered horizontally
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 32.dp)
+                    .padding(top = 80.dp),
+                verticalArrangement = Arrangement.Top,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Typewriter quote canvas
+                TypewriterCanvas(
+                    quote = TypewriterViewModel.QUOTE,
+                    visibleCharCount = uiState.visibleCharCount,
+                    cursorVisible = uiState.cursorVisible,
+                    cursorAlpha = uiState.cursorAlpha,
+                    cursorBlinkOn = cursorBlinkOn
                 )
+
+                // Attribution: "Benjamin Franklin"
+                if (uiState.attributionAlpha > 0f) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = TypewriterViewModel.ATTRIBUTION,
+                        style = TextStyle(
+                            fontFamily = FontFamily.Default,
+                            fontSize = 12.sp,
+                            letterSpacing = 0.7.sp,
+                            color = pencilColor
+                        ),
+                        modifier = Modifier.alpha(uiState.attributionAlpha)
+                    )
+                }
+
+                // CTA: "Now write yours."
+                if (uiState.ctaAlpha > 0f) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = TypewriterViewModel.CTA,
+                        style = TextStyle(
+                            fontFamily = CormorantGaramond,
+                            fontSize = 24.sp,
+                            fontStyle = FontStyle.Normal,
+                            color = inkColor
+                        ),
+                        modifier = Modifier
+                            .alpha(uiState.ctaAlpha)
+                            .graphicsLayer {
+                                translationY = uiState.ctaTranslateY * density
+                            }
+                    )
+                }
+
+                // Downward chevron — pulsing, appears with READY state
+                if (uiState.ctaAlpha > 0f && uiState.state == TypewriterState.READY) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowDown,
+                        contentDescription = "Continue",
+                        tint = inkColor,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .alpha(chevronAlpha)
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun WelcomeBackContent(
+    data: WelcomeBackData,
+    alpha: Float,
+    chevronAlpha: Float,
+    inkColor: Color,
+    pencilColor: Color
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 32.dp)
+            .alpha(alpha),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "You\u2019ve been away.",
+            style = TextStyle(
+                fontFamily = CormorantGaramond,
+                fontSize = 28.sp,
+                color = inkColor
+            )
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        if (data.entryCount > 0) {
+            Text(
+                text = "You have ${data.entryCount} ${if (data.entryCount == 1) "entry" else "entries"} and ${data.totalWords} words.",
+                style = TextStyle(
+                    fontFamily = FontFamily.Default,
+                    fontSize = 14.sp,
+                    color = pencilColor
+                )
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        Text(
+            text = "Day 1 of a new practice.",
+            style = TextStyle(
+                fontFamily = CormorantGaramond,
+                fontSize = 22.sp,
+                fontStyle = FontStyle.Italic,
+                color = inkColor
+            )
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Icon(
+            imageVector = Icons.Filled.KeyboardArrowDown,
+            contentDescription = "Continue",
+            tint = inkColor,
+            modifier = Modifier
+                .size(24.dp)
+                .alpha(chevronAlpha)
+        )
     }
 }

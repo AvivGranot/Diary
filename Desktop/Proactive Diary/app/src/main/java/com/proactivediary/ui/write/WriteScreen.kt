@@ -58,12 +58,20 @@ fun WriteScreen(
     onEntrySaved: (() -> Unit)? = null
 ) {
     val state by viewModel.uiState.collectAsState()
+    val activity = LocalContext.current as? android.app.Activity
 
     // Notify parent when a new entry is saved (for billing refresh)
     LaunchedEffect(state.newEntrySaved) {
         if (state.newEntrySaved) {
             onEntrySaved?.invoke()
             viewModel.clearNewEntrySaved()
+        }
+    }
+
+    // Trigger in-app review after streak celebration dismiss
+    LaunchedEffect(state.requestInAppReview) {
+        if (state.requestInAppReview && activity != null) {
+            viewModel.requestInAppReview(activity)
         }
     }
 
@@ -301,11 +309,19 @@ fun WriteScreen(
         )
     }
 
+    // First entry "Day 1" celebration
+    if (state.showFirstEntryCelebration) {
+        FirstEntryCelebration(
+            onDismiss = { viewModel.dismissFirstEntryCelebration() }
+        )
+    }
+
     // Practice share card dialog
     if (streakShareCount > 0) {
         val milestone = when (streakShareCount) {
             7 -> "One week of practice"
             14 -> "Two weeks of practice"
+            21 -> "Three weeks of practice"
             30 -> "One month of practice"
             50 -> "Fifty days of practice"
             100 -> "One hundred days of practice"
