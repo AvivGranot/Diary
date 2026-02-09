@@ -1,16 +1,9 @@
 package com.proactivediary.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
-import com.proactivediary.data.db.dao.PreferenceDao
 
 private val LightColorScheme = lightColorScheme(
     background = DiaryColors.Paper,
@@ -28,46 +21,14 @@ private val LightColorScheme = lightColorScheme(
     surfaceContainerHighest = DiaryColors.Parchment,
 )
 
-private val DarkColorScheme = darkColorScheme(
-    background = DiaryColors.PaperDark,
-    onBackground = DiaryColors.InkDark,
-    surface = DiaryColors.ParchmentDark,
-    onSurface = DiaryColors.InkDark,
-    surfaceVariant = DiaryColors.ParchmentDark,
-    onSurfaceVariant = DiaryColors.PencilDark,
-    secondary = DiaryColors.PencilDark,
-    onSecondary = DiaryColors.PaperDark,
-    primary = DiaryColors.InkDark,
-    onPrimary = DiaryColors.ParchmentDark,
-    outline = DiaryColors.DividerDark,
-    outlineVariant = DiaryColors.DividerDark,
-    surfaceContainerHighest = DiaryColors.ParchmentDark,
-)
-
-val LocalDarkMode = compositionLocalOf { false }
-
 @Composable
 fun ProactiveDiaryTheme(
-    preferenceDao: PreferenceDao? = null,
-    darkMode: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val isDark = if (preferenceDao != null) {
-        val darkModePref by preferenceDao.observe("dark_mode")
-            .collectAsState(initial = null)
-        darkModePref?.value == "true"
-    } else {
-        darkMode
-    }
-
-    val colorScheme = if (isDark) DarkColorScheme else LightColorScheme
-
-    CompositionLocalProvider(LocalDarkMode provides isDark) {
-        MaterialTheme(
-            colorScheme = colorScheme,
-            typography = DiaryTypography,
-            shapes = DiaryShapes,
-            content = content
-        )
-    }
+    MaterialTheme(
+        colorScheme = LightColorScheme,
+        typography = DiaryTypography,
+        shapes = DiaryShapes,
+        content = content
+    )
 }

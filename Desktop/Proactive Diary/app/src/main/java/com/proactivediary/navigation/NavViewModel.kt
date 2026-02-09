@@ -45,11 +45,10 @@ class NavViewModel @Inject constructor(
                 }
             }
 
-            _startDestination.value = if (typewriterCompleted) {
-                Routes.Main.route
-            } else {
-                Routes.Typewriter.route
-            }
+            // Always start at Typewriter — the Franklin quote is the first screen
+            // in every user journey. First launch gets the full animation;
+            // returning users see it instantly then auto-advance.
+            _startDestination.value = Routes.Typewriter.route
         }
     }
 }

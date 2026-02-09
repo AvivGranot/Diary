@@ -41,11 +41,6 @@ class SettingsViewModel @Inject constructor(
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
-    // Dark mode
-    val isDarkMode = preferenceDao.observe("dark_mode")
-        .map { it?.value == "true" }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
-
     // Font size
     val fontSize = preferenceDao.observe("font_size")
         .map { it?.value ?: "medium" }
@@ -88,12 +83,6 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val pref = preferenceDao.get("streak_enabled")
             _isStreakEnabled.value = pref?.value != "false"
-        }
-    }
-
-    fun toggleDarkMode(enabled: Boolean) {
-        viewModelScope.launch {
-            preferenceDao.insert(PreferenceEntity("dark_mode", if (enabled) "true" else "false"))
         }
     }
 
