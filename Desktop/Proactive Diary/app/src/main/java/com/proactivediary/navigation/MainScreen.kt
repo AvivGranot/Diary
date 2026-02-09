@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.material3.HorizontalDivider
@@ -67,7 +67,7 @@ private const val WRITE_TAB = "write_tab"
 
 val bottomNavItems = listOf(
     BottomNavItem(WRITE_TAB, "Write", Icons.Outlined.Edit, iconSize = 24),
-    BottomNavItem(Routes.Journal.route, "Journal", Icons.Outlined.MenuBook),
+    BottomNavItem(Routes.Journal.route, "Journal", Icons.AutoMirrored.Outlined.MenuBook),
     BottomNavItem(Routes.Settings.route, "Settings", Icons.Outlined.Settings),
 )
 
@@ -293,6 +293,8 @@ fun MainScreen(
             entryCount = subscriptionState.entryCount,
             totalWords = subscriptionState.totalWords,
             isFirstPaywallView = isFirstPaywallView,
+            monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$2/month",
+            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$20/year",
             onSelectPlan = { sku ->
                 billingViewModel.markPaywallViewed()
                 activity?.let { billingViewModel.launchPurchase(it, sku) }

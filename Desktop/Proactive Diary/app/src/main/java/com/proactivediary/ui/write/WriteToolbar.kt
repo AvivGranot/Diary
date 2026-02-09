@@ -1,8 +1,6 @@
 package com.proactivediary.ui.write
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,16 +35,12 @@ import com.proactivediary.domain.model.Mood
 fun WriteToolbar(
     selectedMood: Mood?,
     onMoodSelected: (Mood?) -> Unit,
-    tags: List<String>,
-    onTagsUpdated: (List<String>) -> Unit,
     wordCount: Int,
     showWordCount: Boolean,
     colorKey: String,
     modifier: Modifier = Modifier
 ) {
     val bgColor = DiaryThemeConfig.colorForKey(colorKey)
-    val secondaryTextColor = DiaryThemeConfig.secondaryTextColorFor(colorKey)
-    var showTagDialog by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier
@@ -77,25 +71,6 @@ fun WriteToolbar(
                 onMoodSelected = onMoodSelected
             )
 
-            // Center: Tag button
-            Text(
-                text = if (tags.isEmpty()) "#" else "# ${tags.size}",
-                style = TextStyle(
-                    fontFamily = FontFamily.Default,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = secondaryTextColor
-                ),
-                modifier = Modifier
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        showTagDialog = true
-                    }
-                    .padding(horizontal = 12.dp, vertical = 4.dp)
-            )
-
             // Right: Word count
             if (showWordCount) {
                 Text(
@@ -111,22 +86,10 @@ fun WriteToolbar(
             }
         }
     }
-
-    // Tag dialog
-    if (showTagDialog) {
-        TagInputDialog(
-            currentTags = tags,
-            onDismiss = { showTagDialog = false },
-            onConfirm = { newTags ->
-                onTagsUpdated(newTags)
-                showTagDialog = false
-            }
-        )
-    }
 }
 
 @Composable
-private fun TagInputDialog(
+internal fun TagInputDialog(
     currentTags: List<String>,
     onDismiss: () -> Unit,
     onConfirm: (List<String>) -> Unit

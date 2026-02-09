@@ -17,7 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -47,6 +47,8 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.Intent
+import android.net.Uri
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.auth.AuthViewModel
 import com.proactivediary.ui.auth.AuthDialog
@@ -66,7 +68,7 @@ fun SettingsScreen(
     billingViewModel: BillingViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
-    val isDarkMode by viewModel.isDarkMode.collectAsState()
+
     val fontSize by viewModel.fontSize.collectAsState()
     val isStreakEnabled by viewModel.isStreakEnabled.collectAsState()
     val designSummary by viewModel.diaryDesignSummary.collectAsState()
@@ -83,6 +85,7 @@ fun SettingsScreen(
     var showExportOptions by remember { mutableStateOf(false) }
     var showFontSizeMenu by remember { mutableStateOf(false) }
     var showPrivacyPolicy by remember { mutableStateOf(false) }
+    var showTermsOfService by remember { mutableStateOf(false) }
     var deleteConfirmText by remember { mutableStateOf("") }
 
     val context = LocalContext.current
@@ -125,31 +128,6 @@ fun SettingsScreen(
                     value = designSummary,
                     onClick = onOpenDesignStudio
                 )
-                SettingsDivider()
-
-                // Dark Mode
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Dark Mode",
-                        style = TextStyle(fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
-                    )
-                    Switch(
-                        checked = isDarkMode,
-                        onCheckedChange = { viewModel.toggleDarkMode(it) },
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = MaterialTheme.colorScheme.onBackground,
-                            checkedTrackColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
-                            uncheckedThumbColor = MaterialTheme.colorScheme.secondary,
-                            uncheckedTrackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
-                        )
-                    )
-                }
                 SettingsDivider()
 
                 // Font Size
@@ -250,7 +228,6 @@ fun SettingsScreen(
                                 Plan.TRIAL -> "Free (${subscriptionState.trialDaysLeft} entries left)"
                                 Plan.MONTHLY -> "Monthly plan"
                                 Plan.ANNUAL -> "Annual plan"
-                                Plan.LIFETIME -> "Lifetime plan"
                                 Plan.EXPIRED -> "Trial expired"
                             }
                         }",
@@ -404,6 +381,11 @@ fun SettingsScreen(
                     onClick = { showPrivacyPolicy = true }
                 )
                 SettingsDivider()
+                SettingsRow(
+                    label = "Terms of Service",
+                    onClick = { showTermsOfService = true }
+                )
+                SettingsDivider()
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -433,6 +415,8 @@ fun SettingsScreen(
             onDismiss = { showPaywall = false },
             entryCount = subState.entryCount,
             totalWords = subState.totalWords,
+            monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$2/month",
+            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$20/year",
             onSelectPlan = { sku ->
                 activity?.let { billingViewModel.launchPurchase(it, sku) }
                 showPaywall = false
@@ -474,6 +458,50 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showPrivacyPolicy = false }) {
+                    Text("Close", color = MaterialTheme.colorScheme.onBackground)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    }
+
+    // Terms of Service dialog
+    if (showTermsOfService) {
+        AlertDialog(
+            onDismissRequest = { showTermsOfService = false },
+            title = {
+                Text(
+                    text = "Terms of Service",
+                    style = TextStyle(
+                        fontFamily = CormorantGaramond,
+                        fontSize = 20.sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "By using Proactive Diary, you agree to our Terms of Service.\n\nYou retain full ownership of everything you write. Your content stays on your device and is never transmitted to our servers.\n\nSubscriptions are managed through Google Play and auto-renew unless cancelled. The app is provided \"as is\" without warranties. You are responsible for backing up your data.",
+                        style = TextStyle(fontSize = 13.sp, color = MaterialTheme.colorScheme.secondary)
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = "Read full terms online",
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontStyle = FontStyle.Italic
+                        ),
+                        modifier = Modifier.clickable {
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://proactivediary.com/terms-of-service"))
+                            context.startActivity(intent)
+                        }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showTermsOfService = false }) {
                     Text("Close", color = MaterialTheme.colorScheme.onBackground)
                 }
             },
@@ -633,7 +661,7 @@ private fun SettingsRow(
 
 @Composable
 private fun SettingsDivider() {
-    Divider(
+    HorizontalDivider(
         modifier = Modifier.padding(horizontal = 16.dp),
         thickness = 1.dp,
         color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)

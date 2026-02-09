@@ -15,6 +15,7 @@ data class EntryEntity(
     val content: String,
     val mood: String? = null,
     val tags: String = "[]",
+    @ColumnInfo(name = "tagged_contacts") val taggedContacts: String = "[]",
     @ColumnInfo(name = "word_count") val wordCount: Int = 0,
     @ColumnInfo(name = "created_at") val createdAt: Long,
     @ColumnInfo(name = "updated_at") val updatedAt: Long

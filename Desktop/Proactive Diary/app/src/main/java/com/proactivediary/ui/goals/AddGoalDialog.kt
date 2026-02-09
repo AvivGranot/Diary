@@ -16,7 +16,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -106,7 +106,7 @@ fun AddGoalDialog(
                             }
                             innerTextField()
                             Spacer(Modifier.height(4.dp))
-                            Divider(color = pencilColor.copy(alpha = 0.2f))
+                            HorizontalDivider(color = pencilColor.copy(alpha = 0.2f))
                         }
                     }
                 )

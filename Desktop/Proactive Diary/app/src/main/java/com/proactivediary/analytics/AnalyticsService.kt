@@ -87,8 +87,82 @@ class AnalyticsService @Inject constructor() {
         log("notification_tapped", bundleOf("type" to type))
     }
 
+    // ─── Growth Loop (Contact Tagging) ───
+    fun logContactTagged(contactCount: Int) {
+        log("contact_tagged", bundleOf("contact_count" to contactCount))
+    }
+
+    fun logContactShared(hasEmail: Boolean, hasPhone: Boolean) {
+        log("contact_shared", bundleOf("has_email" to hasEmail, "has_phone" to hasPhone))
+    }
+
     // ─── App lifecycle ───
     fun logAppOpened() = log("app_opened")
+
+    // ─── Engagement & Retention ───
+    fun logSessionStart(daysSinceInstall: Int, totalEntries: Int) {
+        log("session_start_enriched", bundleOf(
+            "days_since_install" to daysSinceInstall,
+            "total_entries" to totalEntries
+        ))
+    }
+
+    fun logSessionEnd(durationSec: Long, screensViewed: Int) {
+        log("session_end", bundleOf(
+            "duration_sec" to durationSec,
+            "screens_viewed" to screensViewed
+        ))
+    }
+
+    fun logRetentionDay(day: Int, totalEntries: Int, totalWords: Int) {
+        log("retention_day", bundleOf(
+            "day" to day,
+            "total_entries" to totalEntries,
+            "total_words" to totalWords
+        ))
+    }
+
+    fun logWritingStreak(streak: Int) {
+        log("writing_streak", bundleOf("streak" to streak))
+    }
+
+    fun logJournalViewed(entryCount: Int, searchUsed: Boolean) {
+        log("journal_viewed", bundleOf(
+            "entry_count" to entryCount,
+            "search_used" to searchUsed
+        ))
+    }
+
+    fun logFeatureUsed(featureName: String) {
+        log("feature_used", bundleOf("feature" to featureName))
+    }
+
+    fun logWritingPattern(dayOfWeek: String, hourOfDay: Int, wordCount: Int) {
+        log("writing_pattern", bundleOf(
+            "day_of_week" to dayOfWeek,
+            "hour_of_day" to hourOfDay,
+            "word_count" to wordCount
+        ))
+    }
+
+    fun logExportUsed(format: String, entryCount: Int) {
+        log("export_used", bundleOf("format" to format, "entry_count" to entryCount))
+    }
+
+    // ─── Conversion Funnel ───
+    fun logTrialMilestone(entriesWritten: Int, entriesRemaining: Int) {
+        log("trial_milestone", bundleOf(
+            "entries_written" to entriesWritten,
+            "entries_remaining" to entriesRemaining
+        ))
+    }
+
+    fun logPaywallAction(action: String, trialEntriesUsed: Int) {
+        log("paywall_action", bundleOf(
+            "action" to action,
+            "trial_entries_used" to trialEntriesUsed
+        ))
+    }
 
     // ─── Book Export ───
     fun logBookExported(year: Int, entryCount: Int) {

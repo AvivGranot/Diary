@@ -13,6 +13,7 @@ import com.proactivediary.data.repository.EntryRepository
 import com.proactivediary.data.repository.StreakRepository
 import com.proactivediary.domain.WritingGoalService
 import com.proactivediary.domain.model.Mood
+import com.proactivediary.domain.model.TaggedContact
 import com.proactivediary.playstore.InAppReviewService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -97,6 +98,7 @@ data class WriteUiState(
     val showDesignStudioPrompt: Boolean = false,
     val goalCompletedMessage: String? = null,
     val weeklyGoalProgress: String? = null,
+    val taggedContacts: List<TaggedContact> = emptyList(),
     val showStreakCelebration: Int = 0,
     val newEntrySaved: Boolean = false,
     val requestInAppReview: Boolean = false,
@@ -195,12 +197,14 @@ class WriteViewModel @Inject constructor(
                 val entry = entryRepository.getByIdSync(entryId)
                 if (entry != null) {
                     val tags = parseTags(entry.tags)
+                    val contacts = parseTaggedContacts(entry.taggedContacts)
                     _uiState.value = _uiState.value.copy(
                         entryId = entry.id,
                         title = entry.title,
                         content = entry.content,
                         mood = Mood.fromString(entry.mood),
                         tags = tags,
+                        taggedContacts = contacts,
                         wordCount = computeWordCount(entry.content),
                         isLoaded = true,
                         isNewEntry = false
@@ -211,12 +215,14 @@ class WriteViewModel @Inject constructor(
                 val todayEntry = entryRepository.getTodayEntrySync()
                 if (todayEntry != null) {
                     val tags = parseTags(todayEntry.tags)
+                    val contacts = parseTaggedContacts(todayEntry.taggedContacts)
                     _uiState.value = _uiState.value.copy(
                         entryId = todayEntry.id,
                         title = todayEntry.title,
                         content = todayEntry.content,
                         mood = Mood.fromString(todayEntry.mood),
                         tags = tags,
+                        taggedContacts = contacts,
                         wordCount = computeWordCount(todayEntry.content),
                         isLoaded = true,
                         isNewEntry = false
@@ -293,6 +299,25 @@ class WriteViewModel @Inject constructor(
         }
     }
 
+    fun onContactTagged(contact: TaggedContact) {
+        val current = _uiState.value.taggedContacts
+        if (current.any { it.lookupUri == contact.lookupUri }) return
+        _uiState.value = _uiState.value.copy(taggedContacts = current + contact)
+        analyticsService.logContactTagged(current.size + 1)
+        if (_uiState.value.content.isNotBlank() || _uiState.value.title.isNotBlank()) {
+            viewModelScope.launch { saveEntry(_uiState.value.content) }
+        }
+    }
+
+    fun onContactRemoved(contact: TaggedContact) {
+        _uiState.value = _uiState.value.copy(
+            taggedContacts = _uiState.value.taggedContacts.filter { it.lookupUri != contact.lookupUri }
+        )
+        if (_uiState.value.content.isNotBlank() || _uiState.value.title.isNotBlank()) {
+            viewModelScope.launch { saveEntry(_uiState.value.content) }
+        }
+    }
+
     fun saveNow() {
         val state = _uiState.value
         if (state.content.isNotBlank() || state.title.isNotBlank()) {
@@ -321,6 +346,7 @@ class WriteViewModel @Inject constructor(
             withContext(Dispatchers.IO) {
                 val now = System.currentTimeMillis()
                 val tagsJson = gson.toJson(state.tags)
+                val contactsJson = gson.toJson(state.taggedContacts)
 
                 val entry = EntryEntity(
                     id = state.entryId,
@@ -328,6 +354,7 @@ class WriteViewModel @Inject constructor(
                     content = text,
                     mood = state.mood?.key,
                     tags = tagsJson,
+                    taggedContacts = contactsJson,
                     wordCount = computeWordCount(text),
                     createdAt = if (state.isNewEntry) now else {
                         entryRepository.getByIdSync(state.entryId)?.createdAt ?: now
@@ -344,6 +371,14 @@ class WriteViewModel @Inject constructor(
                         mood = state.mood?.key,
                         hasTitle = state.title.isNotBlank(),
                         sessionDurationMs = sessionDuration
+                    )
+
+                    // Log writing pattern (day of week, hour, word count)
+                    val now = java.time.LocalDateTime.now()
+                    analyticsService.logWritingPattern(
+                        dayOfWeek = now.dayOfWeek.name.lowercase(),
+                        hourOfDay = now.hour,
+                        wordCount = computeWordCount(text)
                     )
 
                     // Check if this is the user's very first entry ever
@@ -419,6 +454,15 @@ class WriteViewModel @Inject constructor(
         }
     }
 
+    private fun parseTaggedContacts(json: String): List<TaggedContact> {
+        return try {
+            val type = object : TypeToken<List<TaggedContact>>() {}.type
+            gson.fromJson(json, type) ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
     private fun computeWordCount(text: String): Int {
         if (text.isBlank()) return 0
         return text.trim().split("\\s+".toRegex()).filter { it.isNotEmpty() }.size
@@ -461,6 +505,10 @@ class WriteViewModel @Inject constructor(
                 _uiState.value = _uiState.value.copy(weeklyGoalProgress = progress)
             }
         }
+    }
+
+    fun logContactShared(hasEmail: Boolean, hasPhone: Boolean) {
+        analyticsService.logContactShared(hasEmail, hasPhone)
     }
 
     fun hasFeature(feature: String): Boolean {

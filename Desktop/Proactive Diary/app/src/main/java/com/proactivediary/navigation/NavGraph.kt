@@ -158,6 +158,8 @@ fun ProactiveDiaryNavHost(
             if (showYearPaywall) {
                 PaywallDialog(
                     onDismiss = { showYearPaywall = false },
+                    monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$2/month",
+                    annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$20/year",
                     onSelectPlan = { sku ->
                         yearActivity?.let { billingViewModel.launchPurchase(it, sku) }
                         showYearPaywall = false
@@ -175,6 +177,8 @@ fun ProactiveDiaryNavHost(
     if (showPaywall) {
         PaywallDialog(
             onDismiss = { showPaywall = false },
+            monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$2/month",
+            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$20/year",
             onSelectPlan = { sku ->
                 activity?.let { billingViewModel.launchPurchase(it, sku) }
                 showPaywall = false

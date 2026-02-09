@@ -38,7 +38,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Tap to write"
+        android:text="@string/widget_tap_to_write"
         android:textSize="11sp"
         android:textColor="#80585858"
         android:fontFamily="serif"

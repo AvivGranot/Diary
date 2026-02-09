@@ -82,6 +82,12 @@ class EntryRepositoryImpl @Inject constructor(
     override suspend fun getLastEntryTimestamp(): Long? =
         entryDao.getLastEntryTimestamp()
 
+    override suspend fun getPage(limit: Int, offset: Int): List<EntryEntity> =
+        entryDao.getPage(limit, offset)
+
+    override suspend fun getTotalCount(): Int =
+        entryDao.getTotalCount()
+
     private fun todayRange(): Pair<Long, Long> {
         val zone = ZoneId.systemDefault()
         val today = LocalDate.now()

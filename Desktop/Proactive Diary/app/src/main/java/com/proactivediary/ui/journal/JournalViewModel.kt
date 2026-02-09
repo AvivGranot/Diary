@@ -48,14 +48,17 @@ data class JournalUiState(
     val writingDays: Set<LocalDate> = emptySet(),
     val moodTrend: List<MoodDataPoint> = emptyList(),
     val weeklyDigest: WeeklyDigest = WeeklyDigest(),
-    val onThisDay: OnThisDayEntry? = null
+    val onThisDay: OnThisDayEntry? = null,
+    val hasMoreEntries: Boolean = false,
+    val isLoadingMore: Boolean = false
 )
 
 @HiltViewModel
 class JournalViewModel @Inject constructor(
     private val entryRepository: EntryRepository,
     private val searchEngine: SearchEngine,
-    private val streakRepository: StreakRepository
+    private val streakRepository: StreakRepository,
+    private val analyticsService: com.proactivediary.analytics.AnalyticsService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(JournalUiState())
@@ -64,35 +67,106 @@ class JournalViewModel @Inject constructor(
     private val gson = Gson()
     private var searchJob: Job? = null
     private var loadJob: Job? = null
+    private var currentOffset = 0
+    private var totalEntryCount = 0
+
+    companion object {
+        const val PAGE_SIZE = 50
+    }
+
+    private var searchUsed = false
 
     init {
-        loadAllEntries()
+        loadInitialEntries()
         loadInsights()
         loadWeeklyDigest()
         loadOnThisDay()
+        logJournalOpened()
     }
 
-    private fun loadAllEntries() {
+    private fun logJournalOpened() {
+        viewModelScope.launch {
+            val count = withContext(Dispatchers.IO) { entryRepository.getTotalEntryCount() }
+            analyticsService.logJournalViewed(count, searchUsed = false)
+        }
+    }
+
+    private fun loadInitialEntries() {
         loadJob?.cancel()
+        currentOffset = 0
         loadJob = viewModelScope.launch {
+            try {
+                val (entries, total) = withContext(Dispatchers.IO) {
+                    val page = entryRepository.getPage(PAGE_SIZE, 0)
+                    val total = entryRepository.getTotalCount()
+                    Pair(page, total)
+                }
+                totalEntryCount = total
+                currentOffset = entries.size
+                val cards = entries.map { it.toCardData() }
+                val grouped = groupByDate(cards)
+                _uiState.value = _uiState.value.copy(
+                    entries = cards,
+                    groupedEntries = grouped,
+                    isLoading = false,
+                    isEmpty = cards.isEmpty(),
+                    isSearchEmpty = false,
+                    hasMoreEntries = currentOffset < totalEntryCount
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    isEmpty = true
+                )
+            }
+        }
+
+        // Also observe for real-time updates (new entries, deletions)
+        viewModelScope.launch {
             entryRepository.getAllEntries()
-                .catch { e ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        isEmpty = true
-                    )
-                }
+                .catch { /* already handled above */ }
                 .collect { entities ->
-                    val cards = entities.map { it.toCardData() }
-                    val grouped = groupByDate(cards)
-                    _uiState.value = _uiState.value.copy(
-                        entries = cards,
-                        groupedEntries = grouped,
-                        isLoading = false,
-                        isEmpty = cards.isEmpty(),
-                        isSearchEmpty = false
-                    )
+                    // Only refresh if count changed (entry added/deleted)
+                    if (entities.size != totalEntryCount) {
+                        totalEntryCount = entities.size
+                        // Re-paginate from scratch to stay consistent
+                        val visibleCount = currentOffset.coerceAtMost(entities.size)
+                        val cards = entities.take(visibleCount).map { it.toCardData() }
+                        val grouped = groupByDate(cards)
+                        _uiState.value = _uiState.value.copy(
+                            entries = cards,
+                            groupedEntries = grouped,
+                            isEmpty = cards.isEmpty(),
+                            hasMoreEntries = visibleCount < totalEntryCount
+                        )
+                    }
                 }
+        }
+    }
+
+    fun loadMoreEntries() {
+        if (_uiState.value.isLoadingMore || !_uiState.value.hasMoreEntries) return
+        if (_uiState.value.searchQuery.isNotBlank()) return
+
+        _uiState.value = _uiState.value.copy(isLoadingMore = true)
+        viewModelScope.launch {
+            try {
+                val moreEntries = withContext(Dispatchers.IO) {
+                    entryRepository.getPage(PAGE_SIZE, currentOffset)
+                }
+                currentOffset += moreEntries.size
+                val newCards = moreEntries.map { it.toCardData() }
+                val allCards = _uiState.value.entries + newCards
+                val grouped = groupByDate(allCards)
+                _uiState.value = _uiState.value.copy(
+                    entries = allCards,
+                    groupedEntries = grouped,
+                    isLoadingMore = false,
+                    hasMoreEntries = currentOffset < totalEntryCount
+                )
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isLoadingMore = false)
+            }
         }
     }
 
@@ -102,7 +176,7 @@ class JournalViewModel @Inject constructor(
         if (query.isBlank()) {
             searchJob?.cancel()
             _uiState.value = _uiState.value.copy(isSearching = false, isSearchEmpty = false)
-            loadAllEntries()
+            loadInitialEntries()
             return
         }
 
@@ -119,7 +193,7 @@ class JournalViewModel @Inject constructor(
             isSearching = false,
             isSearchEmpty = false
         )
-        loadAllEntries()
+        loadInitialEntries()
     }
 
     private fun performSearch(query: String) {

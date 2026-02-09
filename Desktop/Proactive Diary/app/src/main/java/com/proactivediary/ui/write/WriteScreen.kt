@@ -39,6 +39,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
@@ -58,7 +60,20 @@ fun WriteScreen(
     onEntrySaved: (() -> Unit)? = null
 ) {
     val state by viewModel.uiState.collectAsState()
-    val activity = LocalContext.current as? android.app.Activity
+    val context = LocalContext.current
+    val activity = context as? android.app.Activity
+    var showTagDialog by remember { mutableStateOf(false) }
+
+    // Contact picker launcher — no READ_CONTACTS permission needed
+    val contactPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickContact()
+    ) { contactUri ->
+        contactUri?.let { uri ->
+            resolveContact(context, uri)?.let { contact ->
+                viewModel.onContactTagged(contact)
+            }
+        }
+    }
 
     // Notify parent when a new entry is saved (for billing refresh)
     LaunchedEffect(state.newEntrySaved) {
@@ -152,8 +167,24 @@ fun WriteScreen(
                         Spacer(modifier = Modifier.height(4.dp))
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
+
+                // Tag row: # text tags + @ contact tags
+                ContactTagRow(
+                    taggedContacts = state.taggedContacts,
+                    textTags = state.tags,
+                    onAddContactClick = { contactPickerLauncher.launch(null) },
+                    onRemoveContact = { viewModel.onContactRemoved(it) },
+                    onShareWithContact = { contact ->
+                        shareEntryWithContact(context, state, contact)
+                        viewModel.logContactShared(contact.email != null, contact.phone != null)
+                    },
+                    onTextTagsClick = { showTagDialog = true },
+                    secondaryTextColor = secondaryTextColor,
+                    horizontalPadding = horizontalPadding
+                )
+                Spacer(modifier = Modifier.height(4.dp))
 
                 // Title field
                 if (titleExpanded) {
@@ -241,8 +272,6 @@ fun WriteScreen(
             WriteToolbar(
                 selectedMood = state.mood,
                 onMoodSelected = { viewModel.onMoodSelected(it) },
-                tags = state.tags,
-                onTagsUpdated = { viewModel.onTagsUpdated(it) },
                 wordCount = state.wordCount,
                 showWordCount = showWordCount,
                 colorKey = state.colorKey
@@ -293,9 +322,20 @@ fun WriteScreen(
         )
     }
 
+    // Text tag dialog (moved from toolbar)
+    if (showTagDialog) {
+        TagInputDialog(
+            currentTags = state.tags,
+            onDismiss = { showTagDialog = false },
+            onConfirm = { newTags ->
+                viewModel.onTagsUpdated(newTags)
+                showTagDialog = false
+            }
+        )
+    }
+
     // Streak share dialog state
     var streakShareCount by remember { mutableStateOf(0) }
-    val context = LocalContext.current
 
     // Streak milestone celebration overlay
     if (state.showStreakCelebration > 0) {

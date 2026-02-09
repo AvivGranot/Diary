@@ -163,7 +163,7 @@ fun GoalCard(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 Icons.Default.Check,
-                                contentDescription = null,
+                                contentDescription = "Goal completed",
                                 tint = parchmentColor,
                                 modifier = Modifier.size(14.dp)
                             )

@@ -1,0 +1,27 @@
+# Built outputs
+/build/
+/app/build/
+
+# Gradle
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+
+# Local config
+local.properties
+
+# Signing
+*.jks
+*.keystore
+keystore.properties
+
+# Firebase (contains API keys)
+google-services.json
+
+# OS files
+.DS_Store
+Thumbs.db
+nul

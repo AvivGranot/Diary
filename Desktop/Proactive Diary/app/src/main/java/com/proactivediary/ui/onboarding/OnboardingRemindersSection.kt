@@ -116,7 +116,7 @@ private fun ReminderRow(
             if (reminder.enabled) {
                 Icon(
                     Icons.Default.Check,
-                    contentDescription = null,
+                    contentDescription = "Reminder enabled",
                     tint = surfaceColor,
                     modifier = Modifier.size(14.dp)
                 )

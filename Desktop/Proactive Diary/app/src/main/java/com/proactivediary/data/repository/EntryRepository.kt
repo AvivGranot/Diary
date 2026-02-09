@@ -22,4 +22,6 @@ interface EntryRepository {
     fun getTotalWordCountSync(): Int
     suspend fun getEntryForDate(date: java.time.LocalDate): EntryEntity?
     suspend fun getLastEntryTimestamp(): Long?
+    suspend fun getPage(limit: Int, offset: Int): List<EntryEntity>
+    suspend fun getTotalCount(): Int
 }

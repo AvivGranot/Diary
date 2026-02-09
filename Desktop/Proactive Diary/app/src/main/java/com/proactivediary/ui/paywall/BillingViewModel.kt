@@ -25,7 +25,7 @@ data class SubscriptionState(
     val totalWords: Int = 0
 )
 
-enum class Plan { TRIAL, MONTHLY, ANNUAL, LIFETIME, EXPIRED }
+enum class Plan { TRIAL, MONTHLY, ANNUAL, EXPIRED }
 
 @HiltViewModel
 class BillingViewModel @Inject constructor(
@@ -82,7 +82,6 @@ class BillingViewModel @Inject constructor(
                 _purchaseResult.value = result
                 if (result is PurchaseResult.Success) {
                     val planType = when {
-                        billingService.isLifetime() -> "lifetime"
                         billingService.isAnnual() -> "annual"
                         else -> "monthly"
                     }
@@ -139,7 +138,6 @@ class BillingViewModel @Inject constructor(
         // First check if user has an active paid subscription
         if (billingService.hasActiveSubscription()) {
             val plan = when {
-                billingService.isLifetime() -> Plan.LIFETIME
                 billingService.isAnnual() -> Plan.ANNUAL
                 else -> Plan.MONTHLY
             }
@@ -152,6 +150,10 @@ class BillingViewModel @Inject constructor(
 
         if (entryCount < ENTRY_GATE_THRESHOLD) {
             val entriesLeft = ENTRY_GATE_THRESHOLD - entryCount
+            // Log trial milestones at 3, 5, 7, 9 entries
+            if (entryCount in listOf(3, 5, 7, 9)) {
+                analyticsService.logTrialMilestone(entryCount, entriesLeft)
+            }
             return SubscriptionState(
                 isActive = true,
                 plan = Plan.TRIAL,
@@ -179,6 +181,10 @@ class BillingViewModel @Inject constructor(
             _isFirstPaywallView.value = false
         }
     }
+
+    /** Real price from Play Console, or null if not yet loaded. */
+    fun getMonthlyPrice(): String? = billingService.getMonthlyPrice()
+    fun getAnnualPrice(): String? = billingService.getAnnualPrice()
 
     fun canWrite(): Boolean = _subscriptionState.value.isActive
 

@@ -94,4 +94,5 @@
     <string name="book_saved">Book saved to Downloads</string>
     <string name="book_subtitle">A beautiful PDF of your year\'s writing</string>
     <string name="no_entries_for_year">No entries for %d</string>
+    <string name="widget_tap_to_write">Tap to write</string>
 </resources>
