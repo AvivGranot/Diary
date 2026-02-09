@@ -54,48 +54,43 @@ class EntryDetailViewModel @Inject constructor(
     private val entryId: String = savedStateHandle.get<String>("entryId") ?: ""
 
     init {
-        loadThemePreferences()
+        observeThemePreferences()
         loadEntry()
     }
 
-    private fun loadThemePreferences() {
+    private val themeKeys = listOf(
+        "diary_color", "diary_form", "diary_canvas", "diary_details",
+        "diary_mark_text", "diary_mark_position", "diary_mark_font", "font_size"
+    )
+
+    private val defaultFeatures = listOf("auto_save", "word_count", "date_header", "daily_quote")
+
+    private fun observeThemePreferences() {
         viewModelScope.launch {
-            val colorKey = preferenceDao.get("diary_color")?.value ?: "cream"
-            val form = preferenceDao.get("diary_form")?.value ?: "focused"
-            val canvas = preferenceDao.get("diary_canvas")?.value ?: "lined"
-            val fontSizePref = preferenceDao.get("font_size")?.value ?: "medium"
-            val detailsJson = preferenceDao.get("diary_details")?.value
-            val markText = preferenceDao.get("diary_mark_text")?.value ?: ""
-            val markPosition = preferenceDao.get("diary_mark_position")?.value ?: "header"
-            val markFont = preferenceDao.get("diary_mark_font")?.value ?: "serif"
+            preferenceDao.observeBatch(themeKeys).collect { entities ->
+                val prefs = entities.associate { it.key to it.value }
 
-            val fontSize = when (fontSizePref) {
-                "small" -> 14
-                "large" -> 18
-                else -> 16
+                val detailsJson = prefs["diary_details"]
+                val features: List<String> = if (detailsJson != null) {
+                    try {
+                        val type = object : TypeToken<List<String>>() {}.type
+                        gson.fromJson(detailsJson, type)
+                    } catch (_: Exception) { defaultFeatures }
+                } else { defaultFeatures }
+
+                _uiState.value = _uiState.value.copy(
+                    colorKey = prefs["diary_color"] ?: "cream",
+                    form = prefs["diary_form"] ?: "focused",
+                    canvas = prefs["diary_canvas"] ?: "lined",
+                    fontSize = when (prefs["font_size"]) {
+                        "small" -> 14; "large" -> 18; else -> 16
+                    },
+                    features = features,
+                    markText = prefs["diary_mark_text"] ?: "",
+                    markPosition = prefs["diary_mark_position"] ?: "header",
+                    markFont = prefs["diary_mark_font"] ?: "serif"
+                )
             }
-
-            val features: List<String> = if (detailsJson != null) {
-                try {
-                    val type = object : TypeToken<List<String>>() {}.type
-                    gson.fromJson(detailsJson, type)
-                } catch (_: Exception) {
-                    listOf("auto_save", "word_count", "date_header", "daily_quote")
-                }
-            } else {
-                listOf("auto_save", "word_count", "date_header", "daily_quote")
-            }
-
-            _uiState.value = _uiState.value.copy(
-                colorKey = colorKey,
-                form = form,
-                canvas = canvas,
-                fontSize = fontSize,
-                features = features,
-                markText = markText,
-                markPosition = markPosition,
-                markFont = markFont
-            )
         }
     }
 

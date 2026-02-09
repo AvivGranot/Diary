@@ -127,67 +127,52 @@ class WriteViewModel @Inject constructor(
     private val entryIdArg: String? = savedStateHandle.get<String>("entryId")
 
     init {
-        loadThemePreferences()
+        observeThemePreferences()
         loadOrCreateEntry(entryIdArg)
         setupAutoSave()
         loadGoalProgress()
         analyticsService.logWriteScreenViewed()
+
+        val today = LocalDate.now()
+        val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.getDefault())
+        _uiState.value = _uiState.value.copy(dateHeader = today.format(formatter))
     }
 
-    private fun loadThemePreferences() {
+    private val themeKeys = listOf(
+        "diary_color", "diary_form", "diary_texture", "diary_canvas",
+        "diary_details", "diary_mark_text", "diary_mark_position",
+        "diary_mark_font", "font_size"
+    )
+
+    private val defaultFeatures = listOf("auto_save", "word_count", "date_header", "daily_quote")
+
+    private fun observeThemePreferences() {
         viewModelScope.launch {
-            val prefs = withContext(Dispatchers.IO) {
-                val keys = listOf(
-                    "diary_color", "diary_form", "diary_texture", "diary_canvas",
-                    "diary_details", "diary_mark_text", "diary_mark_position",
-                    "diary_mark_font", "font_size"
+            preferenceDao.observeBatch(themeKeys).collect { entities ->
+                val prefs = entities.associate { it.key to it.value }
+
+                val detailsJson = prefs["diary_details"]
+                val features: List<String> = if (detailsJson != null) {
+                    try {
+                        val type = object : TypeToken<List<String>>() {}.type
+                        gson.fromJson(detailsJson, type)
+                    } catch (_: Exception) { defaultFeatures }
+                } else { defaultFeatures }
+
+                _uiState.value = _uiState.value.copy(
+                    colorKey = prefs["diary_color"] ?: "cream",
+                    form = prefs["diary_form"] ?: "focused",
+                    texture = prefs["diary_texture"] ?: "paper",
+                    canvas = prefs["diary_canvas"] ?: "lined",
+                    fontSize = when (prefs["font_size"]) {
+                        "small" -> 14; "large" -> 18; else -> 16
+                    },
+                    features = features,
+                    markText = prefs["diary_mark_text"] ?: "",
+                    markPosition = prefs["diary_mark_position"] ?: "header",
+                    markFont = prefs["diary_mark_font"] ?: "serif"
                 )
-                preferenceDao.getBatch(keys).associate { it.key to it.value }
             }
-
-            val colorKey = prefs["diary_color"] ?: "cream"
-            val form = prefs["diary_form"] ?: "focused"
-            val texture = prefs["diary_texture"] ?: "paper"
-            val canvas = prefs["diary_canvas"] ?: "lined"
-            val detailsJson = prefs["diary_details"]
-            val markText = prefs["diary_mark_text"] ?: ""
-            val markPosition = prefs["diary_mark_position"] ?: "header"
-            val markFont = prefs["diary_mark_font"] ?: "serif"
-            val fontSizePref = prefs["font_size"] ?: "medium"
-
-            val fontSize = when (fontSizePref) {
-                "small" -> 14
-                "large" -> 18
-                else -> 16
-            }
-
-            val features: List<String> = if (detailsJson != null) {
-                try {
-                    val type = object : TypeToken<List<String>>() {}.type
-                    gson.fromJson(detailsJson, type)
-                } catch (_: Exception) {
-                    listOf("auto_save", "word_count", "date_header", "daily_quote")
-                }
-            } else {
-                listOf("auto_save", "word_count", "date_header", "daily_quote")
-            }
-
-            val today = LocalDate.now()
-            val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.getDefault())
-            val dateHeader = today.format(formatter)
-
-            _uiState.value = _uiState.value.copy(
-                colorKey = colorKey,
-                form = form,
-                texture = texture,
-                canvas = canvas,
-                fontSize = fontSize,
-                features = features,
-                markText = markText,
-                markPosition = markPosition,
-                markFont = markFont,
-                dateHeader = dateHeader
-            )
         }
     }
 

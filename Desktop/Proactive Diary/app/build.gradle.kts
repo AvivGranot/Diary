@@ -1,5 +1,8 @@
 import java.io.FileInputStream
 import java.util.Properties
+import java.util.jar.JarEntry
+import java.util.jar.JarOutputStream
+import java.util.jar.Manifest
 
 plugins {
     id("com.android.application")
@@ -163,4 +166,22 @@ dependencies {
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.3.1")
     testImplementation("app.cash.turbine:turbine:1.1.0")
     testImplementation("androidx.arch.core:core-testing:2.2.0")
+}
+
+// Workaround for Windows command-line length limit (CreateProcess error=206)
+tasks.withType<Test>().configureEach {
+    // Use a manifest-only JAR to shorten the classpath passed to the JVM
+    val originalClasspath = classpath
+    doFirst {
+        val manifestJar = File.createTempFile("classpath", ".jar")
+        manifestJar.deleteOnExit()
+        val manifest = Manifest()
+        manifest.mainAttributes.putValue("Manifest-Version", "1.0")
+        manifest.mainAttributes.putValue(
+            "Class-Path",
+            originalClasspath.files.joinToString(" ") { it.toURI().toURL().toString() }
+        )
+        JarOutputStream(manifestJar.outputStream(), manifest).close()
+        classpath = files(manifestJar)
+    }
 }
