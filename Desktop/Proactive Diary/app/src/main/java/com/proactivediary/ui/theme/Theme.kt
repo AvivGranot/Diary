@@ -10,6 +10,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
+import com.proactivediary.analytics.Experiment
+import com.proactivediary.analytics.ExperimentService
 import com.proactivediary.data.db.dao.PreferenceDao
 
 private val LightColorScheme = lightColorScheme(
@@ -49,13 +51,22 @@ val LocalDarkMode = compositionLocalOf { false }
 @Composable
 fun ProactiveDiaryTheme(
     preferenceDao: PreferenceDao? = null,
+    experimentService: ExperimentService? = null,
     darkMode: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     val isDark = if (preferenceDao != null) {
         val darkModePref by preferenceDao.observe("dark_mode")
             .collectAsState(initial = null)
-        darkModePref?.value == "true"
+        when {
+            // User has explicitly set a preference — always respect it
+            darkModePref?.value != null -> darkModePref?.value == "true"
+            // Experiment 6: Dark Mode Default — "system" variant follows system setting
+            experimentService != null &&
+                experimentService.isVariant(Experiment.DARK_MODE_DEFAULT, "system") -> darkMode
+            // Control: always light
+            else -> false
+        }
     } else {
         darkMode
     }

@@ -293,6 +293,7 @@ fun MainScreen(
             entryCount = subscriptionState.entryCount,
             totalWords = subscriptionState.totalWords,
             isFirstPaywallView = isFirstPaywallView,
+            hideLifetime = billingViewModel.hideLifetime,
             onSelectPlan = { sku ->
                 billingViewModel.markPaywallViewed()
                 activity?.let { billingViewModel.launchPurchase(it, sku) }

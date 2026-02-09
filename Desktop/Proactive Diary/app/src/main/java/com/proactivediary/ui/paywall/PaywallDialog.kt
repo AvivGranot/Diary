@@ -41,7 +41,9 @@ fun PaywallDialog(
     isAuthenticated: Boolean = true,
     entryCount: Int = 0,
     totalWords: Int = 0,
-    isFirstPaywallView: Boolean = true
+    isFirstPaywallView: Boolean = true,
+    // Experiment 7: Pricing Anchoring — hide lifetime option when true
+    hideLifetime: Boolean = false
 ) {
     // Remove auth gate: always go directly to purchase
     val handlePlanSelect: (String) -> Unit = { sku -> onSelectPlan(sku) }
@@ -167,14 +169,17 @@ fun PaywallDialog(
                 Spacer(Modifier.height(12.dp))
 
                 // Lifetime plan card
-                PlanCard(
-                    title = "Lifetime",
-                    price = "\$79.99",
-                    badge = "One-time",
-                    onClick = { handlePlanSelect(BillingService.LIFETIME_SKU) }
-                )
+                // Experiment 7: hide_lifetime variant removes this option
+                if (!hideLifetime) {
+                    PlanCard(
+                        title = "Lifetime",
+                        price = "\$79.99",
+                        badge = "One-time",
+                        onClick = { handlePlanSelect(BillingService.LIFETIME_SKU) }
+                    )
 
-                Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(12.dp))
+                }
 
                 // Urgency line
                 Text(

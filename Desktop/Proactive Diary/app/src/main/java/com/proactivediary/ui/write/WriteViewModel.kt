@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.proactivediary.analytics.AnalyticsService
+import com.proactivediary.analytics.Experiment
+import com.proactivediary.analytics.ExperimentService
 import com.proactivediary.data.db.dao.PreferenceDao
 import com.proactivediary.data.db.entities.PreferenceEntity
 import com.proactivediary.data.db.entities.EntryEntity
@@ -100,7 +102,9 @@ data class WriteUiState(
     val showStreakCelebration: Int = 0,
     val newEntrySaved: Boolean = false,
     val requestInAppReview: Boolean = false,
-    val showFirstEntryCelebration: Boolean = false
+    val showFirstEntryCelebration: Boolean = false,
+    // A/B test: Experiment 2 — blank page vs prompt
+    val showPromptAsPlaceholder: Boolean = true
 )
 
 @OptIn(FlowPreview::class)
@@ -109,6 +113,7 @@ class WriteViewModel @Inject constructor(
     private val entryRepository: EntryRepository,
     private val preferenceDao: PreferenceDao,
     private val analyticsService: AnalyticsService,
+    private val experimentService: ExperimentService,
     private val writingGoalService: WritingGoalService,
     private val streakRepository: StreakRepository,
     private val inAppReviewService: InAppReviewService,
@@ -129,7 +134,16 @@ class WriteViewModel @Inject constructor(
         loadOrCreateEntry(entryIdArg)
         setupAutoSave()
         loadGoalProgress()
+        applyExperiments()
         analyticsService.logWriteScreenViewed()
+    }
+
+    private fun applyExperiments() {
+        // Experiment 2: Blank Page vs Prompt
+        val promptVariant = experimentService.getVariant(Experiment.BLANK_PAGE_VS_PROMPT)
+        val showPrompt = promptVariant != "blank_page"
+        _uiState.value = _uiState.value.copy(showPromptAsPlaceholder = showPrompt)
+        experimentService.logExposure(Experiment.BLANK_PAGE_VS_PROMPT)
     }
 
     private fun loadThemePreferences() {
@@ -365,9 +379,11 @@ class WriteViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(isNewEntry = false, isSaving = false, newEntrySaved = true)
 
                     // After first entry save, prompt Design Studio if not yet completed
+                    // Experiment 1: skip_design variant suppresses this prompt
+                    val skipDesign = preferenceDao.get("exp_skip_design")?.value == "true"
                     val designDone = preferenceDao.get("design_studio_completed")?.value == "true"
                     val designLegacy = preferenceDao.get("design_completed")?.value == "true"
-                    if (!designDone && !designLegacy) {
+                    if (!skipDesign && !designDone && !designLegacy) {
                         _uiState.value = _uiState.value.copy(showDesignStudioPrompt = true)
                     }
 
@@ -384,9 +400,13 @@ class WriteViewModel @Inject constructor(
                     inAppReviewService.incrementEntryCount()
 
                     // Check streak milestone
+                    // Experiment 4: Streak Celebration — only show overlay in control variant
                     val streak = streakRepository.calculateWritingStreak()
-                    if (isMilestone(streak)) {
+                    if (isMilestone(streak) &&
+                        experimentService.isVariant(Experiment.STREAK_CELEBRATION, "control")
+                    ) {
                         _uiState.value = _uiState.value.copy(showStreakCelebration = streak)
+                        experimentService.logExposure(Experiment.STREAK_CELEBRATION)
                     }
                 } else {
                     entryRepository.update(entry)

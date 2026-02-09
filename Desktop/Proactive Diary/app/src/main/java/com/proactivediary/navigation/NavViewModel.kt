@@ -2,6 +2,8 @@ package com.proactivediary.navigation
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.proactivediary.analytics.Experiment
+import com.proactivediary.analytics.ExperimentService
 import com.proactivediary.data.db.dao.PreferenceDao
 import com.proactivediary.data.db.entities.PreferenceEntity
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,7 +14,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NavViewModel @Inject constructor(
-    private val preferenceDao: PreferenceDao
+    private val preferenceDao: PreferenceDao,
+    private val experimentService: ExperimentService
 ) : ViewModel() {
 
     private val _startDestination = MutableStateFlow<String?>(null)
@@ -48,7 +51,22 @@ class NavViewModel @Inject constructor(
             _startDestination.value = if (typewriterCompleted) {
                 Routes.Main.route
             } else {
-                Routes.Typewriter.route
+                // Experiment 1: First Words — vary the onboarding flow
+                val variant = experimentService.getVariant(Experiment.FIRST_WORDS)
+                experimentService.logExposure(Experiment.FIRST_WORDS)
+                when (variant) {
+                    "straight_to_write" -> {
+                        // Skip everything — mark onboarding as done and go to Main
+                        preferenceDao.insert(PreferenceEntity("first_launch_completed", "true"))
+                        Routes.Main.route
+                    }
+                    "skip_design" -> {
+                        // Show typewriter but skip Design Studio (nav goes straight to Main after)
+                        preferenceDao.insert(PreferenceEntity("exp_skip_design", "true"))
+                        Routes.Typewriter.route
+                    }
+                    else -> Routes.Typewriter.route // control: full flow
+                }
             }
         }
     }

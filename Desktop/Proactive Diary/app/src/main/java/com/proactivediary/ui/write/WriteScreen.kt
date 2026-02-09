@@ -209,6 +209,8 @@ fun WriteScreen(
                 }
 
                 // Writing area with canvas background
+                // Experiment 2: blank_page variant hides the prompt placeholder
+                val placeholderText = if (state.showPromptAsPlaceholder) state.dailyPrompt else ""
                 WriteArea(
                     content = state.content,
                     onContentChanged = { viewModel.onContentChanged(it) },
@@ -218,7 +220,7 @@ fun WriteScreen(
                     horizontalPadding = horizontalPadding,
                     fontSizeSp = state.fontSize,
                     lineHeightMultiplier = lineHeightMultiplier,
-                    placeholderText = state.dailyPrompt,
+                    placeholderText = placeholderText,
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)

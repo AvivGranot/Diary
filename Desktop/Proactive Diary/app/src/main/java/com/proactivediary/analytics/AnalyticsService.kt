@@ -95,6 +95,14 @@ class AnalyticsService @Inject constructor() {
         log("book_exported", bundleOf("year" to year, "entry_count" to entryCount))
     }
 
+    // ─── A/B Testing ───
+    fun logExperimentExposure(experimentKey: String, variant: String) {
+        log("experiment_exposure", bundleOf(
+            "experiment_key" to experimentKey,
+            "variant" to variant
+        ))
+    }
+
     // ─── Helpers ───
     private fun log(event: String, params: Bundle? = null) {
         analytics.logEvent(event, params)

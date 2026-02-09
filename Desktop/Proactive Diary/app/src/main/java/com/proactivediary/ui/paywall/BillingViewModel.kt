@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import com.proactivediary.analytics.AnalyticsService
+import com.proactivediary.analytics.Experiment
+import com.proactivediary.analytics.ExperimentService
 import androidx.lifecycle.viewModelScope
 import com.proactivediary.data.db.dao.PreferenceDao
 import com.proactivediary.data.db.entities.PreferenceEntity
@@ -30,6 +32,7 @@ enum class Plan { TRIAL, MONTHLY, ANNUAL, LIFETIME, EXPIRED }
 @HiltViewModel
 class BillingViewModel @Inject constructor(
     private val analyticsService: AnalyticsService,
+    private val experimentService: ExperimentService,
     private val entryRepository: EntryRepository,
     private val preferenceDao: PreferenceDao,
     @ApplicationContext context: Context
@@ -48,14 +51,32 @@ class BillingViewModel @Inject constructor(
     private val _isFirstPaywallView = MutableStateFlow(true)
     val isFirstPaywallView: StateFlow<Boolean> = _isFirstPaywallView
 
+    /** Experiment 7: Pricing Anchoring — whether to hide the lifetime plan */
+    val hideLifetime: Boolean
+        get() = experimentService.isVariant(Experiment.PRICING_ANCHORING, "hide_lifetime")
+
     companion object {
-        /** Show paywall after this many entries (engagement-gated, not time-gated) */
+        /** Default: show paywall after this many entries (engagement-gated, not time-gated) */
         const val ENTRY_GATE_THRESHOLD = 10
 
         // Preference keys for offline cache
         private const val KEY_CACHED_PLAN = "billing_cached_plan"
         private const val KEY_CACHED_ACTIVE = "billing_cached_active"
     }
+
+    /**
+     * Experiment 3: Paywall Timing — vary the entry gate threshold.
+     * control=10, early=7, late=14
+     */
+    private val entryGateThreshold: Int
+        get() {
+            val variant = experimentService.getVariant(Experiment.PAYWALL_TIMING)
+            return when (variant) {
+                "early" -> 7
+                "late" -> 14
+                else -> ENTRY_GATE_THRESHOLD
+            }
+        }
 
     init {
         // Load cached state first (instant, works offline)
@@ -104,7 +125,7 @@ class BillingViewModel @Inject constructor(
                 val isActive = cachedActive == "true"
                 val entryCount = entryRepository.getTotalEntryCountSync()
                 val totalWords = entryRepository.getTotalWordCountSync()
-                val entriesLeft = if (plan == Plan.TRIAL) (ENTRY_GATE_THRESHOLD - entryCount).coerceAtLeast(0) else 0
+                val entriesLeft = if (plan == Plan.TRIAL) (entryGateThreshold - entryCount).coerceAtLeast(0) else 0
 
                 _subscriptionState.value = SubscriptionState(
                     isActive = isActive,
@@ -146,12 +167,14 @@ class BillingViewModel @Inject constructor(
             return SubscriptionState(isActive = true, plan = plan, trialDaysLeft = 0)
         }
 
-        // Entry-count-gated trial: free until they hit ENTRY_GATE_THRESHOLD entries
+        // Entry-count-gated trial: free until they hit the threshold
+        // Experiment 3: Paywall Timing — threshold varies by variant
+        val threshold = entryGateThreshold
         val entryCount = entryRepository.getTotalEntryCountSync()
         val totalWords = entryRepository.getTotalWordCountSync()
 
-        if (entryCount < ENTRY_GATE_THRESHOLD) {
-            val entriesLeft = ENTRY_GATE_THRESHOLD - entryCount
+        if (entryCount < threshold) {
+            val entriesLeft = threshold - entryCount
             return SubscriptionState(
                 isActive = true,
                 plan = Plan.TRIAL,

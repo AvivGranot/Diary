@@ -12,6 +12,8 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.proactivediary.MainActivity
 import com.proactivediary.R
+import com.proactivediary.analytics.Experiment
+import com.proactivediary.analytics.ExperimentService
 import com.proactivediary.data.repository.StreakRepository
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.CoroutineScope
@@ -53,6 +55,10 @@ class AlarmReceiver : BroadcastReceiver() {
     }
 
     private fun showWritingNotification(context: Context, reminderId: String, label: String) {
+        // Experiment 5: Reminder Tone — vary notification copy
+        val experimentService = getExperimentService(context)
+        val toneVariant = experimentService?.getVariant(Experiment.REMINDER_TONE) ?: "control"
+
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -68,17 +74,57 @@ class AlarmReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = NotificationCompat.Builder(context, NotificationChannels.CHANNEL_WRITING)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Time to write")
-            .setContentText(label)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
-            .build()
+        when (toneVariant) {
+            "silent" -> {
+                // Silent variant: badge-only notification with minimal presence
+                val notification = NotificationCompat.Builder(context, NotificationChannels.CHANNEL_WRITING)
+                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setPriority(NotificationCompat.PRIORITY_LOW)
+                    .setSilent(true)
+                    .setAutoCancel(true)
+                    .setContentIntent(pendingIntent)
+                    .build()
+                val notificationId = reminderId.hashCode() and 0x7FFFFFFF
+                notificationManager.notify(notificationId, notification)
+            }
+            "gentle" -> {
+                val notification = NotificationCompat.Builder(context, NotificationChannels.CHANNEL_WRITING)
+                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setContentTitle("Your diary is here when you're ready")
+                    .setContentText(label)
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setAutoCancel(true)
+                    .setContentIntent(pendingIntent)
+                    .build()
+                val notificationId = reminderId.hashCode() and 0x7FFFFFFF
+                notificationManager.notify(notificationId, notification)
+            }
+            else -> {
+                // Control: original copy
+                val notification = NotificationCompat.Builder(context, NotificationChannels.CHANNEL_WRITING)
+                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setContentTitle("Time to write")
+                    .setContentText(label)
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setAutoCancel(true)
+                    .setContentIntent(pendingIntent)
+                    .build()
+                val notificationId = reminderId.hashCode() and 0x7FFFFFFF
+                notificationManager.notify(notificationId, notification)
+            }
+        }
+    }
 
-        val notificationId = reminderId.hashCode() and 0x7FFFFFFF
-        notificationManager.notify(notificationId, notification)
+    private fun getExperimentService(context: Context): ExperimentService? {
+        return try {
+            val entryPoint = EntryPointAccessors.fromApplication(
+                context.applicationContext,
+                AlarmReceiverEntryPoint::class.java
+            )
+            entryPoint.experimentService()
+        } catch (_: Exception) {
+            null
+        }
     }
 
     private fun showGoalNotification(context: Context, goalId: String, goalTitle: String) {
