@@ -1,5 +1,13 @@
 package com.proactivediary.di
 
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.ktx.analytics
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.ktx.remoteConfig
+import com.proactivediary.analytics.ExperimentOverrideStore
+import com.proactivediary.analytics.ExperimentService
+import com.proactivediary.analytics.FirebaseExperimentService
 import com.proactivediary.data.db.dao.EntryDao
 import com.proactivediary.data.db.dao.GoalCheckInDao
 import com.proactivediary.data.db.dao.GoalDao
@@ -44,4 +52,20 @@ object AppModule {
     @Provides
     @Singleton
     fun provideSearchEngine(): SearchEngine = SearchEngineImpl()
+
+    @Provides
+    @Singleton
+    fun provideFirebaseRemoteConfig(): FirebaseRemoteConfig = Firebase.remoteConfig
+
+    @Provides
+    @Singleton
+    fun provideFirebaseAnalytics(): FirebaseAnalytics = Firebase.analytics
+
+    @Provides
+    @Singleton
+    fun provideExperimentService(
+        remoteConfig: FirebaseRemoteConfig,
+        analytics: FirebaseAnalytics,
+        overrideStore: ExperimentOverrideStore
+    ): ExperimentService = FirebaseExperimentService(remoteConfig, analytics, overrideStore)
 }

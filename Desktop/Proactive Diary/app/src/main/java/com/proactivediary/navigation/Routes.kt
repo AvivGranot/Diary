@@ -19,4 +19,5 @@ sealed class Routes(val route: String) {
         fun createRoute(entryId: String) = "entry/$entryId"
     }
     object YearInReview : Routes("year_in_review")
+    object DebugExperiments : Routes("debug_experiments")
 }

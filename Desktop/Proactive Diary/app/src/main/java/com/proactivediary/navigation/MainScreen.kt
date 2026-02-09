@@ -52,6 +52,8 @@ import com.proactivediary.ui.settings.ReminderManagementScreen
 import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.paywall.PurchaseResult
+import com.proactivediary.ui.debug.DebugExperimentScreen
+import com.proactivediary.ui.debug.DebugExperimentViewModel
 import com.proactivediary.ui.settings.SettingsScreen
 import com.proactivediary.ui.write.WriteScreen
 import kotlinx.coroutines.launch
@@ -277,7 +279,18 @@ fun MainScreen(
                     },
                     onNavigateToYearInReview = {
                         rootNavController.navigate(Routes.YearInReview.route)
+                    },
+                    onNavigateToDebugExperiments = {
+                        innerNavController.navigate(Routes.DebugExperiments.route)
                     }
+                )
+            }
+            composable(Routes.DebugExperiments.route) {
+                val debugViewModel: DebugExperimentViewModel = hiltViewModel()
+                DebugExperimentScreen(
+                    experimentService = debugViewModel.experimentService,
+                    overrideStore = debugViewModel.overrideStore,
+                    onBack = { innerNavController.popBackStack() }
                 )
             }
         }

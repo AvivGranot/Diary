@@ -58,6 +58,7 @@ class AlarmReceiver : BroadcastReceiver() {
         // Experiment 5: Reminder Tone — vary notification copy
         val experimentService = getExperimentService(context)
         val toneVariant = experimentService?.getVariant(Experiment.REMINDER_TONE) ?: "control"
+        val content = buildReminderContent(toneVariant, label)
 
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -74,45 +75,18 @@ class AlarmReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        when (toneVariant) {
-            "silent" -> {
-                // Silent variant: badge-only notification with minimal presence
-                val notification = NotificationCompat.Builder(context, NotificationChannels.CHANNEL_WRITING)
-                    .setSmallIcon(R.drawable.ic_launcher_foreground)
-                    .setPriority(NotificationCompat.PRIORITY_LOW)
-                    .setSilent(true)
-                    .setAutoCancel(true)
-                    .setContentIntent(pendingIntent)
-                    .build()
-                val notificationId = reminderId.hashCode() and 0x7FFFFFFF
-                notificationManager.notify(notificationId, notification)
-            }
-            "gentle" -> {
-                val notification = NotificationCompat.Builder(context, NotificationChannels.CHANNEL_WRITING)
-                    .setSmallIcon(R.drawable.ic_launcher_foreground)
-                    .setContentTitle("Your diary is here when you're ready")
-                    .setContentText(label)
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                    .setAutoCancel(true)
-                    .setContentIntent(pendingIntent)
-                    .build()
-                val notificationId = reminderId.hashCode() and 0x7FFFFFFF
-                notificationManager.notify(notificationId, notification)
-            }
-            else -> {
-                // Control: original copy
-                val notification = NotificationCompat.Builder(context, NotificationChannels.CHANNEL_WRITING)
-                    .setSmallIcon(R.drawable.ic_launcher_foreground)
-                    .setContentTitle("Time to write")
-                    .setContentText(label)
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                    .setAutoCancel(true)
-                    .setContentIntent(pendingIntent)
-                    .build()
-                val notificationId = reminderId.hashCode() and 0x7FFFFFFF
-                notificationManager.notify(notificationId, notification)
-            }
-        }
+        val builder = NotificationCompat.Builder(context, NotificationChannels.CHANNEL_WRITING)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setPriority(content.priority)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+
+        if (content.title != null) builder.setContentTitle(content.title)
+        if (content.body != null) builder.setContentText(content.body)
+        if (content.isSilent) builder.setSilent(true)
+
+        val notificationId = reminderId.hashCode() and 0x7FFFFFFF
+        notificationManager.notify(notificationId, builder.build())
     }
 
     private fun getExperimentService(context: Context): ExperimentService? {

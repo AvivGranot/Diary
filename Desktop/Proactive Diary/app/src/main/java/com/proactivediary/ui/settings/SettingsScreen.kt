@@ -53,6 +53,7 @@ import com.proactivediary.ui.auth.AuthDialog
 import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.paywall.Plan
+import com.proactivediary.BuildConfig
 import com.proactivediary.ui.theme.CormorantGaramond
 
 @Composable
@@ -62,6 +63,7 @@ fun SettingsScreen(
     onNavigateToReminders: () -> Unit = {},
     onNavigateToTypewriter: () -> Unit = {},
     onNavigateToYearInReview: () -> Unit = {},
+    onNavigateToDebugExperiments: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
     billingViewModel: BillingViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel()
@@ -412,6 +414,21 @@ fun SettingsScreen(
                     Text(
                         text = "Version 1.0.0",
                         style = TextStyle(fontSize = 13.sp, color = MaterialTheme.colorScheme.secondary)
+                    )
+                }
+            }
+
+            // DEBUG section — only visible in debug builds
+            if (BuildConfig.DEBUG) {
+                Spacer(Modifier.height(24.dp))
+
+                SectionHeader("DEBUG")
+                Spacer(Modifier.height(8.dp))
+                SettingsCard {
+                    SettingsRow(
+                        label = "Experiment Overrides",
+                        value = "A/B tests",
+                        onClick = onNavigateToDebugExperiments
                     )
                 }
             }
