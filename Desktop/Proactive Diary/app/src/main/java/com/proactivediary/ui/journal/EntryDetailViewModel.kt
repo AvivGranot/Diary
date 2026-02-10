@@ -53,17 +53,17 @@ class EntryDetailViewModel @Inject constructor(
     private val gson = Gson()
     private val entryId: String = savedStateHandle.get<String>("entryId") ?: ""
 
-    init {
-        observeThemePreferences()
-        loadEntry()
-    }
-
     private val themeKeys = listOf(
         "diary_color", "diary_form", "diary_canvas", "diary_details",
         "diary_mark_text", "diary_mark_position", "diary_mark_font", "font_size"
     )
 
     private val defaultFeatures = listOf("auto_save", "word_count", "date_header", "daily_quote")
+
+    init {
+        observeThemePreferences()
+        loadEntry()
+    }
 
     private fun observeThemePreferences() {
         viewModelScope.launch {

@@ -127,6 +127,14 @@ class WriteViewModel @Inject constructor(
 
     private val entryIdArg: String? = savedStateHandle.get<String>("entryId")
 
+    private val themeKeys = listOf(
+        "diary_color", "diary_form", "diary_texture", "diary_canvas",
+        "diary_details", "diary_mark_text", "diary_mark_position",
+        "diary_mark_font", "font_size"
+    )
+
+    private val defaultFeatures = listOf("auto_save", "word_count", "date_header", "daily_quote")
+
     init {
         observeThemePreferences()
         loadOrCreateEntry(entryIdArg)
@@ -138,14 +146,6 @@ class WriteViewModel @Inject constructor(
         val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.getDefault())
         _uiState.value = _uiState.value.copy(dateHeader = today.format(formatter))
     }
-
-    private val themeKeys = listOf(
-        "diary_color", "diary_form", "diary_texture", "diary_canvas",
-        "diary_details", "diary_mark_text", "diary_mark_position",
-        "diary_mark_font", "font_size"
-    )
-
-    private val defaultFeatures = listOf("auto_save", "word_count", "date_header", "daily_quote")
 
     private fun observeThemePreferences() {
         viewModelScope.launch {

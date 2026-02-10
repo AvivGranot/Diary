@@ -38,7 +38,6 @@ fun StickyFooter(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(72.dp)
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
@@ -50,8 +49,8 @@ fun StickyFooter(
                     endY = Float.POSITIVE_INFINITY
                 )
             )
-            .padding(horizontal = 32.dp, vertical = 12.dp)
             .navigationBarsPadding()
+            .padding(horizontal = 32.dp, vertical = 12.dp)
     ) {
         Box(
             modifier = Modifier
