@@ -20,7 +20,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.material3.Text
 import com.proactivediary.domain.model.Mood
 
 private val InkColor = Color(0xFF313131)
@@ -33,14 +37,14 @@ fun MoodSelector(
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Mood.entries.forEach { mood ->
             val isSelected = selectedMood == mood
 
             val circleSize by animateDpAsState(
-                targetValue = if (isSelected) 18.dp else 12.dp,
+                targetValue = if (isSelected) 20.dp else 10.dp,
                 animationSpec = tween(durationMillis = 200),
                 label = "moodSize"
             )
@@ -53,7 +57,7 @@ fun MoodSelector(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
                     ) {
-                        onMoodSelected(mood)
+                        onMoodSelected(if (isSelected) null else mood)
                     },
                 contentAlignment = Alignment.Center
             ) {
@@ -62,14 +66,14 @@ fun MoodSelector(
                         .size(circleSize)
                         .clip(CircleShape)
                         .background(
-                            color = if (isSelected) mood.color else mood.color.copy(alpha = 0.25f),
+                            color = if (isSelected) mood.color else mood.color.copy(alpha = 0.3f),
                             shape = CircleShape
                         )
                         .then(
                             if (isSelected) {
                                 Modifier.border(
-                                    width = 1.5.dp,
-                                    color = InkColor.copy(alpha = 0.4f),
+                                    width = 2.dp,
+                                    color = InkColor.copy(alpha = 0.5f),
                                     shape = CircleShape
                                 )
                             } else {
@@ -78,6 +82,18 @@ fun MoodSelector(
                         )
                 )
             }
+        }
+
+        // Show selected mood label
+        if (selectedMood != null) {
+            Text(
+                text = selectedMood.label,
+                style = TextStyle(
+                    fontFamily = FontFamily.Default,
+                    fontSize = 11.sp,
+                    color = InkColor.copy(alpha = 0.5f)
+                )
+            )
         }
     }
 }

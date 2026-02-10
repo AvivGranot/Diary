@@ -38,9 +38,11 @@ fun WriteToolbar(
     wordCount: Int,
     showWordCount: Boolean,
     colorKey: String,
+    textureKey: String = "paper",
     modifier: Modifier = Modifier
 ) {
-    val bgColor = DiaryThemeConfig.colorForKey(colorKey)
+    val bgColor = DiaryThemeConfig.textureColorForKey(textureKey)
+    val secondaryColor = DiaryThemeConfig.textureSecondaryTextColor(textureKey)
 
     Box(
         modifier = modifier
@@ -53,7 +55,7 @@ fun WriteToolbar(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(0.5.dp)
-                .background(Color(0xFF585858).copy(alpha = 0.15f))
+                .background(secondaryColor.copy(alpha = 0.15f))
                 .align(Alignment.TopCenter)
         )
 
@@ -78,7 +80,7 @@ fun WriteToolbar(
                     style = TextStyle(
                         fontFamily = FontFamily.Default,
                         fontSize = 12.sp,
-                        color = Color(0xFF585858)
+                        color = secondaryColor
                     )
                 )
             } else {

@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -34,13 +35,15 @@ import com.proactivediary.ui.theme.DiaryColors
 private data class FormOption(
     val key: String,
     val title: String,
-    val description: String
+    val description: String,
+    val lineSpacing: Int = 8, // dp between preview lines
+    val lineCount: Int = 3
 )
 
 private val formOptions = listOf(
-    FormOption("focused", "Focused", "Single entry with generous margins"),
-    FormOption("spacious", "Spacious", "Multiple entries with breathing room"),
-    FormOption("compact", "Compact", "Dense layout for prolific writers")
+    FormOption("focused", "Focused", "Single entry with generous margins", lineSpacing = 12, lineCount = 3),
+    FormOption("spacious", "Spacious", "Multiple entries with breathing room", lineSpacing = 8, lineCount = 4),
+    FormOption("compact", "Compact", "Dense layout for prolific writers", lineSpacing = 4, lineCount = 5)
 )
 
 @Composable
@@ -125,10 +128,12 @@ fun FormSection(
                         }
 
                         Column(
-                            modifier = Modifier.padding(
-                                start = if (isSelected) 16.dp else 16.dp,
-                                end = 16.dp
-                            )
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(
+                                    start = 16.dp,
+                                    end = 8.dp
+                                )
                         ) {
                             Text(
                                 text = option.title,
@@ -142,6 +147,27 @@ fun FormSection(
                                 fontSize = 12.sp,
                                 color = DiaryColors.Pencil
                             )
+                        }
+
+                        // Mini line preview showing spacing
+                        Column(
+                            modifier = Modifier
+                                .padding(end = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(option.lineSpacing.dp)
+                        ) {
+                            val widths = listOf(48, 40, 32, 28, 24)
+                            for (i in 0 until option.lineCount) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(widths.getOrElse(i) { 24 }.dp)
+                                        .height(2.dp)
+                                        .background(
+                                            if (isSelected) DiaryColors.Ink.copy(alpha = 0.3f)
+                                            else DiaryColors.Pencil.copy(alpha = 0.15f),
+                                            RoundedCornerShape(1.dp)
+                                        )
+                                )
+                            }
                         }
                     }
                 }

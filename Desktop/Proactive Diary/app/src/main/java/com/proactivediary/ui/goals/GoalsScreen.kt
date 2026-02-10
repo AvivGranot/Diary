@@ -83,6 +83,19 @@ fun GoalsScreen(
                         color = pencilColor,
                         textAlign = TextAlign.Center
                     )
+                    Spacer(Modifier.height(24.dp))
+                    Text(
+                        text = "+ Add new goal",
+                        style = TextStyle(
+                            fontFamily = CormorantGaramond,
+                            fontSize = 16.sp,
+                            fontStyle = FontStyle.Italic
+                        ),
+                        color = inkColor,
+                        modifier = Modifier
+                            .clickable { showAddDialog = true }
+                            .padding(vertical = 12.dp)
+                    )
                 }
             }
         } else {
@@ -101,21 +114,26 @@ fun GoalsScreen(
                     )
                 }
             }
-        }
 
-        // Add new goal link
-        Text(
-            text = "+ Add new goal",
-            style = TextStyle(
-                fontFamily = CormorantGaramond,
-                fontSize = 14.sp,
-                fontStyle = FontStyle.Italic
-            ),
-            color = inkColor,
-            modifier = Modifier
-                .clickable { showAddDialog = true }
-                .padding(vertical = 12.dp)
-        )
+            // Add new goal link — centered below list
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "+ Add new goal",
+                    style = TextStyle(
+                        fontFamily = CormorantGaramond,
+                        fontSize = 14.sp,
+                        fontStyle = FontStyle.Italic
+                    ),
+                    color = inkColor,
+                    modifier = Modifier
+                        .clickable { showAddDialog = true }
+                        .padding(vertical = 12.dp)
+                )
+            }
+        }
     }
 
     // Long-press action sheet

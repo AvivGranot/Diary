@@ -262,16 +262,12 @@ fun MainScreen(
                     },
                     onNavigateToGoals = {
                         innerNavController.navigate(Routes.Goals.route) {
-                            popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
                             launchSingleTop = true
-                            restoreState = true
                         }
                     },
                     onNavigateToReminders = {
                         innerNavController.navigate(Routes.Reminders.route) {
-                            popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
                             launchSingleTop = true
-                            restoreState = true
                         }
                     },
                     onNavigateToTypewriter = {

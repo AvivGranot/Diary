@@ -128,6 +128,10 @@ class SettingsViewModel @Inject constructor(
     fun exportJson() {
         viewModelScope.launch {
             val entries = withContext(Dispatchers.IO) { entryDao.getAllSync() }
+            if (entries.isEmpty()) {
+                _exportMessage.value = "Nothing to export yet. Write your first entry!"
+                return@launch
+            }
             val gson = Gson()
             val exportEntries = entries.map { entry ->
                 val tagsType = object : TypeToken<List<String>>() {}.type
@@ -155,6 +159,10 @@ class SettingsViewModel @Inject constructor(
     fun exportText() {
         viewModelScope.launch {
             val entries = withContext(Dispatchers.IO) { entryDao.getAllSync() }
+            if (entries.isEmpty()) {
+                _exportMessage.value = "Nothing to export yet. Write your first entry!"
+                return@launch
+            }
             val dateFormat = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.US)
             val gson = Gson()
             val tagsType = object : TypeToken<List<String>>() {}.type
@@ -201,7 +209,7 @@ class SettingsViewModel @Inject constructor(
                         os.write(content.toByteArray())
                     }
                 }
-                _exportMessage.value = "Writing exported to Downloads"
+                _exportMessage.value = "Exported to Downloads/$filename"
             } catch (e: Exception) {
                 _exportMessage.value = "Export failed: ${e.message}"
             }

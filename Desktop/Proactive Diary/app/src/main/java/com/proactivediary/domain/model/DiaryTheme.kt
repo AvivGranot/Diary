@@ -33,6 +33,29 @@ data class DiaryThemeConfig(
             }
         }
 
+        fun textureColorForKey(textureKey: String): Color {
+            return when (textureKey) {
+                "paper" -> Color(0xFFF3EEE7)
+                "parchment" -> Color(0xFFF0E6D0)
+                "linen" -> Color(0xFFEDE8E0)
+                "smooth" -> Color(0xFFFAF9F5)
+                "dark" -> Color(0xFF2A2928)
+                else -> Color(0xFFF3EEE7)
+            }
+        }
+
+        fun isTextureColorDark(textureKey: String): Boolean {
+            return textureKey == "dark"
+        }
+
+        fun textureTextColor(textureKey: String): Color {
+            return if (isTextureColorDark(textureKey)) Color(0xFFE8E7E5) else Color(0xFF313131)
+        }
+
+        fun textureSecondaryTextColor(textureKey: String): Color {
+            return if (isTextureColorDark(textureKey)) Color(0xFFA0A09E) else Color(0xFF585858)
+        }
+
         fun isDarkColor(key: String): Boolean {
             return key in listOf("midnight", "charcoal", "wine_red", "forest", "ocean")
         }

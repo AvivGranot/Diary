@@ -363,8 +363,8 @@ fun SettingsScreen(
                     )
                 } else {
                     SettingsRow(
-                        label = "Sign In",
-                        value = "Optional",
+                        label = "Create Account / Sign In",
+                        value = "Sync subscription",
                         onClick = { showAuthDialog = true }
                     )
                 }
@@ -451,10 +451,54 @@ fun SettingsScreen(
                 )
             },
             text = {
-                Text(
-                    text = "A private daily writing practice.\n\nAll your data stays on this device. We never collect, transmit, or analyze what you write. Your words are yours alone.\n\nThe only network connection this app makes is to Google Play for subscription management. Nothing you write ever leaves your device.",
-                    style = TextStyle(fontSize = 13.sp, color = MaterialTheme.colorScheme.secondary)
-                )
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                ) {
+                    val sectionStyle = TextStyle(fontSize = 13.sp, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.onBackground)
+                    val bodyStyle = TextStyle(fontSize = 13.sp, color = MaterialTheme.colorScheme.secondary)
+
+                    Text("A private daily writing practice.", style = bodyStyle)
+                    Spacer(Modifier.height(12.dp))
+
+                    Text("Data Storage", style = sectionStyle)
+                    Spacer(Modifier.height(4.dp))
+                    Text("All your diary entries, goals, and settings are stored locally on your device. We never collect, transmit, or analyze what you write. Your words are yours alone.", style = bodyStyle)
+                    Spacer(Modifier.height(12.dp))
+
+                    Text("Network Connections", style = sectionStyle)
+                    Spacer(Modifier.height(4.dp))
+                    Text("The only network connections this app makes are to Google Play for subscription management and to Firebase for optional account authentication. Nothing you write ever leaves your device.", style = bodyStyle)
+                    Spacer(Modifier.height(12.dp))
+
+                    Text("Personal Information", style = sectionStyle)
+                    Spacer(Modifier.height(4.dp))
+                    Text("If you choose to create an account, we store only your email address for subscription management. This is optional and not required to use the app.", style = bodyStyle)
+                    Spacer(Modifier.height(12.dp))
+
+                    Text("Data Retention & Deletion", style = sectionStyle)
+                    Spacer(Modifier.height(4.dp))
+                    Text("Your data persists until you delete it. Use Settings > Delete All Data to permanently erase everything. Uninstalling the app also removes all local data.", style = bodyStyle)
+                    Spacer(Modifier.height(12.dp))
+
+                    Text("Third-Party Services", style = sectionStyle)
+                    Spacer(Modifier.height(4.dp))
+                    Text("Google Play Billing: subscription management.\nFirebase Auth: optional account sign-in.\nNo analytics, advertising, or tracking SDKs are used.", style = bodyStyle)
+                    Spacer(Modifier.height(12.dp))
+
+                    Text("Children", style = sectionStyle)
+                    Spacer(Modifier.height(4.dp))
+                    Text("This app is not directed at children under 13. We do not knowingly collect data from children.", style = bodyStyle)
+                    Spacer(Modifier.height(12.dp))
+
+                    Text("Your Rights", style = sectionStyle)
+                    Spacer(Modifier.height(4.dp))
+                    Text("You have full control over your data. You can export your writing at any time via Settings > Export Writing, and delete all data at any time.", style = bodyStyle)
+                    Spacer(Modifier.height(12.dp))
+
+                    Text("Contact", style = sectionStyle)
+                    Spacer(Modifier.height(4.dp))
+                    Text("Questions about this policy? Contact us at privacy@proactivediary.com", style = bodyStyle)
+                }
             },
             confirmButton = {
                 TextButton(onClick = { showPrivacyPolicy = false }) {

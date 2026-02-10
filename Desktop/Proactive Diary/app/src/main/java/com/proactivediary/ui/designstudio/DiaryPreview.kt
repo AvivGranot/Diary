@@ -59,8 +59,10 @@ fun DiaryPreview(
             val color = DiaryThemeConfig.colorForKey(colorKey)
             val txtColor = DiaryThemeConfig.textColorFor(colorKey)
             val secColor = DiaryThemeConfig.secondaryTextColorFor(colorKey)
+            val pageColor = DiaryThemeConfig.textureColorForKey(texture)
+            val pageTextColor = DiaryThemeConfig.textureSecondaryTextColor(texture)
 
-            // Diary book shape
+            // Diary book shape (cover = soul color)
             Box(
                 modifier = Modifier
                     .width(160.dp)
@@ -72,33 +74,50 @@ fun DiaryPreview(
                         spotColor = DiaryColors.Shadow
                     )
                     .background(color, RoundedCornerShape(4.dp))
-                    .padding(16.dp),
+                    .padding(8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                // Inner page (texture/touch color)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp)
+                        .background(pageColor, RoundedCornerShape(2.dp))
+                        .padding(12.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    // Diary title
-                    Text(
-                        text = "My Diary",
-                        fontFamily = CormorantGaramond,
-                        fontSize = 18.sp,
-                        color = txtColor,
-                        textAlign = TextAlign.Center
-                    )
-
-                    // Mark text if present
-                    if (state.markText.isNotBlank()) {
-                        Spacer(modifier = Modifier.height(12.dp))
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        // Diary title
                         Text(
-                            text = state.markText,
-                            fontFamily = if (state.markFont == "serif") CormorantGaramond else null,
-                            fontSize = 9.sp,
-                            fontStyle = FontStyle.Italic,
-                            color = secColor,
+                            text = "My Diary",
+                            fontFamily = CormorantGaramond,
+                            fontSize = 16.sp,
+                            color = DiaryThemeConfig.textureTextColor(texture),
                             textAlign = TextAlign.Center
                         )
+
+                        // Mini line preview
+                        Spacer(modifier = Modifier.height(10.dp))
+                        DiaryLinePreview(
+                            canvas = canvas,
+                            lineColor = pageTextColor.copy(alpha = 0.2f)
+                        )
+
+                        // Mark text if present
+                        if (state.markText.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = state.markText,
+                                fontFamily = if (state.markFont == "serif") CormorantGaramond else null,
+                                fontSize = 8.sp,
+                                fontStyle = FontStyle.Italic,
+                                color = pageTextColor.copy(alpha = 0.6f),
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                 }
             }

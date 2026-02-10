@@ -71,6 +71,9 @@ fun WriteScreen(
         contactUri?.let { uri ->
             resolveContact(context, uri)?.let { contact ->
                 viewModel.onContactTagged(contact)
+                // Auto-open share sheet after tagging
+                shareEntryWithContact(context, viewModel.uiState.value, contact)
+                viewModel.logContactShared(contact.email != null, contact.phone != null)
             }
         }
     }
@@ -96,9 +99,11 @@ fun WriteScreen(
 
     if (!state.isLoaded) return
 
+    // Soul = outer chrome color, Touch/Texture = writing surface color
     val bgColor = DiaryThemeConfig.colorForKey(state.colorKey)
-    val textColor = DiaryThemeConfig.textColorFor(state.colorKey)
-    val secondaryTextColor = DiaryThemeConfig.secondaryTextColorFor(state.colorKey)
+    val surfaceColor = DiaryThemeConfig.textureColorForKey(state.texture)
+    val textColor = DiaryThemeConfig.textureTextColor(state.texture)
+    val secondaryTextColor = DiaryThemeConfig.textureSecondaryTextColor(state.texture)
 
     val showDateHeader = viewModel.hasFeature("date_header")
     val showAutoSave = viewModel.hasFeature("auto_save")
@@ -121,7 +126,7 @@ fun WriteScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(bgColor)
+            .background(surfaceColor)
             .imePadding()
     ) {
         Column(
@@ -278,7 +283,8 @@ fun WriteScreen(
                 onMoodSelected = { viewModel.onMoodSelected(it) },
                 wordCount = state.wordCount,
                 showWordCount = showWordCount,
-                colorKey = state.colorKey
+                colorKey = state.colorKey,
+                textureKey = state.texture
             )
         }
 
