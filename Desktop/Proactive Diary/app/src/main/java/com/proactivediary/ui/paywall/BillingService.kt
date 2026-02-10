@@ -48,6 +48,7 @@ class BillingService(private val context: Context) : PurchasesUpdatedListener {
             .setListener(this)
             .enablePendingPurchases(
                 PendingPurchasesParams.newBuilder()
+                    .enableOneTimeProducts()
                     .build()
             )
             .build()
