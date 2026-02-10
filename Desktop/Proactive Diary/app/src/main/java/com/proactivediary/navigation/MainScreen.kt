@@ -189,26 +189,10 @@ fun MainScreen(
                                 }
                             },
                             label = {
-                                if (item.route == WRITE_TAB && streakEnabled && currentStreak > 0) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(3.dp)
-                                    ) {
-                                        Text(
-                                            text = item.label,
-                                            style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp)
-                                        )
-                                        Text(
-                                            text = "Day $currentStreak",
-                                            style = TextStyle(fontSize = 10.sp)
-                                        )
-                                    }
-                                } else {
-                                    Text(
-                                        text = item.label,
-                                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp)
-                                    )
-                                }
+                                Text(
+                                    text = item.label,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp)
+                                )
                             },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = MaterialTheme.colorScheme.onSurface,

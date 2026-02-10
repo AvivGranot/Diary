@@ -246,9 +246,22 @@ class WriteViewModel @Inject constructor(
         viewModelScope.launch {
             _contentFlow
                 .debounce(5000)
-                .filter { it.isNotBlank() }
                 .collect { text ->
-                    saveEntry(text)
+                    val state = _uiState.value
+                    if (text.isBlank() && state.title.isBlank()) {
+                        // User cleared everything — delete entry if previously saved
+                        if (!state.isNewEntry) {
+                            try {
+                                withContext(Dispatchers.IO) {
+                                    entryRepository.delete(state.entryId)
+                                }
+                            } catch (_: Exception) {}
+                            val newId = UUID.randomUUID().toString()
+                            _uiState.update { it.copy(entryId = newId, isNewEntry = true) }
+                        }
+                    } else {
+                        saveEntry(text)
+                    }
                 }
         }
     }
@@ -528,5 +541,22 @@ class WriteViewModel @Inject constructor(
 
     fun clearNewEntrySaved() {
         _uiState.value = _uiState.value.copy(newEntrySaved = false)
+    }
+
+    /** Re-check if current entry still exists (e.g. after returning from journal detail delete). */
+    fun refreshEntry() {
+        viewModelScope.launch {
+            val state = _uiState.value
+            if (!state.isLoaded) return@launch
+            if (!state.isNewEntry && state.entryId.isNotBlank()) {
+                val exists = withContext(Dispatchers.IO) {
+                    entryRepository.getByIdSync(state.entryId)
+                }
+                if (exists == null) {
+                    _contentFlow.value = ""
+                    loadOrCreateEntry(null)
+                }
+            }
+        }
     }
 }
