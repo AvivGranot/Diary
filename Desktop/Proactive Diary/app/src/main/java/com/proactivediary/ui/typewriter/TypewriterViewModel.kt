@@ -114,10 +114,18 @@ class TypewriterViewModel @Inject constructor(
             isFirstLaunch = isFirst,
             isLoaded = true
         )
-        if (isFirst) {
-            startFirstLaunchSequence()
-        } else {
-            startReturnSequence()
+        // Animation is started from onScreenVisible() once Compose is actually rendering
+    }
+
+    fun onScreenVisible() {
+        if (_uiState.value.state != TypewriterState.IDLE) return // already started
+        viewModelScope.launch {
+            val isFirst = _uiState.value.isFirstLaunch
+            if (isFirst) {
+                startFirstLaunchSequence()
+            } else {
+                startReturnSequence()
+            }
         }
     }
 

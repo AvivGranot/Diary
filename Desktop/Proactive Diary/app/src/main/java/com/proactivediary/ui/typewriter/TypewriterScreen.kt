@@ -103,6 +103,11 @@ fun TypewriterScreen(
 
     if (!uiState.isLoaded) return
 
+    // Start animation only after the screen is actually visible and composing
+    LaunchedEffect(Unit) {
+        viewModel.onScreenVisible()
+    }
+
     // Cursor blink: step function, 530ms — only active during TYPING state
     val cursorBlinkOn by rememberCursorBlinkState(
         intervalMs = 530L,
