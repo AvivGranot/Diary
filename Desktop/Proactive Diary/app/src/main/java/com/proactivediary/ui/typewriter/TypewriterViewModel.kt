@@ -250,18 +250,8 @@ class TypewriterViewModel @Inject constructor(
         if (isLapsed) {
             startWelcomeBackSequence()
         } else {
-            // Show the full quote instantly and wait for user tap
-            _uiState.value = _uiState.value.copy(
-                state = TypewriterState.READY,
-                visibleCharCount = QUOTE.length,
-                cursorVisible = false,
-                cursorAlpha = 0f,
-                attributionAlpha = 1f,
-                ctaAlpha = 1f,
-                ctaTranslateY = 0f,
-                skipVisible = false,
-                practiceDayAlpha = 1f
-            )
+            // Play typewriter animation on every launch
+            startFirstLaunchSequence()
         }
     }
 
