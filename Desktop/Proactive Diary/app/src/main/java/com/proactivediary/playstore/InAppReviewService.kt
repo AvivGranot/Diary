@@ -31,11 +31,11 @@ class InAppReviewService @Inject constructor(
         request.addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 manager.launchReviewFlow(activity, task.result)
+                // Only reset counters after successfully launching the review flow
+                preferenceDao.insertSync(PreferenceEntity(KEY_ENTRIES_SINCE_REVIEW, "0"))
+                preferenceDao.insertSync(PreferenceEntity(KEY_LAST_REVIEW_PROMPT, System.currentTimeMillis().toString()))
             }
         }
-
-        preferenceDao.insert(PreferenceEntity(KEY_ENTRIES_SINCE_REVIEW, "0"))
-        preferenceDao.insert(PreferenceEntity(KEY_LAST_REVIEW_PROMPT, System.currentTimeMillis().toString()))
     }
 
     suspend fun incrementEntryCount() {

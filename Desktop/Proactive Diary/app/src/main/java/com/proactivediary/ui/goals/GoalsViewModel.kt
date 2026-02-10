@@ -120,20 +120,25 @@ class GoalsViewModel @Inject constructor(
         val checkIns = goalRepository.getCompletedCheckIns(goal.id)
         val todayCheckIn = goalRepository.getCheckInForDate(goal.id, todayStr)
 
+        val freq = GoalFrequency.fromString(goal.frequency)
         return GoalUiState(
             id = goal.id,
             title = goal.title,
-            frequency = GoalFrequency.fromString(goal.frequency),
+            frequency = freq,
             reminderTime = goal.reminderTime,
             reminderDays = goal.reminderDays,
             progressPercent = calculateProgress(goal, checkIns, today),
-            streak = calculateStreak(checkIns, today),
+            streak = calculateStreak(checkIns, today, freq),
             checkedInToday = todayCheckIn != null
         )
     }
 
     companion object {
-        fun calculateStreak(checkIns: List<GoalCheckInEntity>, today: LocalDate = LocalDate.now()): Int {
+        fun calculateStreak(
+            checkIns: List<GoalCheckInEntity>,
+            today: LocalDate = LocalDate.now(),
+            frequency: GoalFrequency = GoalFrequency.DAILY
+        ): Int {
             val completedDates = checkIns
                 .filter { it.completed }
                 .mapNotNull { runCatching { LocalDate.parse(it.date) }.getOrNull() }
@@ -141,15 +146,59 @@ class GoalsViewModel @Inject constructor(
                 .toList()
 
             if (completedDates.isEmpty()) return 0
-            if (completedDates.first() != today && completedDates.first() != today.minusDays(1)) return 0
 
-            var streak = 1
-            for (i in 0 until completedDates.size - 1) {
-                if (completedDates[i].minusDays(1) == completedDates[i + 1]) {
-                    streak++
-                } else break
+            return when (frequency) {
+                GoalFrequency.DAILY -> {
+                    if (completedDates.first() != today && completedDates.first() != today.minusDays(1)) return 0
+                    var streak = 1
+                    for (i in 0 until completedDates.size - 1) {
+                        if (completedDates[i].minusDays(1) == completedDates[i + 1]) {
+                            streak++
+                        } else break
+                    }
+                    streak
+                }
+                GoalFrequency.WEEKLY -> {
+                    // Count consecutive weeks with at least one check-in
+                    val weeksWithCheckIn = completedDates
+                        .map { it.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR) to it.year }
+                        .toSortedSet(compareByDescending<Pair<Int, Int>> { it.second }.thenByDescending { it.first })
+                        .toList()
+                    if (weeksWithCheckIn.isEmpty()) return 0
+                    val currentWeek = today.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR) to today.year
+                    val lastWeek = today.minusWeeks(1).let {
+                        it.get(java.time.temporal.IsoFields.WEEK_OF_WEEK_BASED_YEAR) to it.year
+                    }
+                    if (weeksWithCheckIn.first() != currentWeek && weeksWithCheckIn.first() != lastWeek) return 0
+                    var streak = 1
+                    for (i in 0 until weeksWithCheckIn.size - 1) {
+                        val (w1, y1) = weeksWithCheckIn[i]
+                        val (w2, y2) = weeksWithCheckIn[i + 1]
+                        // Check if they are consecutive weeks
+                        if (y1 == y2 && w1 - w2 == 1 || (w1 == 1 && y1 - y2 == 1)) {
+                            streak++
+                        } else break
+                    }
+                    streak
+                }
+                GoalFrequency.MONTHLY -> {
+                    val monthsWithCheckIn = completedDates
+                        .map { YearMonth.from(it) }
+                        .toSortedSet(compareByDescending { it })
+                        .toList()
+                    if (monthsWithCheckIn.isEmpty()) return 0
+                    val currentMonth = YearMonth.from(today)
+                    val lastMonth = currentMonth.minusMonths(1)
+                    if (monthsWithCheckIn.first() != currentMonth && monthsWithCheckIn.first() != lastMonth) return 0
+                    var streak = 1
+                    for (i in 0 until monthsWithCheckIn.size - 1) {
+                        if (monthsWithCheckIn[i].minusMonths(1) == monthsWithCheckIn[i + 1]) {
+                            streak++
+                        } else break
+                    }
+                    streak
+                }
             }
-            return streak
         }
 
         fun calculateProgress(
@@ -178,7 +227,7 @@ class GoalsViewModel @Inject constructor(
                     val weeksElapsed = ((ChronoUnit.DAYS.between(firstOfMonth, today) / 7) + 1).toInt()
                     val weeksWithCheckIn = completedDates
                         .filter { YearMonth.from(it) == month }
-                        .map { ChronoUnit.WEEKS.between(firstOfMonth, it) }
+                        .map { (ChronoUnit.DAYS.between(firstOfMonth, it) / 7).toInt() }
                         .toSet()
                         .size
                     if (weeksElapsed == 0) 0

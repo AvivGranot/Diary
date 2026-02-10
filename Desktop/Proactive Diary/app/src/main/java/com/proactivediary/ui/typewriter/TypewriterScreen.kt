@@ -34,7 +34,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -56,7 +58,8 @@ import com.proactivediary.ui.theme.DiaryColors
 
 @Composable
 fun TypewriterScreen(
-    onNavigateForward: () -> Unit,
+    onNavigateToDesignStudio: () -> Unit,
+    onNavigateToMain: () -> Unit,
     viewModel: TypewriterViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -82,10 +85,16 @@ fun TypewriterScreen(
         }
     }
 
-    // Navigate when fade-out completes
+    // Navigate when fade-out completes — guard against double-fire during transition
+    var hasNavigated by remember { mutableStateOf(false) }
     LaunchedEffect(uiState.screenAlpha, uiState.isNavigating) {
-        if (viewModel.isNavigationComplete()) {
-            onNavigateForward()
+        if (!hasNavigated && viewModel.isNavigationComplete()) {
+            hasNavigated = true
+            if (uiState.isFirstLaunch) {
+                onNavigateToDesignStudio()
+            } else {
+                onNavigateToMain()
+            }
         }
     }
 

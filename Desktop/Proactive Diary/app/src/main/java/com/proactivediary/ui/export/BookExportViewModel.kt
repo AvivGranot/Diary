@@ -124,7 +124,7 @@ class BookExportViewModel @Inject constructor(
                     preferenceDao.get("diary_color")?.value ?: "cream"
                 }
                 val userName = withContext(Dispatchers.IO) {
-                    preferenceDao.get("mark_text")?.value ?: ""
+                    preferenceDao.get("diary_mark_text")?.value ?: ""
                 }
 
                 val config = BookConfig(

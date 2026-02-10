@@ -1,9 +1,12 @@
 package com.proactivediary
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
 import com.proactivediary.analytics.AnalyticsService
@@ -15,6 +18,7 @@ import com.proactivediary.ui.theme.ProactiveDiaryTheme
 
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -35,6 +39,7 @@ class MainActivity : ComponentActivity() {
     lateinit var entryRepository: EntryRepository
 
     private var sessionStartMs = 0L
+    private val _deepLinkDestination = MutableStateFlow<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -42,13 +47,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         sessionStartMs = System.currentTimeMillis()
 
-        val deepLinkDestination = intent?.getStringExtra("destination")
+        handleDeepLink(intent)
 
         analyticsService.logAppOpened()
         inAppUpdateService.checkForUpdate(this)
-        if (deepLinkDestination != null) {
-            analyticsService.logNotificationTapped(deepLinkDestination)
-        }
 
         // Log enriched session start with engagement context
         lifecycleScope.launch {
@@ -69,10 +71,32 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
+            val deepLink by _deepLinkDestination.collectAsState()
             ProactiveDiaryTheme {
-                ProactiveDiaryNavHost(deepLinkDestination = deepLinkDestination)
+                ProactiveDiaryNavHost(
+                    deepLinkDestination = deepLink,
+                    onDeepLinkConsumed = { _deepLinkDestination.value = null }
+                )
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleDeepLink(intent)
+    }
+
+    private fun handleDeepLink(intent: Intent?) {
+        val destination = intent?.getStringExtra("destination")
+        if (destination != null) {
+            analyticsService.logNotificationTapped(destination)
+            _deepLinkDestination.value = destination
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        sessionStartMs = System.currentTimeMillis()
     }
 
     override fun onStop() {
@@ -80,6 +104,7 @@ class MainActivity : ComponentActivity() {
         if (sessionStartMs > 0) {
             val durationSec = (System.currentTimeMillis() - sessionStartMs) / 1000
             analyticsService.logSessionEnd(durationSec, screensViewed = 0)
+            sessionStartMs = 0L
         }
     }
 }

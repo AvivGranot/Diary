@@ -95,8 +95,16 @@ class EntryDetailViewModel @Inject constructor(
     }
 
     private fun loadEntry() {
+        if (entryId.isBlank()) {
+            _uiState.value = _uiState.value.copy(isLoaded = true, isDeleted = true)
+            return
+        }
         viewModelScope.launch {
-            val entry = entryRepository.getByIdSync(entryId) ?: return@launch
+            val entry = entryRepository.getByIdSync(entryId)
+            if (entry == null) {
+                _uiState.value = _uiState.value.copy(isLoaded = true, isDeleted = true)
+                return@launch
+            }
             val tags = parseTags(entry.tags)
 
             val zone = ZoneId.systemDefault()

@@ -35,7 +35,8 @@ fun ProactiveDiaryNavHost(
     navController: NavHostController = rememberNavController(),
     viewModel: NavViewModel = hiltViewModel(),
     billingViewModel: BillingViewModel = hiltViewModel(),
-    deepLinkDestination: String? = null
+    deepLinkDestination: String? = null,
+    onDeepLinkConsumed: () -> Unit = {}
 ) {
     val startDestination by viewModel.startDestination.collectAsState()
     val subscriptionState by billingViewModel.subscriptionState.collectAsState()
@@ -61,7 +62,12 @@ fun ProactiveDiaryNavHost(
     ) {
         composable(Routes.Typewriter.route) {
             TypewriterScreen(
-                onNavigateForward = {
+                onNavigateToDesignStudio = {
+                    navController.navigate(Routes.DesignStudio.createRoute(edit = false)) {
+                        popUpTo(Routes.Typewriter.route) { inclusive = true }
+                    }
+                },
+                onNavigateToMain = {
                     navController.navigate(Routes.Main.route) {
                         popUpTo(Routes.Typewriter.route) { inclusive = true }
                     }
@@ -112,6 +118,7 @@ fun ProactiveDiaryNavHost(
             MainScreen(
                 rootNavController = navController,
                 deepLinkDestination = deepLinkDestination,
+                onDeepLinkConsumed = onDeepLinkConsumed,
                 billingViewModel = billingViewModel
             )
         }

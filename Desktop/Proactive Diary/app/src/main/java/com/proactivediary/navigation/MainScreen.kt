@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,6 +76,7 @@ val bottomNavItems = listOf(
 fun MainScreen(
     rootNavController: NavHostController,
     deepLinkDestination: String? = null,
+    onDeepLinkConsumed: () -> Unit = {},
     billingViewModel: BillingViewModel = hiltViewModel(),
     mainScreenViewModel: MainScreenViewModel = hiltViewModel()
 ) {
@@ -94,6 +96,7 @@ fun MainScreen(
     // After successful payment, navigate to Write tab
     LaunchedEffect(purchaseResult) {
         if (purchaseResult is PurchaseResult.Success) {
+            billingViewModel.consumePurchaseResult()
             billingViewModel.refreshSubscriptionState()
             innerNavController.navigate(WRITE_TAB) {
                 popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
@@ -119,14 +122,14 @@ fun MainScreen(
                     }
                 }
                 "goals" -> {
-                    innerNavController.navigate(Routes.Settings.route) {
+                    innerNavController.navigate(Routes.Goals.route) {
                         popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
                         launchSingleTop = true
                         restoreState = true
                     }
-                    innerNavController.navigate(Routes.Goals.route)
                 }
             }
+            onDeepLinkConsumed()
         }
     }
 

@@ -45,6 +45,34 @@ abstract class AppDatabase : RoomDatabase() {
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE entries ADD COLUMN tagged_contacts TEXT NOT NULL DEFAULT '[]'")
+
+                // Create FTS table + triggers for existing v1 users (onCreate only runs on fresh install)
+                db.execSQL("""
+                    CREATE VIRTUAL TABLE IF NOT EXISTS entries_fts
+                    USING fts4(title, content, tags, content='entries')
+                """)
+                db.execSQL("""
+                    CREATE TRIGGER IF NOT EXISTS entries_ai AFTER INSERT ON entries BEGIN
+                        INSERT INTO entries_fts(docid, title, content, tags)
+                        VALUES (new.rowid, new.title, new.content, new.tags);
+                    END
+                """)
+                db.execSQL("""
+                    CREATE TRIGGER IF NOT EXISTS entries_ad AFTER DELETE ON entries BEGIN
+                        INSERT INTO entries_fts(entries_fts, docid, title, content, tags)
+                        VALUES('delete', old.rowid, old.title, old.content, old.tags);
+                    END
+                """)
+                db.execSQL("""
+                    CREATE TRIGGER IF NOT EXISTS entries_au AFTER UPDATE ON entries BEGIN
+                        INSERT INTO entries_fts(entries_fts, docid, title, content, tags)
+                        VALUES('delete', old.rowid, old.title, old.content, old.tags);
+                        INSERT INTO entries_fts(docid, title, content, tags)
+                        VALUES (new.rowid, new.title, new.content, new.tags);
+                    END
+                """)
+                // Backfill existing entries into FTS index
+                db.execSQL("INSERT INTO entries_fts(docid, title, content, tags) SELECT rowid, title, content, tags FROM entries")
             }
         }
 

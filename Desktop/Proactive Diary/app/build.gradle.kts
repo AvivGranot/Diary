@@ -1,6 +1,6 @@
 import java.io.FileInputStream
 import java.util.Properties
-import java.util.jar.JarEntry
+import java.util.jar.Attributes
 import java.util.jar.JarOutputStream
 import java.util.jar.Manifest
 
@@ -169,19 +169,19 @@ dependencies {
 }
 
 // Workaround for Windows command-line length limit (CreateProcess error=206)
+// The screenshot plugin's PreviewScreenshotUpdateTask extends Test but doesn't
+// use Gradle's built-in argfile mechanism. We manually shorten the classpath by
+// creating a pathing JAR that references all JARs via its Class-Path manifest entry.
 tasks.withType<Test>().configureEach {
-    // Use a manifest-only JAR to shorten the classpath passed to the JVM
-    val originalClasspath = classpath
     doFirst {
-        val manifestJar = File.createTempFile("classpath", ".jar")
-        manifestJar.deleteOnExit()
+        val cp = classpath.files
+        val manifestJar = layout.buildDirectory.file("tmp/pathing-${name}.jar").get().asFile
+        manifestJar.parentFile.mkdirs()
         val manifest = Manifest()
-        manifest.mainAttributes.putValue("Manifest-Version", "1.0")
-        manifest.mainAttributes.putValue(
-            "Class-Path",
-            originalClasspath.files.joinToString(" ") { it.toURI().toURL().toString() }
-        )
-        JarOutputStream(manifestJar.outputStream(), manifest).close()
+        manifest.mainAttributes[Attributes.Name.MANIFEST_VERSION] = "1.0"
+        manifest.mainAttributes[Attributes.Name.CLASS_PATH] =
+            cp.joinToString(" ") { it.toURI().toString() }
+        JarOutputStream(manifestJar.outputStream(), manifest).use { it.flush() }
         classpath = files(manifestJar)
     }
 }

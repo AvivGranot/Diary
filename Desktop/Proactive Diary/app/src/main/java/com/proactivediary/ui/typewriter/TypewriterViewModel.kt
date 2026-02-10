@@ -250,6 +250,7 @@ class TypewriterViewModel @Inject constructor(
         if (isLapsed) {
             startWelcomeBackSequence()
         } else {
+            // Show the full quote instantly and wait for user tap
             _uiState.value = _uiState.value.copy(
                 state = TypewriterState.READY,
                 visibleCharCount = QUOTE.length,
@@ -261,11 +262,6 @@ class TypewriterViewModel @Inject constructor(
                 skipVisible = false,
                 practiceDayAlpha = 1f
             )
-
-            delay(RETURN_AUTO_ADVANCE_MS)
-            if (!_uiState.value.isNavigating) {
-                navigateAway()
-            }
         }
     }
 
@@ -306,6 +302,7 @@ class TypewriterViewModel @Inject constructor(
 
     fun onUserInteraction() {
         if (_uiState.value.state == TypewriterState.READY) {
+            _uiState.value = _uiState.value.copy(state = TypewriterState.NAVIGATING)
             viewModelScope.launch {
                 analyticsService.logTypewriterCompleted()
                 navigateAway()

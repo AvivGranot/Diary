@@ -35,8 +35,8 @@ class BillingService(private val context: Context) : PurchasesUpdatedListener {
     private var monthlyDetails: ProductDetails? = null
     private var annualDetails: ProductDetails? = null
 
-    private var activePurchase: Purchase? = null
-    private var activeProductId: String? = null
+    @Volatile private var activePurchase: Purchase? = null
+    @Volatile private var activeProductId: String? = null
 
     private var retryCount = 0
 
@@ -152,6 +152,7 @@ class BillingService(private val context: Context) : PurchasesUpdatedListener {
         // Ensure connected before launching
         if (!billingClient.isReady) {
             ensureConnected()
+            _purchaseState.value = PurchaseResult.Error("Connecting to Play Store, please try again")
             return
         }
 

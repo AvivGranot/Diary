@@ -37,6 +37,8 @@ class BillingViewModel @Inject constructor(
 
     val billingService = BillingService(context)
 
+    private val loggedTrialMilestones = mutableSetOf<Int>()
+
     private val _subscriptionState = MutableStateFlow(
         SubscriptionState(isActive = true, plan = Plan.TRIAL, trialDaysLeft = 0)
     )
@@ -150,8 +152,9 @@ class BillingViewModel @Inject constructor(
 
         if (entryCount < ENTRY_GATE_THRESHOLD) {
             val entriesLeft = ENTRY_GATE_THRESHOLD - entryCount
-            // Log trial milestones at 3, 5, 7, 9 entries
-            if (entryCount in listOf(3, 5, 7, 9)) {
+            // Log trial milestones at 3, 5, 7, 9 entries (deduplicated)
+            if (entryCount in listOf(3, 5, 7, 9) && entryCount !in loggedTrialMilestones) {
+                loggedTrialMilestones.add(entryCount)
                 analyticsService.logTrialMilestone(entryCount, entriesLeft)
             }
             return SubscriptionState(
@@ -185,6 +188,10 @@ class BillingViewModel @Inject constructor(
     /** Real price from Play Console, or null if not yet loaded. */
     fun getMonthlyPrice(): String? = billingService.getMonthlyPrice()
     fun getAnnualPrice(): String? = billingService.getAnnualPrice()
+
+    fun consumePurchaseResult() {
+        _purchaseResult.value = PurchaseResult.Idle
+    }
 
     fun canWrite(): Boolean = _subscriptionState.value.isActive
 

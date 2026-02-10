@@ -198,6 +198,7 @@ class DesignStudioViewModel @Inject constructor(
                     texture = current.selectedTexture
                 )
 
+                _state.update { it.copy(isSaving = false) }
                 onComplete()
             } catch (e: Exception) {
                 _state.update { it.copy(isSaving = false) }

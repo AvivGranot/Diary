@@ -85,8 +85,12 @@ fun WriteScreen(
 
     // Trigger in-app review after streak celebration dismiss
     LaunchedEffect(state.requestInAppReview) {
-        if (state.requestInAppReview && activity != null) {
-            viewModel.requestInAppReview(activity)
+        if (state.requestInAppReview) {
+            if (activity != null) {
+                viewModel.requestInAppReview(activity)
+            } else {
+                viewModel.clearInAppReviewRequest()
+            }
         }
     }
 

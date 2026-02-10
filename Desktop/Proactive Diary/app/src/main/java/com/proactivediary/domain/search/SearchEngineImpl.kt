@@ -39,17 +39,22 @@ class SearchEngineImpl @Inject constructor() : SearchEngine {
         val datePatterns = listOf(
             Regex("\\d{4}-\\d{2}-\\d{2}"),
             Regex("\\d{1,2}/\\d{1,2}/\\d{2,4}"),
-            Regex("(january|february|march|april|may|june|july|august|september|october|november|december)(\\s+\\d{1,2})?(,?\\s*\\d{4})?"),
-            Regex("yesterday"),
-            Regex("last\\s+(week|month|year)")
+            // "may" alone is too common as a verb — only match it when followed by a day number
+            Regex("\\b(january|february|march|april|june|july|august|september|october|november|december)\\b(\\s+\\d{1,2})?(,?\\s*\\d{4})?"),
+            Regex("\\bmay\\s+\\d{1,2}(,?\\s*\\d{4})?"),
+            Regex("^yesterday$"),
+            Regex("^last\\s+(week|month|year)$")
         )
         return datePatterns.any { it.containsMatchIn(lower) }
     }
 
     override fun buildFtsQuery(userInput: String): String {
-        val words = userInput.lowercase().trim().split("\\s+".toRegex())
+        // Strip FTS4 metacharacters that would cause syntax errors
+        val sanitized = userInput.replace(Regex("[\"()*^]"), "")
+        if (sanitized.isBlank()) return "IMPOSSIBLE_MATCH_TOKEN"
+        val words = sanitized.lowercase().trim().split("\\s+".toRegex())
         val filtered = words.filter { it !in stopWords && it.length > 1 }
-        if (filtered.isEmpty()) return userInput.lowercase().trim() + "*"
+        if (filtered.isEmpty()) return sanitized.lowercase().trim() + "*"
         return filtered.joinToString(" AND ") { "$it*" }
     }
 
@@ -136,7 +141,10 @@ class SearchEngineImpl @Inject constructor() : SearchEngine {
                     }
                 } catch (_: Exception) { /* invalid date */ }
 
-                // Just month name
+                // "may" without a day number should not be treated as a month
+                if (name == "may") continue
+
+                // Just month name (not "may")
                 val start = LocalDate.of(today.year, month, 1)
                 val end = start.with(TemporalAdjusters.lastDayOfMonth())
                 return Pair(

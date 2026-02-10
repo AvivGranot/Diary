@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
@@ -195,6 +196,15 @@ class WriteViewModel @Inject constructor(
                         isNewEntry = false
                     )
                     _contentFlow.value = entry.content
+                } else {
+                    // Entry was deleted — fall through to create a new one
+                    val newId = UUID.randomUUID().toString()
+                    _uiState.value = _uiState.value.copy(
+                        entryId = newId,
+                        isLoaded = true,
+                        isNewEntry = true
+                    )
+                    _contentFlow.value = ""
                 }
             } else {
                 val todayEntry = entryRepository.getTodayEntrySync()
@@ -265,6 +275,10 @@ class WriteViewModel @Inject constructor(
 
     fun onTitleChanged(newTitle: String) {
         _uiState.value = _uiState.value.copy(title = newTitle)
+        // Re-emit content to trigger debounced auto-save (title changes alone must persist)
+        if (_uiState.value.content.isNotBlank() || newTitle.isNotBlank()) {
+            _contentFlow.value = _uiState.value.content
+        }
     }
 
     fun onMoodSelected(mood: Mood?) {
@@ -325,10 +339,19 @@ class WriteViewModel @Inject constructor(
         // Don't save completely empty entries
         if (text.isBlank() && state.title.isBlank()) return
 
-        _uiState.value = state.copy(isSaving = true, saveError = null)
+        _uiState.update { it.copy(isSaving = true, saveError = null) }
 
         try {
-            withContext(Dispatchers.IO) {
+            // Collect results from IO, then apply state changes atomically on return
+            data class SaveResult(
+                val isFirstEntry: Boolean = false,
+                val showDesignPrompt: Boolean = false,
+                val goalMessage: String? = null,
+                val goalProgress: String? = null,
+                val streakMilestone: Int = 0
+            )
+
+            val result = withContext(Dispatchers.IO) {
                 val now = System.currentTimeMillis()
                 val tagsJson = gson.toJson(state.tags)
                 val contactsJson = gson.toJson(state.taggedContacts)
@@ -347,6 +370,12 @@ class WriteViewModel @Inject constructor(
                     updatedAt = now
                 )
 
+                var isFirstEntry = false
+                var showDesignPrompt = false
+                var goalMessage: String? = null
+                var goalProgress: String? = null
+                var streakMilestone = 0
+
                 if (state.isNewEntry) {
                     entryRepository.insert(entry)
 
@@ -358,15 +387,13 @@ class WriteViewModel @Inject constructor(
                         sessionDurationMs = sessionDuration
                     )
 
-                    // Log writing pattern (day of week, hour, word count)
-                    val now = java.time.LocalDateTime.now()
+                    val localNow = java.time.LocalDateTime.now()
                     analyticsService.logWritingPattern(
-                        dayOfWeek = now.dayOfWeek.name.lowercase(),
-                        hourOfDay = now.hour,
+                        dayOfWeek = localNow.dayOfWeek.name.lowercase(),
+                        hourOfDay = localNow.hour,
                         wordCount = computeWordCount(text)
                     )
 
-                    // Check if this is the user's very first entry ever
                     val firstEntryLogged = preferenceDao.get("first_entry_logged")?.value
                     if (firstEntryLogged == null) {
                         val installTime = preferenceDao.get("trial_start_date")?.value?.toLongOrNull()
@@ -378,55 +405,53 @@ class WriteViewModel @Inject constructor(
                             timeSinceInstallMs = timeSinceInstall
                         )
                         preferenceDao.insert(PreferenceEntity("first_entry_logged", "true"))
-                        // Show "Day 1" celebration for the very first entry
-                        _uiState.value = _uiState.value.copy(showFirstEntryCelebration = true)
+                        isFirstEntry = true
                     }
 
-                    _uiState.value = _uiState.value.copy(isNewEntry = false, isSaving = false, newEntrySaved = true)
-
-                    // After first entry save, prompt Design Studio if not yet completed
                     val designDone = preferenceDao.get("design_studio_completed")?.value == "true"
                     val designLegacy = preferenceDao.get("design_completed")?.value == "true"
-                    if (!designDone && !designLegacy) {
-                        _uiState.value = _uiState.value.copy(showDesignStudioPrompt = true)
-                    }
+                    showDesignPrompt = !designDone && !designLegacy
 
-                    // Auto-check-in writing-related goals
                     val checkedInGoals = writingGoalService.autoCheckInWritingGoals()
                     if (checkedInGoals.isNotEmpty()) {
-                        _uiState.value = _uiState.value.copy(goalCompletedMessage = "Goal complete!")
-                        // Refresh goal progress after check-in
-                        val progress = writingGoalService.getWritingGoalProgress()
-                        _uiState.value = _uiState.value.copy(weeklyGoalProgress = progress)
+                        goalMessage = "Goal complete!"
+                        goalProgress = writingGoalService.getWritingGoalProgress()
                     }
 
-                    // Track entries for in-app review prompt
                     inAppReviewService.incrementEntryCount()
 
-                    // Check streak milestone
                     val streak = streakRepository.calculateWritingStreak()
                     if (isMilestone(streak)) {
-                        _uiState.value = _uiState.value.copy(showStreakCelebration = streak)
+                        streakMilestone = streak
                     }
                 } else {
                     entryRepository.update(entry)
-                    _uiState.value = _uiState.value.copy(isSaving = false)
 
-                    // Auto-check-in writing-related goals on update too
                     val checkedInGoals = writingGoalService.autoCheckInWritingGoals()
                     if (checkedInGoals.isNotEmpty()) {
-                        _uiState.value = _uiState.value.copy(goalCompletedMessage = "Goal complete!")
-                        // Refresh goal progress after check-in
-                        val progress = writingGoalService.getWritingGoalProgress()
-                        _uiState.value = _uiState.value.copy(weeklyGoalProgress = progress)
+                        goalMessage = "Goal complete!"
+                        goalProgress = writingGoalService.getWritingGoalProgress()
                     }
                 }
+
+                SaveResult(isFirstEntry, showDesignPrompt, goalMessage, goalProgress, streakMilestone)
+            }
+
+            // Apply all state changes atomically back on the calling dispatcher
+            _uiState.update { current ->
+                current.copy(
+                    isNewEntry = if (state.isNewEntry) false else current.isNewEntry,
+                    isSaving = false,
+                    newEntrySaved = state.isNewEntry || current.newEntrySaved,
+                    showFirstEntryCelebration = result.isFirstEntry || current.showFirstEntryCelebration,
+                    showDesignStudioPrompt = result.showDesignPrompt || current.showDesignStudioPrompt,
+                    goalCompletedMessage = result.goalMessage ?: current.goalCompletedMessage,
+                    weeklyGoalProgress = result.goalProgress ?: current.weeklyGoalProgress,
+                    showStreakCelebration = if (result.streakMilestone > 0) result.streakMilestone else current.showStreakCelebration
+                )
             }
         } catch (e: Exception) {
-            _uiState.value = _uiState.value.copy(
-                isSaving = false,
-                saveError = "Failed to save entry. Please try again."
-            )
+            _uiState.update { it.copy(isSaving = false, saveError = "Failed to save entry. Please try again.") }
         }
     }
 

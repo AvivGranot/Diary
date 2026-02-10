@@ -316,9 +316,10 @@ class JournalViewModel @Inject constructor(
                 val thirtyDaysAgo = LocalDate.now().minusDays(30)
                 val moodTrend = allEntries
                     .filter { it.mood != null }
-                    .map { entry ->
+                    .mapNotNull { entry ->
+                        val mood = Mood.fromString(entry.mood) ?: return@mapNotNull null
                         val date = Instant.ofEpochMilli(entry.createdAt).atZone(zone).toLocalDate()
-                        MoodDataPoint(date, Mood.fromString(entry.mood)!!)
+                        MoodDataPoint(date, mood)
                     }
                     .filter { it.date.isAfter(thirtyDaysAgo) }
                     .sortedBy { it.date }

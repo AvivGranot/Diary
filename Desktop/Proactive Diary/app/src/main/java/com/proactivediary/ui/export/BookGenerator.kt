@@ -302,7 +302,7 @@ class BookGenerator(
         canvas.drawText(monogram, centerX, 260f, monogramPaint)
 
         // Decorative line
-        canvas.drawLine(centerX - 40f, 290f, centerX + 40f, 290f, linePaint.apply { color = textColor })
+        canvas.drawLine(centerX - 40f, 290f, centerX + 40f, 290f, Paint(linePaint).apply { color = textColor })
 
         // Title
         canvas.drawText("My Year in Writing", centerX, 340f, coverTitlePaint)
@@ -504,7 +504,7 @@ class BookGenerator(
         y += 20f
 
         // Decorative line
-        canvas.drawLine(centerX - 30f, y, centerX + 30f, y, linePaint.apply { color = 0xFFA0A09E.toInt() })
+        canvas.drawLine(centerX - 30f, y, centerX + 30f, y, Paint(linePaint).apply { color = 0xFFA0A09E.toInt() })
         y += 50f
 
         // Total entries
