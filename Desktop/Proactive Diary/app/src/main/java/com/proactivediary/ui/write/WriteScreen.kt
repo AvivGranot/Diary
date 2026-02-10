@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -99,11 +100,9 @@ fun WriteScreen(
 
     if (!state.isLoaded) return
 
-    // Soul = outer chrome color, Touch/Texture = writing surface color
     val bgColor = DiaryThemeConfig.colorForKey(state.colorKey)
-    val surfaceColor = DiaryThemeConfig.textureColorForKey(state.texture)
-    val textColor = DiaryThemeConfig.textureTextColor(state.texture)
-    val secondaryTextColor = DiaryThemeConfig.textureSecondaryTextColor(state.texture)
+    val textColor = DiaryThemeConfig.textColorFor(state.colorKey)
+    val secondaryTextColor = DiaryThemeConfig.secondaryTextColorFor(state.colorKey)
 
     val showDateHeader = viewModel.hasFeature("date_header")
     val showAutoSave = viewModel.hasFeature("auto_save")
@@ -126,7 +125,8 @@ fun WriteScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(surfaceColor)
+            .background(bgColor)
+            .navigationBarsPadding()
             .imePadding()
     ) {
         Column(
@@ -279,12 +279,9 @@ fun WriteScreen(
 
             // Bottom toolbar
             WriteToolbar(
-                selectedMood = state.mood,
-                onMoodSelected = { viewModel.onMoodSelected(it) },
                 wordCount = state.wordCount,
                 showWordCount = showWordCount,
-                colorKey = state.colorKey,
-                textureKey = state.texture
+                colorKey = state.colorKey
             )
         }
 

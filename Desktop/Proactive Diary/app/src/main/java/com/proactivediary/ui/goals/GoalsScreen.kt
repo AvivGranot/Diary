@@ -113,25 +113,27 @@ fun GoalsScreen(
                         onLongPress = { longPressedGoal = goal }
                     )
                 }
-            }
-
-            // Add new goal link — centered below list
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "+ Add new goal",
-                    style = TextStyle(
-                        fontFamily = CormorantGaramond,
-                        fontSize = 14.sp,
-                        fontStyle = FontStyle.Italic
-                    ),
-                    color = inkColor,
-                    modifier = Modifier
-                        .clickable { showAddDialog = true }
-                        .padding(vertical = 12.dp)
-                )
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "+ Add new goal",
+                            style = TextStyle(
+                                fontFamily = CormorantGaramond,
+                                fontSize = 14.sp,
+                                fontStyle = FontStyle.Italic
+                            ),
+                            color = inkColor,
+                            modifier = Modifier
+                                .clickable { showAddDialog = true }
+                                .padding(vertical = 12.dp)
+                        )
+                    }
+                }
             }
         }
     }

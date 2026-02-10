@@ -142,8 +142,9 @@ class WriteViewModel @Inject constructor(
         loadGoalProgress()
         analyticsService.logWriteScreenViewed()
 
-        val today = LocalDate.now()
-        val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.getDefault())
+        val estZone = java.time.ZoneId.of("America/New_York")
+        val today = LocalDate.now(estZone)
+        val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.US)
         _uiState.value = _uiState.value.copy(dateHeader = today.format(formatter))
     }
 

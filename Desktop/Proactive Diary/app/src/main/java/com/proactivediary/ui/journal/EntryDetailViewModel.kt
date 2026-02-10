@@ -13,7 +13,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -107,8 +109,8 @@ class EntryDetailViewModel @Inject constructor(
             }
             val tags = parseTags(entry.tags)
 
-            val zone = ZoneId.systemDefault()
-            val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.getDefault())
+            val zone = ZoneId.of("America/New_York")
+            val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.US)
             val dateHeader = Instant.ofEpochMilli(entry.createdAt)
                 .atZone(zone)
                 .toLocalDate()
@@ -129,7 +131,13 @@ class EntryDetailViewModel @Inject constructor(
 
     fun deleteEntry() {
         viewModelScope.launch {
-            entryRepository.delete(entryId)
+            try {
+                withContext(Dispatchers.IO) {
+                    entryRepository.delete(entryId)
+                }
+            } catch (_: Exception) {
+                // Entry may already be deleted
+            }
             _uiState.value = _uiState.value.copy(isDeleted = true)
         }
     }

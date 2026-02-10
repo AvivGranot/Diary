@@ -29,20 +29,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.proactivediary.domain.model.DiaryThemeConfig
-import com.proactivediary.domain.model.Mood
 
 @Composable
 fun WriteToolbar(
-    selectedMood: Mood?,
-    onMoodSelected: (Mood?) -> Unit,
     wordCount: Int,
     showWordCount: Boolean,
     colorKey: String,
-    textureKey: String = "paper",
     modifier: Modifier = Modifier
 ) {
-    val bgColor = DiaryThemeConfig.textureColorForKey(textureKey)
-    val secondaryColor = DiaryThemeConfig.textureSecondaryTextColor(textureKey)
+    val bgColor = DiaryThemeConfig.colorForKey(colorKey)
+    val secondaryColor = DiaryThemeConfig.secondaryTextColorFor(colorKey)
 
     Box(
         modifier = modifier
@@ -65,15 +61,9 @@ fun WriteToolbar(
                 .height(40.dp)
                 .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.End
         ) {
-            // Left: Mood selector
-            MoodSelector(
-                selectedMood = selectedMood,
-                onMoodSelected = onMoodSelected
-            )
-
-            // Right: Word count
+            // Word count
             if (showWordCount) {
                 Text(
                     text = "$wordCount words",
@@ -83,8 +73,6 @@ fun WriteToolbar(
                         color = secondaryColor
                     )
                 )
-            } else {
-                Spacer(modifier = Modifier.width(1.dp))
             }
         }
     }

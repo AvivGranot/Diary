@@ -56,6 +56,7 @@ import com.proactivediary.domain.model.DiaryThemeConfig
 import com.proactivediary.ui.share.ShareCardData
 import com.proactivediary.ui.share.ShareCardDialog
 import com.proactivediary.ui.share.shareCardAsImage
+import androidx.compose.foundation.layout.navigationBarsPadding
 import com.proactivediary.ui.theme.CormorantGaramond
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,6 +103,7 @@ fun EntryDetailScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(bgColor)
+            .navigationBarsPadding()
     ) {
         // Top bar
         TopAppBar(
