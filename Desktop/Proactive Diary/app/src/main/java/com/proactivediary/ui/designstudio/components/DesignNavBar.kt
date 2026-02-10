@@ -26,6 +26,8 @@ import com.proactivediary.ui.theme.DiaryColors
 
 @Composable
 fun DesignNavBar(
+    isEditMode: Boolean = false,
+    onBack: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -37,34 +39,21 @@ fun DesignNavBar(
             .padding(horizontal = 20.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Left: Hamburger (two horizontal lines rendered as text)
-        Box(
-            modifier = Modifier.align(Alignment.CenterStart),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(5.dp),
+        // Left: Back arrow in edit mode, hidden in onboarding
+        if (isEditMode && onBack != null) {
+            Text(
+                text = "\u2190",
+                fontSize = 22.sp,
+                color = DiaryColors.Ink,
                 modifier = Modifier
+                    .align(Alignment.CenterStart)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = { /* Menu - non-functional MVP */ }
+                        onClick = onBack
                     )
                     .padding(8.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .width(20.dp)
-                        .height(1.5.dp)
-                        .background(DiaryColors.Ink)
-                )
-                Box(
-                    modifier = Modifier
-                        .width(14.dp)
-                        .height(1.5.dp)
-                        .background(DiaryColors.Ink)
-                )
-            }
+            )
         }
 
         // Center: App title

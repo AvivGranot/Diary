@@ -71,7 +71,10 @@ fun DesignStudioScreen(
             .background(DiaryColors.Paper)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            DesignNavBar()
+            DesignNavBar(
+                isEditMode = isEditMode,
+                onBack = if (isEditMode) onNavigateToGoals else null
+            )
 
             Box(
                 modifier = Modifier
@@ -196,7 +199,7 @@ fun DesignStudioScreen(
 
                     // 9: Bottom padding for footer clearance
                     item {
-                        Spacer(modifier = Modifier.height(80.dp))
+                        Spacer(modifier = Modifier.height(140.dp))
                     }
                 }
             }

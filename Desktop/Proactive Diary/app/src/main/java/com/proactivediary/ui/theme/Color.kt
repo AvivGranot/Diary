@@ -44,7 +44,4 @@ val diaryColorOptions = listOf(
     DiaryColorOption("Sage", "sage", DiaryColors.Sage),
     DiaryColorOption("Sky", "sky", DiaryColors.Sky),
     DiaryColorOption("Lavender", "lavender", DiaryColors.Lavender),
-    DiaryColorOption("Wine Red", "wine_red", DiaryColors.WineRed),
-    DiaryColorOption("Forest", "forest", DiaryColors.Forest),
-    DiaryColorOption("Ocean", "ocean", DiaryColors.Ocean),
 )
