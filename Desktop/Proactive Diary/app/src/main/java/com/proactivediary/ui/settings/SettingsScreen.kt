@@ -482,7 +482,7 @@ fun SettingsScreen(
 
                     Text("Third-Party Services", style = sectionStyle)
                     Spacer(Modifier.height(4.dp))
-                    Text("Google Play Billing: subscription management.\nFirebase Auth: optional account sign-in.\nNo analytics, advertising, or tracking SDKs are used.", style = bodyStyle)
+                    Text("Google Play Billing: subscription management.\nFirebase Auth: optional account sign-in.\nFirebase Analytics: anonymous usage metrics (screens, features). Your diary content is never included.\nFirebase Crashlytics: anonymous crash reports to improve stability.", style = bodyStyle)
                     Spacer(Modifier.height(12.dp))
 
                     Text("Children", style = sectionStyle)

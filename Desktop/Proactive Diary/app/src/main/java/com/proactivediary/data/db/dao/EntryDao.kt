@@ -69,4 +69,7 @@ interface EntryDao {
 
     @Query("SELECT created_at FROM entries ORDER BY created_at DESC LIMIT 1")
     suspend fun getLastEntryTimestamp(): Long?
+
+    @RawQuery
+    suspend fun rawExec(query: SupportSQLiteQuery): Int
 }

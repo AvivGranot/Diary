@@ -1,5 +1,6 @@
 package com.proactivediary.data.repository
 
+import android.database.sqlite.SQLiteException
 import androidx.sqlite.db.SimpleSQLiteQuery
 import com.proactivediary.data.db.dao.EntryDao
 import com.proactivediary.data.db.entities.EntryEntity
@@ -49,8 +50,19 @@ class EntryRepositoryImpl @Inject constructor(
     override suspend fun update(entry: EntryEntity) =
         entryDao.update(entry)
 
-    override suspend fun delete(entryId: String) =
-        entryDao.deleteById(entryId)
+    override suspend fun delete(entryId: String) {
+        try {
+            entryDao.deleteById(entryId)
+        } catch (_: SQLiteException) {
+            // FTS delete trigger fails (encoding/tokenization mismatch) — drop it and retry
+            entryDao.rawExec(SimpleSQLiteQuery("DROP TRIGGER IF EXISTS entries_ad"))
+            entryDao.deleteById(entryId)
+            // Rebuild FTS to clean up stale entries
+            try {
+                entryDao.rawExec(SimpleSQLiteQuery("INSERT INTO entries_fts(entries_fts) VALUES('rebuild')"))
+            } catch (_: Exception) { }
+        }
+    }
 
     override suspend fun deleteAll() =
         entryDao.deleteAll()

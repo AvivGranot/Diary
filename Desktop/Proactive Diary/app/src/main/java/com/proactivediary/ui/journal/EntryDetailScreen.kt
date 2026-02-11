@@ -70,10 +70,9 @@ fun EntryDetailScreen(
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    var hasNavigatedBack by remember { mutableStateOf(false) }
-    LaunchedEffect(state.isDeleted) {
-        if (state.isDeleted && !hasNavigatedBack) {
-            hasNavigatedBack = true
+    // If entry not found on load, go back immediately
+    LaunchedEffect(state.isLoaded, state.isDeleted) {
+        if (state.isLoaded && state.isDeleted) {
             onBack()
         }
     }
@@ -391,6 +390,7 @@ fun EntryDetailScreen(
                 TextButton(onClick = {
                     showDeleteDialog = false
                     viewModel.deleteEntry()
+                    onBack()
                 }) {
                     Text("Delete")
                 }

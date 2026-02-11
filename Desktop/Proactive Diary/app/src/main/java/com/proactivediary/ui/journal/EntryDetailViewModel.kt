@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
@@ -131,14 +132,13 @@ class EntryDetailViewModel @Inject constructor(
 
     fun deleteEntry() {
         viewModelScope.launch {
-            try {
-                withContext(Dispatchers.IO) {
+            withContext(NonCancellable + Dispatchers.IO) {
+                try {
                     entryRepository.delete(entryId)
+                } catch (_: Exception) {
+                    // Entry may already be deleted
                 }
-            } catch (_: Exception) {
-                // Entry may already be deleted
             }
-            _uiState.value = _uiState.value.copy(isDeleted = true)
         }
     }
 

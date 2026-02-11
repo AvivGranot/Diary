@@ -241,7 +241,24 @@ fun TypewriterScreen(
                     )
                 }
 
-                // Auto-advances after CTA — no chevron needed
+                // Chevron — pulsing arrow, tappable (also auto-advances after 0.5s)
+                if (uiState.state == TypewriterState.READY) {
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowDown,
+                        contentDescription = "Continue",
+                        tint = inkColor,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .alpha(chevronAlpha)
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) {
+                                viewModel.onUserInteraction()
+                            }
+                    )
+                }
             }
         }
     }
