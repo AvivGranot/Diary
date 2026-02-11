@@ -1,0 +1,10 @@
+{
+  "name": "proactive-diary-bug-resolver",
+  "private": true,
+  "description": "Automated bug resolution pipeline using Claude API",
+  "main": "resolve-bugs.js",
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "@anthropic-ai/sdk": "^0.30.0"
+  }
+}
