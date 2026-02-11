@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.proactivediary.domain.model.DiaryThemeConfig
+import com.proactivediary.ui.theme.DiaryColors
 
 @Composable
 fun WriteToolbar(
@@ -88,6 +89,9 @@ internal fun TagInputDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
+        containerColor = DiaryColors.Paper,
+        titleContentColor = DiaryColors.Ink,
+        textContentColor = DiaryColors.Pencil,
         title = {
             Text(
                 text = "Tags",
@@ -105,7 +109,7 @@ internal fun TagInputDialog(
                     style = TextStyle(
                         fontFamily = FontFamily.Default,
                         fontSize = 13.sp,
-                        color = Color(0xFF585858)
+                        color = DiaryColors.Pencil
                     )
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -118,15 +122,18 @@ internal fun TagInputDialog(
                             style = TextStyle(
                                 fontFamily = FontFamily.Default,
                                 fontSize = 14.sp,
-                                color = Color(0xFF585858).copy(alpha = 0.5f)
+                                color = DiaryColors.Pencil.copy(alpha = 0.5f)
                             )
                         )
                     },
                     colors = TextFieldDefaults.colors(
                         unfocusedContainerColor = Color.Transparent,
                         focusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color(0xFF585858),
-                        unfocusedIndicatorColor = Color(0xFF585858).copy(alpha = 0.3f)
+                        focusedIndicatorColor = DiaryColors.Ink,
+                        unfocusedIndicatorColor = DiaryColors.Pencil.copy(alpha = 0.3f),
+                        cursorColor = DiaryColors.Ink,
+                        focusedTextColor = DiaryColors.Ink,
+                        unfocusedTextColor = DiaryColors.Ink
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     textStyle = TextStyle(
@@ -146,12 +153,12 @@ internal fun TagInputDialog(
                     .filter { it.isNotBlank() }
                 onConfirm(parsed)
             }) {
-                Text("Save")
+                Text("Save", color = DiaryColors.Ink)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text("Cancel", color = DiaryColors.Pencil)
             }
         }
     )
