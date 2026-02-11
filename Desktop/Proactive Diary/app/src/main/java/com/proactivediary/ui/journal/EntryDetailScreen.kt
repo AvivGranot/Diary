@@ -70,8 +70,12 @@ fun EntryDetailScreen(
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
+    var hasNavigatedBack by remember { mutableStateOf(false) }
     LaunchedEffect(state.isDeleted) {
-        if (state.isDeleted) onBack()
+        if (state.isDeleted && !hasNavigatedBack) {
+            hasNavigatedBack = true
+            onBack()
+        }
     }
 
     if (!state.isLoaded) return

@@ -83,6 +83,7 @@ class TypewriterViewModel @Inject constructor(
         private const val CTA_SLIDE_MS = 400L
         private const val SKIP_APPEAR_MS = 0L
         private const val SCREEN_FADE_MS = 400L
+        private const val AUTO_ADVANCE_MS = 1500L
         private const val RETURN_AUTO_ADVANCE_MS = 500L
 
         private const val PREF_KEY = "first_launch_completed"
@@ -236,8 +237,13 @@ class TypewriterViewModel @Inject constructor(
         }
         _uiState.value = _uiState.value.copy(practiceDayAlpha = 1f)
 
-        // READY: user can interact, chevron appears
-        _uiState.value = _uiState.value.copy(state = TypewriterState.READY)
+        // Auto-advance to next screen after brief pause
+        delay(AUTO_ADVANCE_MS)
+        if (_uiState.value.state != TypewriterState.NAVIGATING) {
+            _uiState.value = _uiState.value.copy(state = TypewriterState.NAVIGATING)
+            analyticsService.logTypewriterCompleted()
+            navigateAway()
+        }
     }
 
     private suspend fun startReturnSequence() {

@@ -241,18 +241,7 @@ fun TypewriterScreen(
                     )
                 }
 
-                // Downward chevron — pulsing, appears with READY state
-                if (uiState.ctaAlpha > 0f && uiState.state == TypewriterState.READY) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Icon(
-                        imageVector = Icons.Filled.KeyboardArrowDown,
-                        contentDescription = "Continue",
-                        tint = inkColor,
-                        modifier = Modifier
-                            .size(24.dp)
-                            .alpha(chevronAlpha)
-                    )
-                }
+                // Auto-advances after CTA — no chevron needed
             }
         }
     }

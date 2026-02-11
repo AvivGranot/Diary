@@ -52,7 +52,7 @@ fun ContactTagRow(
     ) {
         // "#" text tag button (moved from toolbar)
         Text(
-            text = if (textTags.isEmpty()) "#" else "# ${textTags.size}",
+            text = if (textTags.isEmpty()) "#" else textTags.joinToString(" ") { "#$it" },
             style = TextStyle(
                 fontFamily = FontFamily.Default,
                 fontSize = 14.sp,
