@@ -51,7 +51,6 @@ class WriteViewModelTest {
         assertEquals("", state.entryId)
         assertEquals("", state.title)
         assertEquals("", state.content)
-        assertNull(state.mood)
         assertTrue(state.tags.isEmpty())
         assertEquals(0, state.wordCount)
         assertFalse(state.isSaving)

@@ -181,7 +181,6 @@ class SettingsViewModel @Inject constructor(
                 } catch (e: Exception) {
                     emptyList()
                 }
-                val moodDisplay = entry.mood?.replaceFirstChar { it.uppercase() } ?: "None"
                 val tagsDisplay = if (tags.isNotEmpty()) tags.joinToString(", ") else "None"
 
                 buildString {
@@ -190,7 +189,7 @@ class SettingsViewModel @Inject constructor(
                     appendLine()
                     appendLine(entry.content)
                     appendLine()
-                    append("Mood: $moodDisplay | Words: ${entry.wordCount} | Tags: $tagsDisplay")
+                    append("Words: ${entry.wordCount} | Tags: $tagsDisplay")
                 }
             }
             saveToDownloads("proactive_diary_export.txt", text, "text/plain")

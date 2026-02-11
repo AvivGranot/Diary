@@ -295,7 +295,7 @@ private fun StatsCard(state: BookExportUiState) {
 
             Spacer(Modifier.height(20.dp))
 
-            // Row: avg words | longest streak | most common mood
+            // Row: avg words | longest streak
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -308,11 +308,6 @@ private fun StatsCard(state: BookExportUiState) {
                 StatItem(
                     number = state.longestStreak.toString(),
                     label = "longest streak",
-                    modifier = Modifier.weight(1f)
-                )
-                StatItem(
-                    number = state.mostCommonMood ?: "\u2014",
-                    label = "top mood",
                     modifier = Modifier.weight(1f)
                 )
             }

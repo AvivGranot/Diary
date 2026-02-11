@@ -127,20 +127,13 @@ fun JournalScreen(
                         }
                     }
 
-                    // Insights, heatmap, and mood trend at the top
+                    // Insights and heatmap at the top
                     item(key = "insights") {
                         InsightsCard(insights = state.insights)
                     }
 
                     item(key = "heatmap") {
                         CalendarHeatmap(writingDays = state.writingDays)
-                    }
-
-                    if (state.moodTrend.size >= 2) {
-                        item(key = "mood_trend") {
-                            MoodTrendChart(dataPoints = state.moodTrend)
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
                     }
 
                     if (state.weeklyDigest.isVisible) {

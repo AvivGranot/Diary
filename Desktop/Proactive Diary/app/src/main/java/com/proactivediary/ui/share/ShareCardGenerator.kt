@@ -43,8 +43,7 @@ data class ShareCardData(
     val excerpt: String,
     val title: String = "",
     val dateFormatted: String = "",
-    val colorKey: String = "cream",
-    val mood: String? = null
+    val colorKey: String = "cream"
 )
 
 @Composable

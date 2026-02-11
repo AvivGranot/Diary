@@ -22,7 +22,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.proactivediary.domain.model.Mood
 import com.proactivediary.ui.journal.CalendarHeatmap
 import com.proactivediary.ui.journal.DiaryCard
 import com.proactivediary.ui.journal.DiaryCardData
@@ -112,7 +111,6 @@ private fun JournalContent() {
                     id = "mock1",
                     title = "Evening walk thoughts",
                     content = "The air was cool and the neighborhood was quiet. I noticed the magnolia tree on Elm Street has started blooming early this year.",
-                    mood = Mood.GREAT,
                     tags = listOf("nature", "evening"),
                     wordCount = 156,
                     createdAt = System.currentTimeMillis() - 86400000
@@ -125,7 +123,6 @@ private fun JournalContent() {
                     id = "mock2",
                     title = "Monday morning clarity",
                     content = "Started the week with a clear head. Wrote down three things I want to accomplish this week and felt a sense of purpose I haven\u2019t had in a while.",
-                    mood = Mood.GOOD,
                     tags = listOf("goals", "morning"),
                     wordCount = 234,
                     createdAt = System.currentTimeMillis() - 172800000

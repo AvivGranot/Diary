@@ -12,7 +12,6 @@ import androidx.core.content.res.ResourcesCompat
 import com.proactivediary.R
 import com.proactivediary.data.db.entities.EntryEntity
 import com.proactivediary.domain.model.DiaryThemeConfig
-import com.proactivediary.domain.model.Mood
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -27,7 +26,6 @@ data class BookConfig(
     val totalWords: Int,
     val totalEntries: Int,
     val longestStreak: Int,
-    val mostCommonMood: String?,
     val onProgress: (Float) -> Unit
 )
 
@@ -397,16 +395,6 @@ class BookGenerator(
         canvas.drawText(date.format(dateFormatter), MARGIN_LEFT, y + 12f, entryDatePaint)
         y += 18f
 
-        // Mood dot
-        val moodObj = Mood.fromString(entry.mood)
-        if (moodObj != null) {
-            val moodDotPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = moodObj.color.toArgb()
-            }
-            val dateWidth = entryDatePaint.measureText(date.format(dateFormatter))
-            canvas.drawCircle(MARGIN_LEFT + dateWidth + 10f, y - 6f, 4f, moodDotPaint)
-        }
-
         // Title
         if (entry.title.isNotBlank()) {
             y += 4f
@@ -524,13 +512,6 @@ class BookGenerator(
         y += 18f
         canvas.drawText("day longest streak", centerX, y, statsLabelPaint)
         y += 50f
-
-        // Most common mood
-        val moodDisplay = config.mostCommonMood ?: "\u2014"
-        val moodLabelPaint = Paint(statsNumberPaint).apply { textSize = 32f }
-        canvas.drawText(moodDisplay, centerX, y, moodLabelPaint)
-        y += 18f
-        canvas.drawText("most common mood", centerX, y, statsLabelPaint)
 
         drawPageNumber(canvas, pageNum)
         doc.finishPage(page)

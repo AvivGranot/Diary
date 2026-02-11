@@ -26,7 +26,6 @@ data class JournalInsights(
     val totalEntries: Int = 0,
     val totalWords: Int = 0,
     val averageWordsPerEntry: Int = 0,
-    val mostCommonMood: String? = null,
     val currentStreak: Int = 0,
     val mostActiveDay: String? = null // e.g., "Tuesdays"
 )
@@ -101,9 +100,6 @@ fun InsightsCard(
                         StatItem(label = "Avg words", value = "${insights.averageWordsPerEntry}")
                         if (insights.currentStreak > 0) {
                             StatItem(label = "Practice", value = "Day ${insights.currentStreak}")
-                        }
-                        if (insights.mostCommonMood != null) {
-                            StatItem(label = "Top mood", value = insights.mostCommonMood.replaceFirstChar { it.uppercase() })
                         }
                     }
 

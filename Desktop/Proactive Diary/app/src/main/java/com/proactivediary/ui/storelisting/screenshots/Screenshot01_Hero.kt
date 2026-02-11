@@ -22,12 +22,10 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.proactivediary.domain.model.Mood
 import com.proactivediary.ui.storelisting.ScreenshotFrame
 import com.proactivediary.ui.theme.CormorantGaramond
 import com.proactivediary.ui.theme.DiaryColors
 import com.proactivediary.ui.theme.ProactiveDiaryTheme
-import com.proactivediary.ui.write.MoodSelector
 
 @Composable
 fun Screenshot01Hero() {
@@ -119,18 +117,12 @@ private fun HeroContent() {
 
         Spacer(Modifier.weight(1f))
 
-        // Bottom bar: mood + saved + word count
+        // Bottom bar: saved + word count
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.End
         ) {
-            MoodSelector(
-                selectedMood = Mood.GOOD,
-                onMoodSelected = {},
-                modifier = Modifier
-            )
-
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)

@@ -19,7 +19,6 @@ class EntryEntityTest {
         assertEquals("e1", entry.id)
         assertEquals("", entry.title)
         assertEquals("Hello world", entry.content)
-        assertNull(entry.mood)
         assertEquals("[]", entry.tags)
         assertEquals("[]", entry.taggedContacts)
         assertEquals(0, entry.wordCount)
@@ -30,9 +29,8 @@ class EntryEntityTest {
         val entry = EntryEntity(
             id = "e1", content = "Hello", createdAt = 1000L, updatedAt = 2000L
         )
-        val updated = entry.copy(title = "New Title", mood = "great", wordCount = 5)
+        val updated = entry.copy(title = "New Title", wordCount = 5)
         assertEquals("New Title", updated.title)
-        assertEquals("great", updated.mood)
         assertEquals(5, updated.wordCount)
         assertEquals("Hello", updated.content) // unchanged
     }
@@ -64,7 +62,6 @@ class EntryEntityTest {
             id = "e2",
             title = "My Day",
             content = "It was a great day",
-            mood = "great",
             tags = "[\"personal\",\"gratitude\"]",
             taggedContacts = "[{\"name\":\"John\"}]",
             wordCount = 5,
@@ -72,7 +69,6 @@ class EntryEntityTest {
             updatedAt = 2000L
         )
         assertEquals("My Day", entry.title)
-        assertEquals("great", entry.mood)
         assertTrue(entry.tags.contains("personal"))
     }
 }

@@ -43,18 +43,16 @@ class AnalyticsService @Inject constructor() {
     }
 
     // ─── Writing ───
-    fun logFirstEntryWritten(wordCount: Int, mood: String?, timeSinceInstallMs: Long) {
+    fun logFirstEntryWritten(wordCount: Int, timeSinceInstallMs: Long) {
         log("first_entry_written", bundleOf(
             "word_count" to wordCount,
-            "mood" to (mood ?: "none"),
             "time_since_install_sec" to (timeSinceInstallMs / 1000)
         ))
     }
 
-    fun logEntrySaved(wordCount: Int, mood: String?, hasTitle: Boolean, sessionDurationMs: Long) {
+    fun logEntrySaved(wordCount: Int, hasTitle: Boolean, sessionDurationMs: Long) {
         log("entry_saved", bundleOf(
             "word_count" to wordCount,
-            "mood" to (mood ?: "none"),
             "has_title" to hasTitle,
             "session_duration_sec" to (sessionDurationMs / 1000)
         ))

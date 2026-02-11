@@ -8,7 +8,6 @@ import com.google.gson.reflect.TypeToken
 import com.proactivediary.data.db.dao.PreferenceDao
 import com.proactivediary.data.db.entities.EntryEntity
 import com.proactivediary.data.repository.EntryRepository
-import com.proactivediary.domain.model.Mood
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,7 +26,6 @@ data class EntryDetailUiState(
     val entryId: String = "",
     val title: String = "",
     val content: String = "",
-    val mood: Mood? = null,
     val tags: List<String> = emptyList(),
     val wordCount: Int = 0,
     val dateHeader: String = "",
@@ -121,7 +119,6 @@ class EntryDetailViewModel @Inject constructor(
                 entryId = entry.id,
                 title = entry.title,
                 content = entry.content,
-                mood = Mood.fromString(entry.mood),
                 tags = tags,
                 wordCount = entry.wordCount,
                 dateHeader = dateHeader,

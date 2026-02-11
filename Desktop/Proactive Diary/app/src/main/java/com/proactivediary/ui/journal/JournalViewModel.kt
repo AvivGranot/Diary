@@ -7,7 +7,6 @@ import com.google.gson.reflect.TypeToken
 import com.proactivediary.data.db.entities.EntryEntity
 import com.proactivediary.data.repository.EntryRepository
 import com.proactivediary.data.repository.StreakRepository
-import com.proactivediary.domain.model.Mood
 import com.proactivediary.domain.search.SearchEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -46,7 +45,6 @@ data class JournalUiState(
     val isSearchEmpty: Boolean = false,
     val insights: JournalInsights = JournalInsights(),
     val writingDays: Set<LocalDate> = emptySet(),
-    val moodTrend: List<MoodDataPoint> = emptyList(),
     val weeklyDigest: WeeklyDigest = WeeklyDigest(),
     val onThisDay: OnThisDayEntry? = null,
     val hasMoreEntries: Boolean = false,
@@ -274,7 +272,6 @@ class JournalViewModel @Inject constructor(
             id = id,
             title = title,
             content = content,
-            mood = Mood.fromString(mood),
             tags = tagsList,
             wordCount = wordCount,
             createdAt = createdAt
@@ -303,7 +300,7 @@ class JournalViewModel @Inject constructor(
 
     private fun loadInsights() {
         viewModelScope.launch {
-            val (insights, writingDays, moodTrend) = withContext(Dispatchers.IO) {
+            val (insights, writingDays) = withContext(Dispatchers.IO) {
                 val allEntries = entryRepository.getAllSync()
                 val zone = ZoneId.systemDefault()
 
@@ -311,26 +308,6 @@ class JournalViewModel @Inject constructor(
                 val writingDays = allEntries.map { entry ->
                     Instant.ofEpochMilli(entry.createdAt).atZone(zone).toLocalDate()
                 }.toSet()
-
-                // Mood trend (last 30 days)
-                val thirtyDaysAgo = LocalDate.now().minusDays(30)
-                val moodTrend = allEntries
-                    .filter { it.mood != null }
-                    .mapNotNull { entry ->
-                        val mood = Mood.fromString(entry.mood) ?: return@mapNotNull null
-                        val date = Instant.ofEpochMilli(entry.createdAt).atZone(zone).toLocalDate()
-                        MoodDataPoint(date, mood)
-                    }
-                    .filter { it.date.isAfter(thirtyDaysAgo) }
-                    .sortedBy { it.date }
-
-                // Most common mood
-                val mostCommonMood = allEntries
-                    .mapNotNull { it.mood }
-                    .groupingBy { it }
-                    .eachCount()
-                    .maxByOrNull { it.value }
-                    ?.key
 
                 // Most active day of week
                 val dayOfWeekCounts = allEntries.map { entry ->
@@ -350,18 +327,16 @@ class JournalViewModel @Inject constructor(
                     totalEntries = allEntries.size,
                     totalWords = totalWords,
                     averageWordsPerEntry = avgWords,
-                    mostCommonMood = mostCommonMood,
                     currentStreak = streak,
                     mostActiveDay = mostActiveDay?.plus("s") // "Tuesdays"
                 )
 
-                Triple(insights, writingDays, moodTrend)
+                Pair(insights, writingDays)
             }
 
             _uiState.value = _uiState.value.copy(
                 insights = insights,
-                writingDays = writingDays,
-                moodTrend = moodTrend
+                writingDays = writingDays
             )
         }
     }
@@ -387,17 +362,10 @@ class JournalViewModel @Inject constructor(
                 if (weekEntries.isEmpty()) return@withContext null
 
                 val totalWords = weekEntries.sumOf { it.wordCount }
-                val mostCommonMood = weekEntries
-                    .mapNotNull { it.mood }
-                    .groupingBy { it }
-                    .eachCount()
-                    .maxByOrNull { it.value }
-                    ?.key
 
                 WeeklyDigest(
                     entryCount = weekEntries.size,
                     totalWords = totalWords,
-                    mostCommonMood = mostCommonMood,
                     isVisible = true
                 )
             }

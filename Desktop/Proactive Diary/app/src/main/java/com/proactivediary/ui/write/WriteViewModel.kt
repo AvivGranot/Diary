@@ -12,7 +12,6 @@ import com.proactivediary.data.db.entities.EntryEntity
 import com.proactivediary.data.repository.EntryRepository
 import com.proactivediary.data.repository.StreakRepository
 import com.proactivediary.domain.WritingGoalService
-import com.proactivediary.domain.model.Mood
 import com.proactivediary.domain.model.TaggedContact
 import com.proactivediary.playstore.InAppReviewService
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,6 +26,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -80,7 +80,6 @@ data class WriteUiState(
     val entryId: String = "",
     val title: String = "",
     val content: String = "",
-    val mood: Mood? = null,
     val tags: List<String> = emptyList(),
     val wordCount: Int = 0,
     val isSaving: Boolean = false,
@@ -151,6 +150,37 @@ class WriteViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(dateHeader = today.format(formatter))
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        // Force-save any pending title/content changes before ViewModel is destroyed
+        // (e.g., user switches tabs before debounce completes)
+        val state = _uiState.value
+        if (state.isLoaded && (state.content.isNotBlank() || state.title.isNotBlank())) {
+            runBlocking(Dispatchers.IO) {
+                val now = System.currentTimeMillis()
+                val tagsJson = gson.toJson(state.tags)
+                val contactsJson = gson.toJson(state.taggedContacts)
+                val entry = EntryEntity(
+                    id = state.entryId,
+                    title = state.title,
+                    content = state.content,
+                    mood = null,
+                    tags = tagsJson,
+                    taggedContacts = contactsJson,
+                    wordCount = state.wordCount,
+                    createdAt = entryRepository.getByIdSync(state.entryId)?.createdAt
+                        ?: now,
+                    updatedAt = now
+                )
+                if (state.isNewEntry) {
+                    entryRepository.insert(entry)
+                } else {
+                    entryRepository.update(entry)
+                }
+            }
+        }
+    }
+
     private fun observeThemePreferences() {
         viewModelScope.launch {
             preferenceDao.observeBatch(themeKeys).collect { entities ->
@@ -192,7 +222,6 @@ class WriteViewModel @Inject constructor(
                         entryId = entry.id,
                         title = entry.title,
                         content = entry.content,
-                        mood = Mood.fromString(entry.mood),
                         tags = tags,
                         taggedContacts = contacts,
                         wordCount = computeWordCount(entry.content),
@@ -219,7 +248,6 @@ class WriteViewModel @Inject constructor(
                         entryId = todayEntry.id,
                         title = todayEntry.title,
                         content = todayEntry.content,
-                        mood = Mood.fromString(todayEntry.mood),
                         tags = tags,
                         taggedContacts = contacts,
                         wordCount = computeWordCount(todayEntry.content),
@@ -233,7 +261,6 @@ class WriteViewModel @Inject constructor(
                         entryId = newId,
                         title = "",
                         content = "",
-                        mood = null,
                         tags = emptyList(),
                         wordCount = 0,
                         isLoaded = true,
@@ -300,16 +327,6 @@ class WriteViewModel @Inject constructor(
                 delay(2000)
                 saveEntry(_uiState.value.content)
             }
-        }
-    }
-
-    fun onMoodSelected(mood: Mood?) {
-        val currentMood = _uiState.value.mood
-        _uiState.value = _uiState.value.copy(
-            mood = if (currentMood == mood) null else mood
-        )
-        if (_uiState.value.content.isNotBlank() || _uiState.value.title.isNotBlank()) {
-            viewModelScope.launch { saveEntry(_uiState.value.content) }
         }
     }
 
@@ -382,7 +399,7 @@ class WriteViewModel @Inject constructor(
                     id = state.entryId,
                     title = state.title,
                     content = text,
-                    mood = state.mood?.key,
+                    mood = null,
                     tags = tagsJson,
                     taggedContacts = contactsJson,
                     wordCount = computeWordCount(text),
@@ -404,7 +421,6 @@ class WriteViewModel @Inject constructor(
                     val sessionDuration = System.currentTimeMillis() - sessionStartMs
                     analyticsService.logEntrySaved(
                         wordCount = computeWordCount(text),
-                        mood = state.mood?.key,
                         hasTitle = state.title.isNotBlank(),
                         sessionDurationMs = sessionDuration
                     )
@@ -423,7 +439,6 @@ class WriteViewModel @Inject constructor(
                         val timeSinceInstall = System.currentTimeMillis() - installTime
                         analyticsService.logFirstEntryWritten(
                             wordCount = computeWordCount(text),
-                            mood = state.mood?.key,
                             timeSinceInstallMs = timeSinceInstall
                         )
                         preferenceDao.insert(PreferenceEntity("first_entry_logged", "true"))

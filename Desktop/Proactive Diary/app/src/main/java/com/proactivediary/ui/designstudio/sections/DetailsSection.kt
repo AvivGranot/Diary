@@ -39,7 +39,6 @@ private data class DetailOption(
 private val detailOptions = listOf(
     DetailOption("auto_save", "Auto-save indicator", "Show a subtle dot when saving"),
     DetailOption("word_count", "Word count", "Display words written at the bottom"),
-    DetailOption("mood_prompt", "Mood prompt", "Ask how you\u2019re feeling before you write"),
     DetailOption("daily_quote", "Daily quote", "Show an inspiring quote when you open your diary"),
     DetailOption("date_header", "Date header", "Display today\u2019s date above each entry")
 )

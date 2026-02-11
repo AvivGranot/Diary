@@ -11,7 +11,6 @@ import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.db.dao.EntryDao
 import com.proactivediary.data.db.dao.PreferenceDao
 import com.proactivediary.data.db.entities.EntryEntity
-import com.proactivediary.domain.model.Mood
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +37,6 @@ data class BookExportUiState(
     val totalEntries: Int = 0,
     val totalWords: Int = 0,
     val longestStreak: Int = 0,
-    val mostCommonMood: String? = null,
     val averageWordsPerEntry: Int = 0,
     val monthsWithEntries: Int = 0,
     val exportState: ExportState = ExportState.Idle,
@@ -89,7 +87,6 @@ class BookExportViewModel @Inject constructor(
                 .size
 
             val longestStreak = calculateLongestStreak(yearEntries)
-            val mostCommonMood = calculateMostCommonMood(yearEntries)
 
             _uiState.update {
                 it.copy(
@@ -98,7 +95,6 @@ class BookExportViewModel @Inject constructor(
                     totalEntries = totalEntries,
                     totalWords = totalWords,
                     longestStreak = longestStreak,
-                    mostCommonMood = mostCommonMood,
                     averageWordsPerEntry = averageWords,
                     monthsWithEntries = monthsWithEntries,
                     isLoading = false
@@ -135,7 +131,6 @@ class BookExportViewModel @Inject constructor(
                     totalWords = state.totalWords,
                     totalEntries = state.totalEntries,
                     longestStreak = state.longestStreak,
-                    mostCommonMood = state.mostCommonMood,
                     onProgress = { progress ->
                         _uiState.update { it.copy(exportState = ExportState.Generating(progress)) }
                     }
@@ -195,18 +190,6 @@ class BookExportViewModel @Inject constructor(
             }
         }
         return longest
-    }
-
-    private fun calculateMostCommonMood(entries: List<EntryEntity>): String? {
-        val moodCounts = entries
-            .mapNotNull { it.mood }
-            .filter { it.isNotBlank() }
-            .groupingBy { it }
-            .eachCount()
-
-        if (moodCounts.isEmpty()) return null
-        val topKey = moodCounts.maxByOrNull { it.value }?.key ?: return null
-        return Mood.fromString(topKey)?.label ?: topKey.replaceFirstChar { it.uppercase() }
     }
 
     private fun entryYear(entry: EntryEntity): Int {

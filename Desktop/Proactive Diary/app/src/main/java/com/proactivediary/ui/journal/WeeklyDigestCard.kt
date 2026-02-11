@@ -28,7 +28,6 @@ import com.proactivediary.ui.theme.CormorantGaramond
 data class WeeklyDigest(
     val entryCount: Int = 0,
     val totalWords: Int = 0,
-    val mostCommonMood: String? = null,
     val isVisible: Boolean = false
 )
 
@@ -86,9 +85,6 @@ fun WeeklyDigestCard(
                     append("This week: ${digest.entryCount} ")
                     append(if (digest.entryCount == 1) "entry" else "entries")
                     append(", ${digest.totalWords} words.")
-                    if (digest.mostCommonMood != null) {
-                        append("\nYour most common mood: ${digest.mostCommonMood.replaceFirstChar { it.uppercase() }}.")
-                    }
                 },
                 style = TextStyle(
                     fontSize = 14.sp,

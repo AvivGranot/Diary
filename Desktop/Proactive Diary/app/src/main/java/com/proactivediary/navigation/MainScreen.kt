@@ -161,10 +161,10 @@ fun MainScreen(
                                     }
                                     innerNavController.navigate(item.route) {
                                         popUpTo(innerNavController.graph.startDestinationId) {
-                                            saveState = true
+                                            saveState = item.route != Routes.Settings.route
                                         }
                                         launchSingleTop = true
-                                        restoreState = true
+                                        restoreState = item.route != Routes.Settings.route
                                     }
                                 }
                             },

@@ -25,7 +25,6 @@ data class DesignStudioState(
     val features: Map<String, Boolean> = mapOf(
         "auto_save" to true,
         "word_count" to true,
-        "mood_prompt" to false,
         "daily_quote" to true,
         "date_header" to true
     ),
@@ -103,7 +102,6 @@ class DesignStudioViewModel @Inject constructor(
                         mapOf(
                             "auto_save" to ("auto_save" in enabledList),
                             "word_count" to ("word_count" in enabledList),
-                            "mood_prompt" to ("mood_prompt" in enabledList),
                             "daily_quote" to ("daily_quote" in enabledList),
                             "date_header" to ("date_header" in enabledList)
                         )

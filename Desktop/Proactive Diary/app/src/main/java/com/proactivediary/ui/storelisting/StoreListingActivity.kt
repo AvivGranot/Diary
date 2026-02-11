@@ -24,7 +24,6 @@ import com.proactivediary.ui.storelisting.screenshots.Screenshot02Celebration
 import com.proactivediary.ui.storelisting.screenshots.Screenshot03Journal
 import com.proactivediary.ui.storelisting.screenshots.Screenshot04Goals
 import com.proactivediary.ui.storelisting.screenshots.Screenshot05DesignStudio
-import com.proactivediary.ui.storelisting.screenshots.Screenshot06Moods
 import com.proactivediary.ui.storelisting.screenshots.Screenshot07Book
 import com.proactivediary.ui.storelisting.screenshots.Screenshot08Privacy
 import com.proactivediary.ui.theme.DiaryColors
@@ -41,7 +40,7 @@ class StoreListingActivity : ComponentActivity() {
     }
 }
 
-private const val PAGE_COUNT = 8
+private const val PAGE_COUNT = 7
 
 @Composable
 private fun StoreListingPager() {
@@ -58,9 +57,8 @@ private fun StoreListingPager() {
                 2 -> Screenshot03Journal()
                 3 -> Screenshot04Goals()
                 4 -> Screenshot05DesignStudio()
-                5 -> Screenshot06Moods()
-                6 -> Screenshot07Book()
-                7 -> Screenshot08Privacy()
+                5 -> Screenshot07Book()
+                6 -> Screenshot08Privacy()
             }
         }
 
