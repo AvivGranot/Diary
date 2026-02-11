@@ -28,6 +28,7 @@ import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.typewriter.TypewriterScreen
 import com.proactivediary.ui.export.YearInReviewScreen
+import com.proactivediary.ui.settings.ContactSupportScreen
 import com.proactivediary.ui.write.WriteScreen
 
 @Composable
@@ -177,6 +178,16 @@ fun ProactiveDiaryNavHost(
                     }
                 )
             }
+        }
+
+        composable(
+            route = Routes.ContactSupport.route,
+            arguments = listOf(navArgument("category") {
+                type = NavType.StringType
+                defaultValue = "support"
+            })
+        ) {
+            ContactSupportScreen(onBack = { navController.popBackStack() })
         }
     }
 

@@ -9,9 +9,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.lifecycleScope
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.db.dao.PreferenceDao
 import com.proactivediary.data.repository.EntryRepository
+import com.proactivediary.data.repository.GoalRepository
+import com.proactivediary.data.repository.StreakRepository
 import com.proactivediary.navigation.ProactiveDiaryNavHost
 import com.proactivediary.playstore.InAppUpdateService
 import com.proactivediary.ui.theme.ProactiveDiaryTheme
@@ -37,6 +40,12 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var entryRepository: EntryRepository
+
+    @Inject
+    lateinit var goalRepository: GoalRepository
+
+    @Inject
+    lateinit var streakRepository: StreakRepository
 
     private var sessionStartMs = 0L
     private val _deepLinkDestination = MutableStateFlow<String?>(null)
@@ -68,6 +77,35 @@ class MainActivity : ComponentActivity() {
                 val totalWords = withContext(Dispatchers.IO) { entryRepository.getTotalWordCountSync() }
                 analyticsService.logRetentionDay(daysSinceInstall, totalEntries, totalWords)
             }
+
+            // Crashlytics custom keys
+            val cachedPlan = withContext(Dispatchers.IO) {
+                preferenceDao.getSync("billing_cached_plan")?.value ?: "trial"
+            }
+            FirebaseCrashlytics.getInstance().apply {
+                setCustomKey("plan_type", cachedPlan)
+                setCustomKey("total_entries", totalEntries)
+                setCustomKey("days_since_install", daysSinceInstall)
+            }
+
+            // User properties for segmentation
+            val (streak, goalCount, onboardingDone, designDone) = withContext(Dispatchers.IO) {
+                val s = streakRepository.calculateWritingStreak()
+                val g = goalRepository.getActiveGoalCount()
+                val ob = preferenceDao.getSync("onboarding_completed")?.value == "true"
+                val dc = preferenceDao.getSync("design_completed")?.value == "true"
+                data class Props(val streak: Int, val goals: Int, val onboarding: Boolean, val design: Boolean)
+                Props(s, g, ob, dc)
+            }
+            analyticsService.setUserProperties(
+                planType = cachedPlan,
+                totalEntries = totalEntries,
+                daysSinceInstall = daysSinceInstall,
+                writingStreak = streak,
+                onboardingCompleted = onboardingDone,
+                hasGoals = goalCount > 0,
+                designCustomized = designDone
+            )
         }
 
         setContent {

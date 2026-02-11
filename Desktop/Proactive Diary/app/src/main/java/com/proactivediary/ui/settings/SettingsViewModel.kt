@@ -2,11 +2,18 @@ package com.proactivediary.ui.settings
 
 import android.content.ContentValues
 import android.content.Context
+import android.graphics.Paint
+import android.graphics.Typeface
+import android.graphics.pdf.PdfDocument
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import android.text.StaticLayout
+import android.text.TextPaint
+import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.proactivediary.R
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.proactivediary.data.db.dao.EntryDao
@@ -187,6 +194,156 @@ class SettingsViewModel @Inject constructor(
                 }
             }
             saveToDownloads("proactive_diary_export.txt", text, "text/plain")
+        }
+    }
+
+    fun exportPdf() {
+        viewModelScope.launch {
+            val entries = withContext(Dispatchers.IO) { entryDao.getAllSync() }
+            if (entries.isEmpty()) {
+                _exportMessage.value = "Nothing to export yet. Write your first entry!"
+                return@launch
+            }
+            withContext(Dispatchers.IO) {
+                try {
+                    val dateFormat = SimpleDateFormat("EEEE, MMMM d, yyyy", Locale.US)
+                    val gson = Gson()
+                    val tagsType = object : TypeToken<List<String>>() {}.type
+
+                    val pageWidth = 595
+                    val pageHeight = 842
+                    val marginLeft = 56f
+                    val marginTop = 56f
+                    val marginBottom = 56f
+                    val marginRight = 56f
+                    val contentWidth = (pageWidth - marginLeft - marginRight).toInt()
+                    val maxY = pageHeight - marginBottom
+
+                    val serifFont = ResourcesCompat.getFont(context, R.font.cormorant_garamond_regular) ?: Typeface.SERIF
+                    val serifItalic = ResourcesCompat.getFont(context, R.font.cormorant_garamond_italic) ?: Typeface.create(Typeface.SERIF, Typeface.ITALIC)
+                    val sansFont = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL)
+
+                    val datePaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+                        typeface = serifItalic; textSize = 12f; color = 0xFF585858.toInt()
+                    }
+                    val titlePaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+                        typeface = serifFont; textSize = 18f; color = 0xFF313131.toInt()
+                    }
+                    val bodyPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+                        typeface = sansFont; textSize = 11f; color = 0xFF313131.toInt()
+                    }
+                    val tagPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+                        typeface = sansFont; textSize = 9f; color = 0xFF888888.toInt()
+                    }
+                    val pageNumPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                        typeface = serifFont; textSize = 10f; color = 0xFF585858.toInt()
+                        textAlign = Paint.Align.CENTER
+                    }
+
+                    val doc = PdfDocument()
+                    var pageNum = 0
+                    var page: PdfDocument.Page? = null
+                    var canvas: android.graphics.Canvas? = null
+                    var y = maxY
+
+                    fun startNewPage() {
+                        page?.let { doc.finishPage(it) }
+                        pageNum++
+                        val info = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNum).create()
+                        page = doc.startPage(info)
+                        canvas = page!!.canvas
+                        val bg = Paint().apply { color = 0xFFFAF9F5.toInt() }
+                        canvas!!.drawRect(0f, 0f, pageWidth.toFloat(), pageHeight.toFloat(), bg)
+                        y = marginTop
+                    }
+
+                    fun drawPageNumber() {
+                        canvas?.drawText(pageNum.toString(), pageWidth / 2f, pageHeight - 28f, pageNumPaint)
+                    }
+
+                    for ((index, entry) in entries.withIndex()) {
+                        val dateStr = dateFormat.format(Date(entry.createdAt))
+                        val tags: List<String> = try { gson.fromJson(entry.tags, tagsType) } catch (_: Exception) { emptyList() }
+
+                        if (y + 100f > maxY) {
+                            if (page != null) drawPageNumber()
+                            startNewPage()
+                        }
+
+                        canvas!!.drawText(dateStr, marginLeft, y + 12f, datePaint)
+                        y += 20f
+
+                        if (entry.title.isNotBlank()) {
+                            val titleLayout = StaticLayout.Builder.obtain(entry.title, 0, entry.title.length, titlePaint, contentWidth)
+                                .setLineSpacing(0f, 1.2f).build()
+                            canvas!!.save()
+                            canvas!!.translate(marginLeft, y)
+                            titleLayout.draw(canvas!!)
+                            canvas!!.restore()
+                            y += titleLayout.height + 4f
+                        }
+
+                        val bodyLayout = StaticLayout.Builder.obtain(entry.content, 0, entry.content.length, bodyPaint, contentWidth)
+                            .setLineSpacing(0f, 1.4f).build()
+                        val totalLines = bodyLayout.lineCount
+                        var lineIndex = 0
+                        while (lineIndex < totalLines) {
+                            if (y + 16f > maxY) {
+                                drawPageNumber()
+                                startNewPage()
+                            }
+                            val lineTop = bodyLayout.getLineTop(lineIndex).toFloat()
+                            val lineBottom = bodyLayout.getLineBottom(lineIndex).toFloat()
+                            val lineHeight = lineBottom - lineTop
+                            canvas!!.save()
+                            canvas!!.translate(marginLeft, y - lineTop)
+                            canvas!!.clipRect(0f, lineTop, contentWidth.toFloat(), lineBottom)
+                            bodyLayout.draw(canvas!!)
+                            canvas!!.restore()
+                            y += lineHeight
+                            lineIndex++
+                        }
+
+                        if (tags.isNotEmpty()) {
+                            y += 4f
+                            if (y + 14f > maxY) { drawPageNumber(); startNewPage() }
+                            val tagStr = tags.joinToString("  ") { "#$it" }
+                            canvas!!.drawText(tagStr, marginLeft, y + 10f, tagPaint)
+                            y += 16f
+                        }
+
+                        if (index < entries.lastIndex) {
+                            y += 12f
+                            if (y + 20f > maxY) { drawPageNumber(); startNewPage() }
+                            val divPaint = Paint().apply { color = 0xFFD0D0D0.toInt(); strokeWidth = 0.5f }
+                            canvas!!.drawLine(marginLeft, y, marginLeft + contentWidth, y, divPaint)
+                            y += 16f
+                        }
+                    }
+
+                    if (page != null) {
+                        drawPageNumber()
+                        doc.finishPage(page!!)
+                    }
+
+                    val filename = "proactive_diary_export.pdf"
+                    val values = ContentValues().apply {
+                        put(MediaStore.Downloads.DISPLAY_NAME, filename)
+                        put(MediaStore.Downloads.MIME_TYPE, "application/pdf")
+                        put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                    }
+                    val uri = context.contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                    uri?.let {
+                        context.contentResolver.openOutputStream(it)?.use { os ->
+                            doc.writeTo(os)
+                        }
+                    }
+                    doc.close()
+                    _exportMessage.value = "Exported to Downloads/$filename"
+                } catch (e: Exception) {
+                    _exportMessage.value = "Export failed: ${e.message}"
+                }
+            }
         }
     }
 

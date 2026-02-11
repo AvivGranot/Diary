@@ -6,6 +6,7 @@ import androidx.work.Configuration
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.proactivediary.notifications.LapsedUserWorker
 import com.proactivediary.notifications.NotificationChannels
 import dagger.hilt.android.HiltAndroidApp
@@ -27,6 +28,7 @@ class ProactiveDiaryApp : Application(), Configuration.Provider {
         super.onCreate()
         NotificationChannels.createChannels(this)
         scheduleLapsedUserCheck()
+        initializeCrashlytics()
     }
 
     private fun scheduleLapsedUserCheck() {
@@ -39,5 +41,14 @@ class ProactiveDiaryApp : Application(), Configuration.Provider {
             ExistingPeriodicWorkPolicy.KEEP,
             request
         )
+    }
+
+    private fun initializeCrashlytics() {
+        FirebaseCrashlytics.getInstance().apply {
+            setCustomKey("plan_type", "unknown")
+            setCustomKey("total_entries", 0)
+            setCustomKey("days_since_install", 0)
+            setCustomKey("app_version", BuildConfig.VERSION_NAME)
+        }
     }
 }

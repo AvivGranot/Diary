@@ -70,6 +70,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
@@ -137,6 +138,7 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-crashlytics-ktx")
+    implementation("com.google.firebase:firebase-functions-ktx")
 
     // Google Sign-In (Credential Manager)
     implementation("androidx.credentials:credentials:1.3.0")

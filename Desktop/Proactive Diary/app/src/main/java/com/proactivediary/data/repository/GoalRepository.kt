@@ -19,4 +19,5 @@ interface GoalRepository {
     suspend fun insertCheckIn(checkIn: GoalCheckInEntity)
     suspend fun deleteAllGoals()
     suspend fun deleteAllCheckIns()
+    suspend fun getActiveGoalCount(): Int
 }

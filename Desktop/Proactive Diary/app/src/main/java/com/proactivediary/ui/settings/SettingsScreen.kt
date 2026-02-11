@@ -64,6 +64,8 @@ fun SettingsScreen(
     onNavigateToReminders: () -> Unit = {},
     onNavigateToTypewriter: () -> Unit = {},
     onNavigateToYearInReview: () -> Unit = {},
+    onNavigateToBugReport: () -> Unit = {},
+    onNavigateToSupport: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
     billingViewModel: BillingViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel()
@@ -284,7 +286,7 @@ fun SettingsScreen(
                 Box {
                     SettingsRow(
                         label = "Export Writing",
-                        value = "JSON / Text",
+                        value = "JSON / PDF",
                         onClick = { showExportOptions = true }
                     )
                     DropdownMenu(
@@ -299,9 +301,9 @@ fun SettingsScreen(
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Export as Plain Text") },
+                            text = { Text("Export as PDF") },
                             onClick = {
-                                viewModel.exportText()
+                                viewModel.exportPdf()
                                 showExportOptions = false
                             }
                         )
@@ -368,6 +370,23 @@ fun SettingsScreen(
                         onClick = { showAuthDialog = true }
                     )
                 }
+            }
+
+            Spacer(Modifier.height(24.dp))
+
+            // HELP & SUPPORT section
+            SectionHeader("HELP & SUPPORT")
+            Spacer(Modifier.height(8.dp))
+            SettingsCard {
+                SettingsRow(
+                    label = "Report a Bug",
+                    onClick = onNavigateToBugReport
+                )
+                SettingsDivider()
+                SettingsRow(
+                    label = "Contact Support",
+                    onClick = onNavigateToSupport
+                )
             }
 
             Spacer(Modifier.height(24.dp))

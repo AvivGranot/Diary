@@ -66,3 +66,7 @@
 # ─── App domain models (used in JSON conversion) ───
 -keep class com.proactivediary.domain.model.** { *; }
 -keep class com.proactivediary.data.db.converters.** { *; }
+
+# ─── Firebase Cloud Functions ───
+-keep class com.google.firebase.functions.** { *; }
+-dontwarn com.google.firebase.functions.**

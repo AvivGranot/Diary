@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
@@ -122,6 +124,7 @@ class WriteViewModel @Inject constructor(
     val uiState: StateFlow<WriteUiState> = _uiState.asStateFlow()
 
     private val _contentFlow = MutableStateFlow("")
+    private var titleSaveJob: Job? = null
     private val gson = Gson()
     private val sessionStartMs = System.currentTimeMillis()
 
@@ -289,9 +292,14 @@ class WriteViewModel @Inject constructor(
 
     fun onTitleChanged(newTitle: String) {
         _uiState.value = _uiState.value.copy(title = newTitle)
-        // Re-emit content to trigger debounced auto-save (title changes alone must persist)
+        // MutableStateFlow deduplicates — re-emitting same content won't trigger auto-save.
+        // Use a separate debounced job so title-only changes are always persisted.
         if (_uiState.value.content.isNotBlank() || newTitle.isNotBlank()) {
-            _contentFlow.value = _uiState.value.content
+            titleSaveJob?.cancel()
+            titleSaveJob = viewModelScope.launch {
+                delay(2000)
+                saveEntry(_uiState.value.content)
+            }
         }
     }
 

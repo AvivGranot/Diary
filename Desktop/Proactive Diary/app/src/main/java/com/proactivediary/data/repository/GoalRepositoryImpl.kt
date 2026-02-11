@@ -53,4 +53,7 @@ class GoalRepositoryImpl @Inject constructor(
 
     override suspend fun deleteAllCheckIns() =
         goalCheckInDao.deleteAll()
+
+    override suspend fun getActiveGoalCount(): Int =
+        goalDao.getActiveGoalsSync().size
 }

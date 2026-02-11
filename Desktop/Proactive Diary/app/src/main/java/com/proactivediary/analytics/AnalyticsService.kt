@@ -169,6 +169,63 @@ class AnalyticsService @Inject constructor() {
         log("book_exported", bundleOf("year" to year, "entry_count" to entryCount))
     }
 
+    // ─── User Properties (Segmentation) ───
+    fun setUserProperties(
+        planType: String,
+        totalEntries: Int,
+        daysSinceInstall: Int,
+        writingStreak: Int,
+        onboardingCompleted: Boolean,
+        hasGoals: Boolean,
+        designCustomized: Boolean
+    ) {
+        analytics.setUserProperty("plan_type", planType)
+        analytics.setUserProperty("total_entries", bucketEntries(totalEntries))
+        analytics.setUserProperty("days_since_install", bucketDays(daysSinceInstall))
+        analytics.setUserProperty("writing_streak", bucketStreak(writingStreak))
+        analytics.setUserProperty("onboarding_completed", onboardingCompleted.toString())
+        analytics.setUserProperty("has_goals", hasGoals.toString())
+        analytics.setUserProperty("design_customized", designCustomized.toString())
+    }
+
+    private fun bucketEntries(count: Int): String = when {
+        count == 0 -> "0"
+        count <= 5 -> "1-5"
+        count <= 10 -> "6-10"
+        count <= 25 -> "11-25"
+        count <= 50 -> "26-50"
+        else -> "51+"
+    }
+
+    private fun bucketDays(days: Int): String = when {
+        days == 0 -> "0"
+        days == 1 -> "1"
+        days <= 7 -> "2-7"
+        days <= 14 -> "8-14"
+        days <= 30 -> "15-30"
+        else -> "31+"
+    }
+
+    private fun bucketStreak(streak: Int): String = when {
+        streak == 0 -> "0"
+        streak <= 3 -> "1-3"
+        streak <= 7 -> "4-7"
+        streak <= 14 -> "8-14"
+        else -> "15+"
+    }
+
+    // ─── Support ───
+    fun logSupportRequestSubmitted(category: String) {
+        log("support_request_submitted", bundleOf("category" to category))
+    }
+
+    fun logOnboardingCompleted(designCustomized: Boolean, goalsSet: Int) {
+        log("onboarding_completed", bundleOf(
+            "design_customized" to designCustomized,
+            "goals_set" to goalsSet
+        ))
+    }
+
     // ─── Helpers ───
     private fun log(event: String, params: Bundle? = null) {
         analytics.logEvent(event, params)

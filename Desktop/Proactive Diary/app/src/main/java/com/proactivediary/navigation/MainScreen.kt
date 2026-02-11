@@ -261,6 +261,12 @@ fun MainScreen(
                     },
                     onNavigateToYearInReview = {
                         rootNavController.navigate(Routes.YearInReview.route)
+                    },
+                    onNavigateToBugReport = {
+                        rootNavController.navigate(Routes.ContactSupport.createRoute("bug"))
+                    },
+                    onNavigateToSupport = {
+                        rootNavController.navigate(Routes.ContactSupport.createRoute("support"))
                     }
                 )
             }

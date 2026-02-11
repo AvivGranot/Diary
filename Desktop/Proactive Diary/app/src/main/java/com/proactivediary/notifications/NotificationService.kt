@@ -27,13 +27,11 @@ class NotificationService @Inject constructor(
     private val alarmManager: AlarmManager
         get() = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-    /** Check if we can schedule exact alarms (required on API 31+). */
-    private fun canScheduleAlarms(): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            return alarmManager.canScheduleExactAlarms()
-        }
-        return true
-    }
+    /**
+     * setRepeating() uses inexact alarms — no SCHEDULE_EXACT_ALARM needed.
+     * Always return true so reminders are never silently blocked.
+     */
+    private fun canScheduleAlarms(): Boolean = true
 
     private val gson = Gson()
 
