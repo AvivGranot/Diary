@@ -48,7 +48,7 @@ private fun BookContent() {
     ) {
         // Year selector
         Text(
-            text = "2025",
+            text = "2026",
             style = TextStyle(
                 fontFamily = CormorantGaramond,
                 fontSize = 32.sp,
@@ -116,7 +116,7 @@ private fun BookContent() {
                 Spacer(Modifier.height(16.dp))
 
                 Text(
-                    text = "2025",
+                    text = "2026",
                     style = TextStyle(
                         fontFamily = CormorantGaramond,
                         fontSize = 16.sp,

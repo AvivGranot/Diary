@@ -144,14 +144,16 @@ class WriteViewModel @Inject constructor(
         loadGoalProgress()
         analyticsService.logWriteScreenViewed()
 
-        val estZone = java.time.ZoneId.of("America/New_York")
-        val today = LocalDate.now(estZone)
+        val pacificZone = java.time.ZoneId.of("America/Los_Angeles")
+        val today = LocalDate.now(pacificZone)
         val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.US)
         _uiState.value = _uiState.value.copy(dateHeader = today.format(formatter))
     }
 
     override fun onCleared() {
         super.onCleared()
+        // Cancel any pending debounced title save — we'll force-save below
+        titleSaveJob?.cancel()
         // Force-save any pending title/content changes before ViewModel is destroyed
         // (e.g., user switches tabs before debounce completes)
         val state = _uiState.value
@@ -324,7 +326,7 @@ class WriteViewModel @Inject constructor(
         if (_uiState.value.content.isNotBlank() || newTitle.isNotBlank()) {
             titleSaveJob?.cancel()
             titleSaveJob = viewModelScope.launch {
-                delay(2000)
+                delay(500)
                 saveEntry(_uiState.value.content)
             }
         }

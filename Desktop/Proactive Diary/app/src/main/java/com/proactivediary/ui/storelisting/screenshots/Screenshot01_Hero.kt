@@ -48,7 +48,7 @@ private fun HeroContent() {
     ) {
         // Date header
         Text(
-            text = "Sunday, February 9, 2025",
+            text = "Wednesday, February 11, 2026",
             style = TextStyle(
                 fontFamily = CormorantGaramond,
                 fontSize = 14.sp,

@@ -1,21 +1,34 @@
 package com.proactivediary.ui.goals
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -24,16 +37,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.proactivediary.ui.components.formatTime
+import com.proactivediary.ui.components.parseStoredTime
 import com.proactivediary.ui.theme.CormorantGaramond
 
 @Composable
 fun GoalsScreen(
+    onBack: () -> Unit = {},
     viewModel: GoalsViewModel = hiltViewModel()
 ) {
     val goals by viewModel.goals.collectAsState()
@@ -43,140 +61,136 @@ fun GoalsScreen(
 
     var showAddDialog by remember { mutableStateOf(false) }
     var editingGoal by remember { mutableStateOf<GoalUiState?>(null) }
-    var longPressedGoal by remember { mutableStateOf<GoalUiState?>(null) }
-    var showDeleteConfirm by remember { mutableStateOf<GoalUiState?>(null) }
+    var goalToDelete by remember { mutableStateOf<GoalUiState?>(null) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 24.dp)
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        Spacer(Modifier.height(16.dp))
-
-        Text(
-            text = "Your Goals",
-            style = MaterialTheme.typography.headlineLarge,
-            color = inkColor
-        )
-
-        Spacer(Modifier.height(16.dp))
+        // Header: back + title + add
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = inkColor
+                )
+            }
+            Text(
+                text = "Goals",
+                style = TextStyle(
+                    fontFamily = CormorantGaramond,
+                    fontSize = 24.sp,
+                    color = inkColor
+                ),
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = { showAddDialog = true }) {
+                Icon(
+                    Icons.Default.Add,
+                    contentDescription = "Add goal",
+                    tint = inkColor
+                )
+            }
+        }
 
         if (goals.isEmpty()) {
-            // Empty state
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
+                    .fillMaxSize()
+                    .padding(32.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "No goals yet",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = inkColor,
+                        style = TextStyle(
+                            fontFamily = CormorantGaramond,
+                            fontSize = 20.sp,
+                            color = pencilColor
+                        ),
                         textAlign = TextAlign.Center
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "Set a goal to start tracking your progress",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = pencilColor,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(Modifier.height(24.dp))
-                    Text(
-                        text = "+ Add new goal",
+                        text = "Tap + to add a goal",
                         style = TextStyle(
-                            fontFamily = CormorantGaramond,
-                            fontSize = 16.sp,
-                            fontStyle = FontStyle.Italic
-                        ),
-                        color = inkColor,
-                        modifier = Modifier
-                            .clickable { showAddDialog = true }
-                            .padding(vertical = 12.dp)
+                            fontSize = 13.sp,
+                            fontStyle = FontStyle.Italic,
+                            color = pencilColor.copy(alpha = 0.7f)
+                        )
                     )
                 }
             }
         } else {
             LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 16.dp)
+                modifier = Modifier.fillMaxSize()
             ) {
                 items(goals, key = { it.id }) { goal ->
-                    GoalCard(
-                        goal = goal,
-                        onCheckIn = { viewModel.checkIn(goal.id) },
-                        onEdit = { editingGoal = goal },
-                        onDelete = { showDeleteConfirm = goal },
-                        onLongPress = { longPressedGoal = goal }
+                    val dismissState = rememberSwipeToDismissBoxState(
+                        confirmValueChange = { value ->
+                            if (value == SwipeToDismissBoxValue.EndToStart) {
+                                goalToDelete = goal
+                                false
+                            } else false
+                        }
                     )
-                }
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                        contentAlignment = Alignment.Center
+
+                    SwipeToDismissBox(
+                        state = dismissState,
+                        backgroundContent = {
+                            val color by animateColorAsState(
+                                targetValue = if (dismissState.targetValue == SwipeToDismissBoxValue.EndToStart)
+                                    Color(0xFFE57373).copy(alpha = 0.3f)
+                                else Color.Transparent,
+                                label = "swipe_bg"
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(color)
+                                    .padding(end = 24.dp),
+                                contentAlignment = Alignment.CenterEnd
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Delete,
+                                    contentDescription = "Delete",
+                                    tint = Color(0xFFD32F2F).copy(alpha = 0.7f)
+                                )
+                            }
+                        },
+                        enableDismissFromStartToEnd = false
                     ) {
-                        Text(
-                            text = "+ Add new goal",
-                            style = TextStyle(
-                                fontFamily = CormorantGaramond,
-                                fontSize = 14.sp,
-                                fontStyle = FontStyle.Italic
-                            ),
-                            color = inkColor,
-                            modifier = Modifier
-                                .clickable { showAddDialog = true }
-                                .padding(vertical = 12.dp)
+                        GoalRow(
+                            goal = goal,
+                            onClick = { editingGoal = goal }
                         )
                     }
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 16.dp),
+                        color = pencilColor.copy(alpha = 0.12f)
+                    )
                 }
             }
         }
     }
 
-    // Long-press action sheet
-    if (longPressedGoal != null) {
-        val goal = longPressedGoal!!
-        AlertDialog(
-            onDismissRequest = { longPressedGoal = null },
-            containerColor = MaterialTheme.colorScheme.surface,
-            title = {
-                Text(goal.title, style = MaterialTheme.typography.titleLarge, color = inkColor)
-            },
-            text = null,
-            confirmButton = {
-                TextButton(onClick = {
-                    editingGoal = goal
-                    longPressedGoal = null
-                }) {
-                    Text("Edit", color = inkColor)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    showDeleteConfirm = goal
-                    longPressedGoal = null
-                }) {
-                    Text("Delete", color = MaterialTheme.colorScheme.error)
-                }
-            }
-        )
-    }
-
     // Delete confirmation
-    if (showDeleteConfirm != null) {
-        val goal = showDeleteConfirm!!
+    if (goalToDelete != null) {
+        val goal = goalToDelete!!
         AlertDialog(
-            onDismissRequest = { showDeleteConfirm = null },
+            onDismissRequest = { goalToDelete = null },
             containerColor = MaterialTheme.colorScheme.surface,
             title = { Text("Delete goal?", style = MaterialTheme.typography.titleLarge, color = inkColor) },
             text = {
                 Text(
-                    "Delete this goal and all check-ins?",
+                    "Delete \"${goal.title}\" and all check-ins?",
                     style = MaterialTheme.typography.bodyLarge,
                     color = pencilColor
                 )
@@ -184,13 +198,13 @@ fun GoalsScreen(
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.deleteGoal(goal.id)
-                    showDeleteConfirm = null
+                    goalToDelete = null
                 }) {
                     Text("Delete", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = null }) {
+                TextButton(onClick = { goalToDelete = null }) {
                     Text("Cancel", color = pencilColor)
                 }
             }
@@ -218,5 +232,66 @@ fun GoalsScreen(
                 editingGoal = null
             }
         )
+    }
+}
+
+@Composable
+private fun GoalRow(
+    goal: GoalUiState,
+    onClick: () -> Unit
+) {
+    val inkColor = MaterialTheme.colorScheme.onBackground
+    val pencilColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val (hour, minute) = parseStoredTime(goal.reminderTime)
+    val timeDisplay = formatTime(hour, minute)
+
+    val daysLabel = buildDaysLabel(goal.reminderDays)
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.background)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            // Large time
+            Text(
+                text = timeDisplay,
+                style = TextStyle(
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Light,
+                    color = inkColor
+                )
+            )
+            // Goal title + frequency + days
+            Text(
+                text = "${goal.title} · ${goal.frequency.label}" +
+                        if (daysLabel.isNotEmpty()) " · $daysLabel" else "",
+                style = TextStyle(
+                    fontSize = 13.sp,
+                    color = pencilColor
+                ),
+                maxLines = 1
+            )
+        }
+    }
+}
+
+private fun buildDaysLabel(reminderDays: String): String {
+    val dayLabels = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+    return try {
+        val days = com.google.gson.Gson()
+            .fromJson(reminderDays, Array<Int>::class.java)
+            .toList()
+        when {
+            days.size >= 7 -> "Every day"
+            days.size == 5 && days.containsAll(listOf(0, 1, 2, 3, 4)) -> "Weekdays"
+            days.size == 2 && days.containsAll(listOf(5, 6)) -> "Weekends"
+            else -> days.mapNotNull { dayLabels.getOrNull(it) }.joinToString(", ")
+        }
+    } catch (_: Exception) {
+        "Every day"
     }
 }

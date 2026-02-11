@@ -108,7 +108,7 @@ class EntryDetailViewModel @Inject constructor(
             }
             val tags = parseTags(entry.tags)
 
-            val zone = ZoneId.of("America/New_York")
+            val zone = ZoneId.of("America/Los_Angeles")
             val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.US)
             val dateHeader = Instant.ofEpochMilli(entry.createdAt)
                 .atZone(zone)

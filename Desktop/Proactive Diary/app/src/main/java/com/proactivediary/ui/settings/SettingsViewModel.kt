@@ -74,6 +74,10 @@ class SettingsViewModel @Inject constructor(
     private val _exportMessage = MutableStateFlow<String?>(null)
     val exportMessage: StateFlow<String?> = _exportMessage
 
+    // Export Uri for share intent
+    private val _exportUri = MutableStateFlow<android.net.Uri?>(null)
+    val exportUri: StateFlow<android.net.Uri?> = _exportUri
+
     // Writing streak toggle
     private val _isStreakEnabled = MutableStateFlow(true)
     val isStreakEnabled: StateFlow<Boolean> = _isStreakEnabled
@@ -159,7 +163,10 @@ class SettingsViewModel @Inject constructor(
                 )
             }
             val json = gson.toJson(exportEntries)
-            saveToDownloads("proactive_diary_export.json", json, "application/json")
+            val uri = saveToDownloads("proactive_diary_export.json", json, "application/json")
+            if (uri != null) {
+                _exportUri.value = uri
+            }
         }
     }
 
@@ -339,6 +346,9 @@ class SettingsViewModel @Inject constructor(
                     }
                     doc.close()
                     _exportMessage.value = "Exported to Downloads/$filename"
+                    if (uri != null) {
+                        _exportUri.value = uri
+                    }
                 } catch (e: Exception) {
                     _exportMessage.value = "Export failed: ${e.message}"
                 }
@@ -346,8 +356,8 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    private suspend fun saveToDownloads(filename: String, content: String, mimeType: String) {
-        withContext(Dispatchers.IO) {
+    private suspend fun saveToDownloads(filename: String, content: String, mimeType: String): android.net.Uri? {
+        return withContext(Dispatchers.IO) {
             try {
                 val values = ContentValues().apply {
                     put(MediaStore.Downloads.DISPLAY_NAME, filename)
@@ -366,14 +376,20 @@ class SettingsViewModel @Inject constructor(
                     }
                 }
                 _exportMessage.value = "Exported to Downloads/$filename"
+                uri
             } catch (e: Exception) {
                 _exportMessage.value = "Export failed: ${e.message}"
+                null
             }
         }
     }
 
     fun clearExportMessage() {
         _exportMessage.value = null
+    }
+
+    fun clearExportUri() {
+        _exportUri.value = null
     }
 
     private fun formatIso8601(millis: Long): String {

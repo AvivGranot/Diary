@@ -83,7 +83,7 @@ class TypewriterViewModel @Inject constructor(
         private const val CTA_SLIDE_MS = 400L
         private const val SKIP_APPEAR_MS = 0L
         private const val SCREEN_FADE_MS = 400L
-        private const val AUTO_ADVANCE_MS = 2000L
+        private const val AUTO_ADVANCE_MS = 3000L
         private const val RETURN_AUTO_ADVANCE_MS = 500L
 
         private const val PREF_KEY = "first_launch_completed"

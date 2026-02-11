@@ -77,6 +77,7 @@ fun SettingsScreen(
     val activeReminderCount by viewModel.activeReminderCount.collectAsState()
     val activeGoalCount by viewModel.activeGoalCount.collectAsState()
     val exportMessage by viewModel.exportMessage.collectAsState()
+    val exportUri by viewModel.exportUri.collectAsState()
     val deleteStep by viewModel.deleteStep.collectAsState()
     val subscriptionState by billingViewModel.subscriptionState.collectAsState()
     val authState by authViewModel.uiState.collectAsState()
@@ -97,6 +98,21 @@ fun SettingsScreen(
         exportMessage?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.clearExportMessage()
+        }
+    }
+
+    LaunchedEffect(exportUri) {
+        exportUri?.let { uri ->
+            try {
+                val mimeType = context.contentResolver.getType(uri) ?: "*/*"
+                val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                    type = mimeType
+                    putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                context.startActivity(android.content.Intent.createChooser(shareIntent, "Share export"))
+            } catch (_: Exception) { }
+            viewModel.clearExportUri()
         }
     }
 

@@ -232,7 +232,9 @@ fun MainScreen(
                 )
             }
             composable(Routes.Goals.route) {
-                GoalsScreen()
+                GoalsScreen(
+                    onBack = { innerNavController.popBackStack() }
+                )
             }
             composable(Routes.Reminders.route) {
                 ReminderManagementScreen(
