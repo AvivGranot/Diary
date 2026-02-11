@@ -1,26 +1,15 @@
 package com.proactivediary.ui.components
 
-import android.app.TimePickerDialog
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccessTime
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import java.util.Locale
 
 /**
@@ -42,9 +31,6 @@ fun ReminderPicker(
     modifier: Modifier = Modifier,
     label: String? = null
 ) {
-    val context = LocalContext.current
-    val formattedTime = formatTime(timeHour, timeMinute)
-
     Column(modifier = modifier.fillMaxWidth()) {
         if (label != null) {
             Text(
@@ -55,35 +41,12 @@ fun ReminderPicker(
             )
         }
 
-        // Time picker row
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    TimePickerDialog(
-                        context,
-                        { _, hour, minute -> onTimeChanged(hour, minute) },
-                        timeHour,
-                        timeMinute,
-                        false
-                    ).show()
-                }
-                .padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.AccessTime,
-                contentDescription = "Select time",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = formattedTime,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                fontSize = 16.sp
-            )
-        }
+        // Wheel time picker
+        WheelTimePicker(
+            hour = timeHour,
+            minute = timeMinute,
+            onTimeChanged = onTimeChanged
+        )
 
         Spacer(modifier = Modifier.height(8.dp))
 

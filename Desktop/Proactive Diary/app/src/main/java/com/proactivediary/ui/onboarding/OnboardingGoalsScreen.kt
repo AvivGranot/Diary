@@ -1,7 +1,6 @@
 package com.proactivediary.ui.onboarding
 
 import android.Manifest
-import android.app.TimePickerDialog
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -25,7 +24,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -58,7 +56,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.domain.model.GoalFrequency
 import com.proactivediary.ui.components.DaySelector
 import com.proactivediary.ui.components.FrequencySelector
-import com.proactivediary.ui.components.formatTime
+import com.proactivediary.ui.components.WheelTimePicker
 import com.proactivediary.ui.theme.CormorantGaramond
 import kotlinx.coroutines.launch
 
@@ -100,27 +98,8 @@ fun OnboardingGoalsScreen(
 
     var fallbackEnabled by remember { mutableStateOf(true) }
 
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (!granted) {
-            scope.launch {
-                snackbarHostState.showSnackbar("Notifications disabled. You can enable them in Settings.")
-            }
-        }
-    }
-
-    fun handleDone() {
-        // Request notification permission FIRST (API 33+), then save data
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val hasPermission = ContextCompat.checkSelfPermission(
-                context, Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-            if (!hasPermission) {
-                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
-        }
-
+    // Shared save-and-finish logic — called after permission is resolved
+    fun saveAndFinish() {
         scope.launch {
             val activeGoals = goals.filter { it.title.isNotBlank() }
             val activeReminders = reminders.filter { it.enabled }
@@ -133,6 +112,36 @@ fun OnboardingGoalsScreen(
 
             onDone()
         }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (!granted) {
+            scope.launch {
+                snackbarHostState.showSnackbar("Notifications disabled. You can enable them in Settings.")
+            }
+        }
+        // Save and schedule reminders AFTER permission dialog is resolved
+        // (whether granted or denied — alarms are still set, notifications
+        // will just be suppressed if denied)
+        saveAndFinish()
+    }
+
+    fun handleDone() {
+        // Request notification permission FIRST (API 33+), save after result
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPermission = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!hasPermission) {
+                // Permission dialog opens — saveAndFinish() called in callback
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                return
+            }
+        }
+        // Permission already granted or API < 33 — proceed immediately
+        saveAndFinish()
     }
 
     val inkColor = MaterialTheme.colorScheme.onBackground
@@ -338,8 +347,6 @@ private fun GoalInputCard(
     inkColor: androidx.compose.ui.graphics.Color,
     pencilColor: androidx.compose.ui.graphics.Color
 ) {
-    val context = LocalContext.current
-
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -411,33 +418,11 @@ private fun GoalInputCard(
                 color = pencilColor,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-            Row(
-                modifier = Modifier
-                    .clickable {
-                        TimePickerDialog(
-                            context,
-                            { _, h, m -> onGoalChanged(goal.copy(hour = h, minute = m)) },
-                            goal.hour,
-                            goal.minute,
-                            false
-                        ).show()
-                    }
-                    .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.Outlined.AccessTime,
-                    contentDescription = "Pick time",
-                    tint = pencilColor,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = formatTime(goal.hour, goal.minute),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = inkColor
-                )
-            }
+            WheelTimePicker(
+                hour = goal.hour,
+                minute = goal.minute,
+                onTimeChanged = { h, m -> onGoalChanged(goal.copy(hour = h, minute = m)) }
+            )
 
             Spacer(Modifier.height(16.dp))
 

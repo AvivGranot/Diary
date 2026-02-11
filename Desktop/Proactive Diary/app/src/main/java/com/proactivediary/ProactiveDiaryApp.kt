@@ -1,6 +1,7 @@
 package com.proactivediary
 
 import android.app.Application
+import android.util.Log
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -9,7 +10,11 @@ import androidx.work.WorkManager
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.proactivediary.notifications.LapsedUserWorker
 import com.proactivediary.notifications.NotificationChannels
+import com.proactivediary.notifications.NotificationService
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -18,6 +23,9 @@ class ProactiveDiaryApp : Application(), Configuration.Provider {
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
+
+    @Inject
+    lateinit var notificationService: NotificationService
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
@@ -28,7 +36,20 @@ class ProactiveDiaryApp : Application(), Configuration.Provider {
         super.onCreate()
         NotificationChannels.createChannels(this)
         scheduleLapsedUserCheck()
+        rescheduleAlarms()
         initializeCrashlytics()
+    }
+
+    private fun rescheduleAlarms() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                Log.d("ProactiveDiaryApp", "rescheduleAlarms: starting rescheduleAll()")
+                notificationService.rescheduleAll()
+                Log.d("ProactiveDiaryApp", "rescheduleAlarms: completed successfully")
+            } catch (e: Exception) {
+                Log.e("ProactiveDiaryApp", "rescheduleAlarms: failed", e)
+            }
+        }
     }
 
     private fun scheduleLapsedUserCheck() {

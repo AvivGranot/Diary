@@ -1,10 +1,8 @@
 package com.proactivediary.ui.onboarding
 
-import android.app.TimePickerDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,21 +17,28 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.proactivediary.ui.components.WheelTimePicker
 import com.proactivediary.ui.components.formatTime
 import com.proactivediary.ui.theme.CormorantGaramond
 
@@ -89,8 +94,10 @@ private fun ReminderRow(
     inkColor: Color,
     pencilColor: Color
 ) {
-    val context = LocalContext.current
     val surfaceColor = MaterialTheme.colorScheme.surface
+    var showTimePicker by remember { mutableStateOf(false) }
+    var pickerHour by remember { mutableIntStateOf(reminder.hour) }
+    var pickerMinute by remember { mutableIntStateOf(reminder.minute) }
 
     Row(
         modifier = Modifier
@@ -146,19 +153,15 @@ private fun ReminderRow(
             )
         }
 
-        // Time
+        // Time — opens wheel picker dialog
         Text(
             text = formatTime(reminder.hour, reminder.minute),
             style = MaterialTheme.typography.bodyMedium,
             color = if (reminder.enabled) inkColor else pencilColor.copy(alpha = 0.5f),
             modifier = Modifier.clickable {
-                TimePickerDialog(
-                    context,
-                    { _, h, m -> onChanged(reminder.copy(hour = h, minute = m)) },
-                    reminder.hour,
-                    reminder.minute,
-                    false
-                ).show()
+                pickerHour = reminder.hour
+                pickerMinute = reminder.minute
+                showTimePicker = true
             }
         )
 
@@ -174,5 +177,46 @@ private fun ReminderRow(
                 )
             }
         }
+    }
+
+    // Wheel time picker dialog
+    if (showTimePicker) {
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            title = {
+                Text(
+                    text = "Set Time",
+                    style = TextStyle(
+                        fontFamily = CormorantGaramond,
+                        fontSize = 20.sp,
+                        color = inkColor
+                    )
+                )
+            },
+            text = {
+                WheelTimePicker(
+                    hour = pickerHour,
+                    minute = pickerMinute,
+                    onTimeChanged = { h, m ->
+                        pickerHour = h
+                        pickerMinute = m
+                    }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onChanged(reminder.copy(hour = pickerHour, minute = pickerMinute))
+                    showTimePicker = false
+                }) {
+                    Text("Done", color = inkColor)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text("Cancel", color = pencilColor)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     }
 }

@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import com.proactivediary.data.db.dao.EntryDao
 import com.proactivediary.data.db.dao.GoalDao
 import com.proactivediary.data.db.dao.WritingReminderDao
@@ -28,17 +29,18 @@ class NotificationService @Inject constructor(
         get() = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
     /**
-     * setRepeating() uses inexact alarms — no SCHEDULE_EXACT_ALARM needed.
      * Always return true so reminders are never silently blocked.
+     * scheduleExact() handles the API 31+ permission check internally.
      */
     private fun canScheduleAlarms(): Boolean = true
 
     private val gson = Gson()
 
     /**
-     * Schedule a repeating alarm for a writing reminder.
+     * Schedule an exact alarm for a writing reminder.
      * The alarm fires daily at the specified time; the receiver checks
-     * if the current day of week is in the reminder's active days.
+     * if the current day of week is in the reminder's active days,
+     * then reschedules the next day's alarm.
      */
     fun scheduleWritingReminder(reminder: WritingReminderEntity) {
         if (!reminder.isActive) return
@@ -52,6 +54,7 @@ class NotificationService @Inject constructor(
             putExtra(AlarmReceiver.EXTRA_ID, reminder.id)
             putExtra(AlarmReceiver.EXTRA_LABEL, reminder.label)
             putExtra(AlarmReceiver.EXTRA_DAYS, reminder.days)
+            putExtra(AlarmReceiver.EXTRA_TIME, reminder.time)
             putExtra(AlarmReceiver.EXTRA_FALLBACK_ENABLED, reminder.fallbackEnabled)
         }
 
@@ -63,17 +66,11 @@ class NotificationService @Inject constructor(
         )
 
         val triggerTime = getNextTriggerTime(hour, minute)
-
-        alarmManager.setRepeating(
-            AlarmManager.RTC_WAKEUP,
-            triggerTime,
-            AlarmManager.INTERVAL_DAY,
-            pendingIntent
-        )
+        scheduleExact(triggerTime, pendingIntent)
     }
 
     /**
-     * Schedule a repeating alarm for a goal reminder.
+     * Schedule an exact alarm for a goal reminder.
      */
     fun scheduleGoalReminder(goal: GoalEntity) {
         if (!goal.isActive) return
@@ -87,6 +84,7 @@ class NotificationService @Inject constructor(
             putExtra(AlarmReceiver.EXTRA_ID, goal.id)
             putExtra(AlarmReceiver.EXTRA_LABEL, goal.title)
             putExtra(AlarmReceiver.EXTRA_DAYS, goal.reminderDays)
+            putExtra(AlarmReceiver.EXTRA_TIME, goal.reminderTime)
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
@@ -97,13 +95,7 @@ class NotificationService @Inject constructor(
         )
 
         val triggerTime = getNextTriggerTime(hour, minute)
-
-        alarmManager.setRepeating(
-            AlarmManager.RTC_WAKEUP,
-            triggerTime,
-            AlarmManager.INTERVAL_DAY,
-            pendingIntent
-        )
+        scheduleExact(triggerTime, pendingIntent)
     }
 
     /**
@@ -136,6 +128,7 @@ class NotificationService @Inject constructor(
             putExtra(AlarmReceiver.EXTRA_ID, reminder.id)
             putExtra(AlarmReceiver.EXTRA_LABEL, reminder.label)
             putExtra(AlarmReceiver.EXTRA_DAYS, reminder.days)
+            putExtra(AlarmReceiver.EXTRA_TIME, reminder.time)
         }
 
         val pendingIntent = PendingIntent.getBroadcast(
@@ -145,12 +138,7 @@ class NotificationService @Inject constructor(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        alarmManager.setRepeating(
-            AlarmManager.RTC_WAKEUP,
-            calendar.timeInMillis,
-            AlarmManager.INTERVAL_DAY,
-            pendingIntent
-        )
+        scheduleExact(calendar.timeInMillis, pendingIntent)
     }
 
     /**
@@ -175,7 +163,9 @@ class NotificationService @Inject constructor(
     suspend fun rescheduleAll() {
         // Reschedule all active writing reminders
         val reminders = reminderDao.getActiveRemindersSync()
+        Log.d("NotificationService", "rescheduleAll: found ${reminders.size} active reminders")
         for (reminder in reminders) {
+            Log.d("NotificationService", "  scheduling reminder: id=${reminder.id}, time=${reminder.time}, active=${reminder.isActive}")
             scheduleWritingReminder(reminder)
             if (reminder.fallbackEnabled) {
                 scheduleFallbackCheck(reminder)
@@ -184,12 +174,38 @@ class NotificationService @Inject constructor(
 
         // Reschedule all active goal reminders
         val goals = goalDao.getActiveGoalsSync()
+        Log.d("NotificationService", "rescheduleAll: found ${goals.size} active goals")
         for (goal in goals) {
+            Log.d("NotificationService", "  scheduling goal: id=${goal.id}, title=${goal.title}, time=${goal.reminderTime}")
             scheduleGoalReminder(goal)
         }
     }
 
     // --- Private helpers ---
+
+    /**
+     * Schedule an exact alarm that fires even in Doze mode.
+     * Falls back to inexact-but-Doze-safe if exact alarm permission
+     * is not granted on API 31+.
+     */
+    private fun scheduleExact(triggerAtMillis: Long, pendingIntent: PendingIntent) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (alarmManager.canScheduleExactAlarms()) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent
+                )
+            } else {
+                // Exact alarm permission not granted — use best-effort
+                alarmManager.setAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent
+                )
+            }
+        } else {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent
+            )
+        }
+    }
 
     private fun cancelAlarm(requestCode: Int) {
         val intent = Intent(context, AlarmReceiver::class.java)

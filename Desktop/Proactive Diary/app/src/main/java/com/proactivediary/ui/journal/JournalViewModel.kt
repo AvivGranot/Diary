@@ -119,25 +119,22 @@ class JournalViewModel @Inject constructor(
             }
         }
 
-        // Also observe for real-time updates (new entries, deletions)
+        // Also observe for real-time updates (new entries, edits, deletions)
         viewModelScope.launch {
             entryRepository.getAllEntries()
                 .catch { /* already handled above */ }
                 .collect { entities ->
-                    // Only refresh if count changed (entry added/deleted)
-                    if (entities.size != totalEntryCount) {
-                        totalEntryCount = entities.size
-                        // Re-paginate from scratch to stay consistent
-                        val visibleCount = currentOffset.coerceAtMost(entities.size)
-                        val cards = entities.take(visibleCount).map { it.toCardData() }
-                        val grouped = groupByDate(cards)
-                        _uiState.value = _uiState.value.copy(
-                            entries = cards,
-                            groupedEntries = grouped,
-                            isEmpty = cards.isEmpty(),
-                            hasMoreEntries = visibleCount < totalEntryCount
-                        )
-                    }
+                    totalEntryCount = entities.size
+                    // Always re-map visible entries so title/content updates are reflected
+                    val visibleCount = currentOffset.coerceAtMost(entities.size)
+                    val cards = entities.take(visibleCount).map { it.toCardData() }
+                    val grouped = groupByDate(cards)
+                    _uiState.value = _uiState.value.copy(
+                        entries = cards,
+                        groupedEntries = grouped,
+                        isEmpty = cards.isEmpty(),
+                        hasMoreEntries = visibleCount < totalEntryCount
+                    )
                 }
         }
     }
