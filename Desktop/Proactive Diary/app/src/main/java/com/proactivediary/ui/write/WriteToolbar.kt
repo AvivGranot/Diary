@@ -1,7 +1,14 @@
 package com.proactivediary.ui.write
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -23,6 +30,8 @@ import androidx.compose.material.icons.filled.FormatUnderlined
 import androidx.compose.material.icons.filled.FormatStrikethrough
 import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.FormatListNumbered
+import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -57,6 +66,10 @@ fun WriteToolbar(
     colorKey: String,
     richTextState: RichTextState? = null,
     onSuggestionsClick: (() -> Unit)? = null,
+    onAttachmentClick: (() -> Unit)? = null,
+    isRecording: Boolean = false,
+    recordingSeconds: Int = 0,
+    onStopRecording: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val bgColor = DiaryThemeConfig.colorForKey(colorKey)
@@ -85,8 +98,35 @@ fun WriteToolbar(
                 .padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Formatting buttons (only when rich text state is available)
-            if (richTextState != null) {
+            // "+" attachment button
+            if (onAttachmentClick != null && !isRecording) {
+                FormatButton(
+                    icon = Icons.Outlined.Add,
+                    contentDescription = "Add attachment",
+                    isActive = false,
+                    activeColor = textColor,
+                    inactiveColor = secondaryColor.copy(alpha = 0.6f),
+                    onClick = onAttachmentClick
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Box(
+                    modifier = Modifier
+                        .width(0.5.dp)
+                        .height(20.dp)
+                        .background(secondaryColor.copy(alpha = 0.15f))
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+            }
+
+            // Recording mode: show recording indicator instead of format buttons
+            if (isRecording) {
+                RecordingIndicator(
+                    durationSeconds = recordingSeconds,
+                    onStop = { onStopRecording?.invoke() },
+                    textColor = textColor,
+                    secondaryColor = secondaryColor
+                )
+            } else if (richTextState != null) {
                 // Inline styles group
                 FormatButton(
                     icon = Icons.Filled.FormatBold,
@@ -242,6 +282,82 @@ private fun FormatButton(
                 )
             }
     )
+}
+
+/**
+ * Compact recording indicator for the toolbar.
+ * Shows: pulsing red dot + waveform bars + timer + stop button
+ */
+@Composable
+private fun RecordingIndicator(
+    durationSeconds: Int,
+    onStop: () -> Unit,
+    textColor: Color,
+    secondaryColor: Color
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "rec")
+
+    // Pulsing red dot
+    val dotAlpha by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 0.3f,
+        animationSpec = infiniteRepeatable(tween(500, easing = LinearEasing), RepeatMode.Reverse),
+        label = "dot"
+    )
+
+    // 5 waveform bars
+    val wave1 by infiniteTransition.animateFloat(0.3f, 1f, infiniteRepeatable(tween(300), RepeatMode.Reverse), label = "w1")
+    val wave2 by infiniteTransition.animateFloat(0.5f, 0.8f, infiniteRepeatable(tween(450), RepeatMode.Reverse), label = "w2")
+    val wave3 by infiniteTransition.animateFloat(0.2f, 1f, infiniteRepeatable(tween(350), RepeatMode.Reverse), label = "w3")
+    val wave4 by infiniteTransition.animateFloat(0.6f, 0.9f, infiniteRepeatable(tween(500), RepeatMode.Reverse), label = "w4")
+    val wave5 by infiniteTransition.animateFloat(0.4f, 1f, infiniteRepeatable(tween(280), RepeatMode.Reverse), label = "w5")
+
+    val redColor = Color(0xFFD32F2F)
+    val minutes = durationSeconds / 60
+    val seconds = durationSeconds % 60
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        // Pulsing red dot
+        Canvas(modifier = Modifier.size(8.dp)) {
+            drawCircle(color = redColor.copy(alpha = dotAlpha), radius = size.minDimension / 2)
+        }
+
+        // Waveform bars
+        val waveHeights = listOf(wave1, wave2, wave3, wave4, wave5)
+        Canvas(modifier = Modifier.width(24.dp).height(16.dp)) {
+            val barWidth = size.width / 9f
+            val gap = barWidth
+            val maxH = size.height
+            waveHeights.forEachIndexed { i, fraction ->
+                val barH = maxH * fraction
+                drawRoundRect(
+                    color = redColor,
+                    topLeft = androidx.compose.ui.geometry.Offset(i * (barWidth + gap), (maxH - barH) / 2),
+                    size = androidx.compose.ui.geometry.Size(barWidth, barH),
+                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(barWidth / 2)
+                )
+            }
+        }
+
+        // Timer
+        Text(
+            text = String.format("%d:%02d", minutes, seconds),
+            style = TextStyle(fontFamily = FontFamily.Default, fontSize = 13.sp, color = redColor)
+        )
+
+        // Stop button
+        Icon(
+            imageVector = Icons.Filled.Stop,
+            contentDescription = "Stop recording",
+            tint = redColor,
+            modifier = Modifier
+                .size(24.dp)
+                .clickable(onClick = onStop)
+        )
+    }
 }
 
 @Composable

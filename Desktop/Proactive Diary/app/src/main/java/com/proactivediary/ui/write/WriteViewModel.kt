@@ -24,7 +24,9 @@ import com.proactivediary.playstore.InAppReviewService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -124,7 +126,10 @@ data class WriteUiState(
     val requestInAppReview: Boolean = false,
     val showFirstEntryCelebration: Boolean = false,
     val audioPath: String? = null,
-    val isRecording: Boolean = false
+    val isRecording: Boolean = false,
+    val isTranscribing: Boolean = false,
+    val partialTranscript: String = "",
+    val speechAvailable: Boolean = false
 )
 
 @OptIn(FlowPreview::class)
@@ -138,6 +143,7 @@ class WriteViewModel @Inject constructor(
     private val inAppReviewService: InAppReviewService,
     val imageStorageManager: ImageStorageManager,
     private val audioRecorderService: AudioRecorderService,
+    private val speechToTextService: com.proactivediary.data.media.SpeechToTextService,
     private val locationService: LocationService,
     private val weatherService: WeatherService,
     private val insightDao: InsightDao,
@@ -149,6 +155,8 @@ class WriteViewModel @Inject constructor(
 
     private val _contentFlow = MutableStateFlow("")
     private var titleSaveJob: Job? = null
+    private val _transcribedTextFlow = MutableSharedFlow<String>(extraBufferCapacity = 20)
+    val transcribedTextFlow: SharedFlow<String> = _transcribedTextFlow
     private val gson = Gson()
     private val sessionStartMs = System.currentTimeMillis()
 
@@ -178,6 +186,24 @@ class WriteViewModel @Inject constructor(
         // Auto-fetch location and weather for new entries
         if (entryIdArg == null) {
             fetchLocationAndWeather()
+        }
+
+        // Speech-to-text setup
+        speechToTextService.checkAvailability()
+        viewModelScope.launch {
+            speechToTextService.isAvailable.collect { available ->
+                _uiState.update { it.copy(speechAvailable = available) }
+            }
+        }
+        viewModelScope.launch {
+            speechToTextService.partialText.collect { partial ->
+                _uiState.update { it.copy(partialTranscript = partial) }
+            }
+        }
+        viewModelScope.launch {
+            speechToTextService.finalText.collect { text ->
+                _transcribedTextFlow.emit(text)
+            }
         }
     }
 
@@ -621,6 +647,11 @@ class WriteViewModel @Inject constructor(
                 val state = _uiState.value
                 val audioPath = audioRecorderService.startRecording(state.entryId)
                 _uiState.update { it.copy(audioPath = audioPath, isRecording = true) }
+                // Start speech-to-text alongside audio recording
+                if (_uiState.value.speechAvailable) {
+                    speechToTextService.startListening()
+                    _uiState.update { it.copy(isTranscribing = true) }
+                }
                 analyticsService.logFeatureUsed("voice_note_started")
             } catch (e: Exception) {
                 _uiState.update { it.copy(saveError = "Failed to start recording.") }
@@ -631,6 +662,9 @@ class WriteViewModel @Inject constructor(
     fun stopRecording() {
         viewModelScope.launch {
             try {
+                // Stop speech-to-text first
+                speechToTextService.stopListening()
+                _uiState.update { it.copy(isTranscribing = false, partialTranscript = "") }
                 val audioPath = audioRecorderService.stopRecording()
                 _uiState.update { it.copy(audioPath = audioPath, isRecording = false) }
                 // Trigger save to persist audio path

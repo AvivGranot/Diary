@@ -46,24 +46,8 @@ fun ImageAttachmentBar(
     secondaryTextColor: Color,
     modifier: Modifier = Modifier
 ) {
-    if (images.isEmpty()) {
-        // Show a subtle add photo button when no images
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 4.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Outlined.AddPhotoAlternate,
-                contentDescription = "Add photo",
-                modifier = Modifier
-                    .size(28.dp)
-                    .clickable(onClick = onAddClick),
-                tint = secondaryTextColor.copy(alpha = 0.4f)
-            )
-        }
-        return
-    }
+    // Only render when there are images — empty state handled by AttachmentTray
+    if (images.isEmpty()) return
 
     Row(
         modifier = modifier

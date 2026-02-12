@@ -64,7 +64,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
 import com.proactivediary.domain.model.DiaryThemeConfig
-import com.proactivediary.ui.components.AudioPlayer
 import com.proactivediary.ui.components.ImageViewer
 import com.proactivediary.ui.share.ShareCardDialog
 import com.proactivediary.ui.share.ShareCardData
@@ -143,6 +142,23 @@ fun WriteScreen(
     var viewingImageId by remember { mutableStateOf<String?>(null) }
     var showTemplatePicker by remember { mutableStateOf(false) }
     var showSuggestions by remember { mutableStateOf(false) }
+    var showAttachmentTray by remember { mutableStateOf(false) }
+    var recordingSeconds by remember { mutableStateOf(0) }
+
+    // Track recording duration
+    LaunchedEffect(state.isRecording) {
+        if (state.isRecording) {
+            recordingSeconds = 0
+            while (true) {
+                delay(1000)
+                recordingSeconds++
+            }
+        } else {
+            recordingSeconds = 0
+        }
+    }
+
+    // Transcription wiring is after richTextState initialization below
 
     // Refresh entry state when screen resumes (e.g., after deleting from journal detail)
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -206,6 +222,16 @@ fun WriteScreen(
             }
     }
 
+    // Observe transcribed text and append to rich text editor
+    LaunchedEffect(richTextInitialized) {
+        if (!richTextInitialized) return@LaunchedEffect
+        viewModel.transcribedTextFlow.collect { text ->
+            val current = richTextState.annotatedString.text
+            val separator = if (current.isNotEmpty() && !current.endsWith(" ") && !current.endsWith("\n")) " " else ""
+            richTextState.setText(current + separator + text)
+        }
+    }
+
     val bgColor = DiaryThemeConfig.colorForKey(state.colorKey)
     val textColor = DiaryThemeConfig.textColorFor(state.colorKey)
     val secondaryTextColor = DiaryThemeConfig.secondaryTextColorFor(state.colorKey)
@@ -226,8 +252,6 @@ fun WriteScreen(
         else -> 1.7f // "focused"
     }
 
-    var titleExpanded by remember { mutableStateOf(state.title.isNotBlank()) }
-
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -243,7 +267,7 @@ fun WriteScreen(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
             ) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 // Personalization mark — header position
                 if (state.markText.isNotBlank() && state.markPosition == "header") {
@@ -253,139 +277,100 @@ fun WriteScreen(
                         color = secondaryTextColor.copy(alpha = 0.6f),
                         horizontalPadding = horizontalPadding
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                 }
 
-                // Date header
+                // Compact date + context row: "Monday, Feb 12 · 📍 Location · ☀️ Weather"
                 if (showDateHeader) {
-                    Text(
-                        text = state.dateHeader,
-                        style = TextStyle(
-                            fontFamily = CormorantGaramond,
-                            fontSize = 16.sp,
-                            color = secondaryTextColor
-                        ),
-                        modifier = Modifier.padding(horizontal = horizontalPadding)
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = horizontalPadding),
+                        horizontalArrangement = Arrangement.spacedBy(0.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = state.dateHeader,
+                            style = TextStyle(
+                                fontFamily = CormorantGaramond,
+                                fontSize = 14.sp,
+                                color = secondaryTextColor
+                            )
+                        )
+                        val locName = state.locationName
+                        val wTemp = state.weatherTemp
+                        val wCond = state.weatherCondition
+                        val wIcon = state.weatherIcon
+                        if (locName != null) {
+                            Text(
+                                text = "  ·  \uD83D\uDCCD $locName",
+                                style = TextStyle(
+                                    fontFamily = FontFamily.Default,
+                                    fontSize = 12.sp,
+                                    color = secondaryTextColor.copy(alpha = 0.6f)
+                                )
+                            )
+                        }
+                        if (wTemp != null && wIcon != null) {
+                            Text(
+                                text = "  ·  $wIcon ${wTemp.toInt()}°",
+                                style = TextStyle(
+                                    fontFamily = FontFamily.Default,
+                                    fontSize = 12.sp,
+                                    color = secondaryTextColor.copy(alpha = 0.6f)
+                                )
+                            )
+                        }
+                    }
 
-                    // Goal progress indicator below date
+                    // Goal progress — slim inline
                     if (state.weeklyGoalProgress != null) {
                         Text(
                             text = state.weeklyGoalProgress!!,
                             style = TextStyle(
-                                fontSize = 12.sp,
+                                fontSize = 11.sp,
                                 fontStyle = FontStyle.Italic,
-                                color = secondaryTextColor.copy(alpha = 0.7f)
+                                color = secondaryTextColor.copy(alpha = 0.5f)
                             ),
                             modifier = Modifier.padding(horizontal = horizontalPadding)
                         )
-                        Spacer(modifier = Modifier.height(4.dp))
                     }
 
-                    // Location and weather chips
-                    val locName = state.locationName
-                    val wTemp = state.weatherTemp
-                    val wCond = state.weatherCondition
-                    val wIcon = state.weatherIcon
-                    if (locName != null || wCond != null) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = horizontalPadding),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (locName != null) {
-                                LocationChip(
-                                    locationName = locName,
-                                    latitude = state.latitude,
-                                    longitude = state.longitude,
-                                    textColor = secondaryTextColor
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                // Title field — always visible, clean placeholder
+                BasicTextField(
+                    value = state.title,
+                    onValueChange = { viewModel.onTitleChanged(it) },
+                    textStyle = TextStyle(
+                        fontFamily = CormorantGaramond,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = textColor
+                    ),
+                    cursorBrush = SolidColor(textColor),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = horizontalPadding),
+                    decorationBox = { innerTextField ->
+                        Box {
+                            if (state.title.isEmpty()) {
+                                Text(
+                                    text = "Title",
+                                    style = TextStyle(
+                                        fontFamily = CormorantGaramond,
+                                        fontSize = 20.sp,
+                                        fontStyle = FontStyle.Italic,
+                                        color = secondaryTextColor.copy(alpha = 0.35f)
+                                    )
                                 )
                             }
-                            if (wTemp != null && wCond != null && wIcon != null) {
-                                WeatherChip(
-                                    temperature = wTemp,
-                                    condition = wCond,
-                                    weatherIcon = wIcon,
-                                    textColor = secondaryTextColor
-                                )
-                            }
+                            innerTextField()
                         }
                     }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                // Tag row: # text tags + @ contact tags
-                ContactTagRow(
-                    taggedContacts = state.taggedContacts,
-                    textTags = state.tags,
-                    onAddContactClick = { contactPickerLauncher.launch(null) },
-                    onRemoveContact = { viewModel.onContactRemoved(it) },
-                    onShareWithContact = { contact ->
-                        shareEntryWithContact(context, state, contact)
-                        viewModel.logContactShared(contact.email != null, contact.phone != null)
-                    },
-                    onTextTagsClick = { showTagDialog = true },
-                    secondaryTextColor = secondaryTextColor,
-                    horizontalPadding = horizontalPadding
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                // Image attachment bar
-                ImageAttachmentBar(
-                    images = state.images,
-                    thumbnailProvider = { filename ->
-                        viewModel.imageStorageManager.getThumbnailFile(state.entryId, filename)
-                    },
-                    onAddClick = { showImagePicker = true },
-                    onRemoveClick = { imageId -> viewModel.removeImage(imageId) },
-                    onImageClick = { imageId -> viewingImageId = imageId },
-                    secondaryTextColor = secondaryTextColor
-                )
-
-                // Voice recording button
-                Box(
-                    modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 4.dp)
-                ) {
-                    VoiceRecordButton(
-                        isRecording = state.isRecording,
-                        onStartRecording = {
-                            val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                                ContextCompat.checkSelfPermission(
-                                    context,
-                                    Manifest.permission.RECORD_AUDIO
-                                ) == PackageManager.PERMISSION_GRANTED
-                            } else {
-                                true
-                            }
-                            if (hasPermission) {
-                                viewModel.startRecording()
-                            } else {
-                                audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                            }
-                        },
-                        onStopRecording = { viewModel.stopRecording() },
-                        secondaryTextColor = secondaryTextColor
-                    )
-                }
-
-                // Audio player — shown after recording completes
-                if (state.audioPath != null && !state.isRecording) {
-                    val audioFile = remember(state.audioPath) { java.io.File(state.audioPath!!) }
-                    if (audioFile.exists()) {
-                        Box(
-                            modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 4.dp)
-                        ) {
-                            AudioPlayer(
-                                audioFile = audioFile,
-                                secondaryTextColor = secondaryTextColor,
-                                onDelete = { viewModel.deleteRecording() }
-                            )
-                        }
-                    }
-                }
-
-                // Template prompt banner (when a template is active)
+                // Template prompt banner (when a template is active) — inline above editor
                 if (state.templatePrompts.isNotEmpty() && state.currentPromptIndex < state.templatePrompts.size) {
                     GuidedPromptBanner(
                         prompt = state.templatePrompts[state.currentPromptIndex],
@@ -399,102 +384,7 @@ fun WriteScreen(
                     )
                 }
 
-                // Template quick-picks (only show when no template active, new entry, empty)
-                if (state.templatePrompts.isEmpty() && state.isNewEntry && state.content.isEmpty()) {
-                    Column(
-                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = "Start with a template",
-                            style = TextStyle(
-                                fontFamily = CormorantGaramond,
-                                fontSize = 14.sp,
-                                color = secondaryTextColor.copy(alpha = 0.5f)
-                            ),
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            listOf(
-                                "\uD83D\uDE4F Gratitude" to "gratitude",
-                                "\uD83D\uDCAD Reflection" to "reflection",
-                                "\u2728 Free Write" to "freewrite"
-                            ).forEach { (label, _) ->
-                                Text(
-                                    text = label,
-                                    style = TextStyle(
-                                        fontFamily = CormorantGaramond,
-                                        fontSize = 13.sp,
-                                        color = secondaryTextColor.copy(alpha = 0.7f)
-                                    ),
-                                    modifier = Modifier
-                                        .background(
-                                            secondaryTextColor.copy(alpha = 0.06f),
-                                            RoundedCornerShape(16.dp)
-                                        )
-                                        .clickable { showTemplatePicker = true }
-                                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Title field
-                if (titleExpanded) {
-                    BasicTextField(
-                        value = state.title,
-                        onValueChange = { viewModel.onTitleChanged(it) },
-                        textStyle = TextStyle(
-                            fontFamily = CormorantGaramond,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = textColor
-                        ),
-                        cursorBrush = SolidColor(textColor),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = horizontalPadding),
-                        decorationBox = { innerTextField ->
-                            Box {
-                                if (state.title.isEmpty()) {
-                                    Text(
-                                        text = "Title",
-                                        style = TextStyle(
-                                            fontFamily = CormorantGaramond,
-                                            fontSize = 20.sp,
-                                            color = secondaryTextColor.copy(alpha = 0.5f)
-                                        )
-                                    )
-                                }
-                                innerTextField()
-                            }
-                        }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                } else {
-                    Text(
-                        text = "tap to add title",
-                        style = TextStyle(
-                            fontFamily = CormorantGaramond,
-                            fontSize = 20.sp,
-                            fontStyle = FontStyle.Italic,
-                            color = secondaryTextColor.copy(alpha = 0.5f)
-                        ),
-                        modifier = Modifier
-                            .padding(horizontal = horizontalPadding)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null
-                            ) {
-                                titleExpanded = true
-                            }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                // Writing area with canvas background
+                // Writing area — THE MAIN EVENT, immediately visible
                 WriteArea(
                     content = state.content,
                     onContentChanged = { viewModel.onContentChanged(it) },
@@ -511,6 +401,42 @@ fun WriteScreen(
                         .weight(1f)
                 )
 
+                // Live transcription partial text (during recording)
+                if (state.isRecording && state.partialTranscript.isNotBlank()) {
+                    Text(
+                        text = state.partialTranscript,
+                        style = TextStyle(
+                            fontFamily = FontFamily.Default,
+                            fontSize = (state.fontSize).sp,
+                            fontStyle = FontStyle.Italic,
+                            color = secondaryTextColor.copy(alpha = 0.4f)
+                        ),
+                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 4.dp)
+                    )
+                }
+
+                // Attachment strip — only when there are attachments
+                AttachmentStrip(
+                    images = state.images,
+                    thumbnailProvider = { filename ->
+                        viewModel.imageStorageManager.getThumbnailFile(state.entryId, filename)
+                    },
+                    audioPath = state.audioPath,
+                    isRecording = state.isRecording,
+                    tags = state.tags,
+                    taggedContacts = state.taggedContacts,
+                    onImageClick = { imageId -> viewingImageId = imageId },
+                    onRemoveImage = { imageId -> viewModel.removeImage(imageId) },
+                    onAddPhoto = { showImagePicker = true },
+                    onPlayAudio = { /* AudioPlayer handles this via the full-screen overlay */ },
+                    onDeleteAudio = { viewModel.deleteRecording() },
+                    onEditTags = { showTagDialog = true },
+                    onRemoveContact = { viewModel.onContactRemoved(it) },
+                    secondaryTextColor = secondaryTextColor,
+                    textColor = textColor,
+                    horizontalPadding = horizontalPadding
+                )
+
                 // Personalization mark — footer position
                 if (state.markText.isNotBlank() && state.markPosition == "footer") {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -524,13 +450,17 @@ fun WriteScreen(
                 }
             }
 
-            // Bottom toolbar
+            // Bottom toolbar — with attachment trigger + recording mode
             WriteToolbar(
                 wordCount = state.wordCount,
                 showWordCount = showWordCount,
                 colorKey = state.colorKey,
                 richTextState = richTextState,
-                onSuggestionsClick = { showSuggestions = true }
+                onSuggestionsClick = { showSuggestions = true },
+                onAttachmentClick = { showAttachmentTray = true },
+                isRecording = state.isRecording,
+                recordingSeconds = recordingSeconds,
+                onStopRecording = { viewModel.stopRecording() }
             )
         }
 
@@ -565,6 +495,34 @@ fun WriteScreen(
                     .padding(start = horizontalPadding, top = 20.dp)
             )
         }
+
+        // Attachment tray overlay
+        AttachmentTray(
+            isVisible = showAttachmentTray,
+            onDismiss = { showAttachmentTray = false },
+            onAddPhoto = { showImagePicker = true },
+            onStartVoice = {
+                val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.RECORD_AUDIO
+                    ) == PackageManager.PERMISSION_GRANTED
+                } else {
+                    true
+                }
+                if (hasPermission) {
+                    viewModel.startRecording()
+                } else {
+                    audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                }
+            },
+            onOpenTemplates = { showTemplatePicker = true },
+            onOpenTags = { showTagDialog = true },
+            onOpenContacts = { contactPickerLauncher.launch(null) },
+            textColor = textColor,
+            secondaryTextColor = secondaryTextColor,
+            bgColor = bgColor
+        )
     }
 
     // Design Studio prompt after first entry save
