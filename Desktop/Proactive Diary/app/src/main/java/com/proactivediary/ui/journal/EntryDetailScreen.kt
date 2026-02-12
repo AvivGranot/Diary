@@ -47,8 +47,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -79,6 +81,7 @@ fun EntryDetailScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
 
     // If entry not found on load, go back immediately
     LaunchedEffect(state.isLoaded, state.isDeleted) {
@@ -484,7 +487,10 @@ fun EntryDetailScreen(
         ) {
             androidx.compose.material3.Surface(
                 modifier = Modifier
-                    .clickable { showGoDeeper = true },
+                    .clickable {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        showGoDeeper = true
+                    },
                 shape = RoundedCornerShape(24.dp),
                 shadowElevation = 2.dp,
                 color = textColor.copy(alpha = 0.08f)

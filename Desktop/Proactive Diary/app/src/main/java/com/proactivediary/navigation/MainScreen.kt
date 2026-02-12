@@ -42,7 +42,9 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -97,6 +99,7 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val activity = context as? Activity
+    val haptic = LocalHapticFeedback.current
 
     // Coach marks
     val showWriteHint by discoveryViewModel.showWriteHint.collectAsState()
@@ -122,9 +125,9 @@ fun MainScreen(
             .distinctUntilChanged()
             .collect { page ->
                 if (page == PAGE_WRITE && !subscriptionState.isActive) {
-                    // User swiped to Write tab but subscription is expired → bounce back
+                    // User swiped to Write tab but subscription is expired → gentle bounce back
                     showPaywall = true
-                    pagerState.scrollToPage(lastValidPage)
+                    pagerState.animateScrollToPage(lastValidPage)
                 } else {
                     lastValidPage = page
                 }
@@ -178,6 +181,7 @@ fun MainScreen(
                             selected = selected,
                             onClick = {
                                 if (!selected) {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                     // Paywall gate: block Write tab when trial expired
                                     if (index == PAGE_WRITE && !subscriptionState.isActive) {
                                         showPaywall = true

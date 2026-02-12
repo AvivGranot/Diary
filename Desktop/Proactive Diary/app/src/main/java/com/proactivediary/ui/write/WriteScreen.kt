@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -398,20 +399,46 @@ fun WriteScreen(
                     )
                 }
 
-                // Template picker button (only show when no template is active and entry is new)
+                // Template quick-picks (only show when no template active, new entry, empty)
                 if (state.templatePrompts.isEmpty() && state.isNewEntry && state.content.isEmpty()) {
-                    Text(
-                        text = "Use a template...",
-                        style = TextStyle(
-                            fontFamily = CormorantGaramond,
-                            fontStyle = FontStyle.Italic,
-                            fontSize = 14.sp,
-                            color = secondaryTextColor.copy(alpha = 0.4f)
-                        ),
-                        modifier = Modifier
-                            .padding(horizontal = horizontalPadding, vertical = 2.dp)
-                            .clickable { showTemplatePicker = true }
-                    )
+                    Column(
+                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = "Start with a template",
+                            style = TextStyle(
+                                fontFamily = CormorantGaramond,
+                                fontSize = 14.sp,
+                                color = secondaryTextColor.copy(alpha = 0.5f)
+                            ),
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf(
+                                "\uD83D\uDE4F Gratitude" to "gratitude",
+                                "\uD83D\uDCAD Reflection" to "reflection",
+                                "\u2728 Free Write" to "freewrite"
+                            ).forEach { (label, _) ->
+                                Text(
+                                    text = label,
+                                    style = TextStyle(
+                                        fontFamily = CormorantGaramond,
+                                        fontSize = 13.sp,
+                                        color = secondaryTextColor.copy(alpha = 0.7f)
+                                    ),
+                                    modifier = Modifier
+                                        .background(
+                                            secondaryTextColor.copy(alpha = 0.06f),
+                                            RoundedCornerShape(16.dp)
+                                        )
+                                        .clickable { showTemplatePicker = true }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                )
+                            }
+                        }
+                    }
                 }
 
                 // Title field

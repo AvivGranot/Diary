@@ -39,6 +39,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -49,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -64,6 +67,7 @@ fun JournalScreen(
     viewModel: JournalViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    val haptic = LocalHapticFeedback.current
     var entryToDelete by remember { mutableStateOf<DiaryCardData?>(null) }
     var viewMode by remember { mutableStateOf("list") } // "list", "calendar", "gallery"
     var selectedDate by remember { mutableStateOf<java.time.LocalDate?>(null) }
@@ -95,8 +99,23 @@ fun JournalScreen(
 
         when {
             state.isLoading -> {
-                // Loading state - blank
-                Box(modifier = Modifier.fillMaxSize())
+                // Skeleton loading state
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    repeat(4) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(88.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.04f)
+                        ) {}
+                    }
+                }
             }
 
             state.isEmpty && state.searchQuery.isBlank() -> {
@@ -252,7 +271,10 @@ fun JournalScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp, vertical = 4.dp)
-                                    .clickable { onNavigateToTalkToJournal() },
+                                    .clickable {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        onNavigateToTalkToJournal()
+                                    },
                                 shape = RoundedCornerShape(12.dp),
                                 color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.06f)
                             ) {
@@ -477,6 +499,13 @@ private fun EmptyState(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(48.dp)
         ) {
+            Icon(
+                imageVector = Icons.Outlined.Edit,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
+                modifier = Modifier.size(48.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = title,
                 style = TextStyle(
