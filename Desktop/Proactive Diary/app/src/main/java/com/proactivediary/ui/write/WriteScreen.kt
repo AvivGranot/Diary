@@ -63,6 +63,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
 import com.proactivediary.domain.model.DiaryThemeConfig
+import com.proactivediary.ui.components.AudioPlayer
 import com.proactivediary.ui.components.ImageViewer
 import com.proactivediary.ui.share.ShareCardDialog
 import com.proactivediary.ui.share.ShareCardData
@@ -365,6 +366,22 @@ fun WriteScreen(
                         onStopRecording = { viewModel.stopRecording() },
                         secondaryTextColor = secondaryTextColor
                     )
+                }
+
+                // Audio player — shown after recording completes
+                if (state.audioPath != null && !state.isRecording) {
+                    val audioFile = remember(state.audioPath) { java.io.File(state.audioPath!!) }
+                    if (audioFile.exists()) {
+                        Box(
+                            modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 4.dp)
+                        ) {
+                            AudioPlayer(
+                                audioFile = audioFile,
+                                secondaryTextColor = secondaryTextColor,
+                                onDelete = { viewModel.deleteRecording() }
+                            )
+                        }
+                    }
                 }
 
                 // Template prompt banner (when a template is active)

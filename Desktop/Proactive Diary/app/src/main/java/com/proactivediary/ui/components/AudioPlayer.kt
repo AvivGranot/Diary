@@ -5,11 +5,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
@@ -37,7 +40,8 @@ import java.io.File
 fun AudioPlayer(
     audioFile: File,
     secondaryTextColor: Color,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onDelete: (() -> Unit)? = null
 ) {
     var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
     var isPlaying by remember { mutableStateOf(false) }
@@ -141,6 +145,22 @@ fun AudioPlayer(
                             color = secondaryTextColor.copy(alpha = 0.7f)
                         ),
                         modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+
+                if (onDelete != null) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Delete recording",
+                        tint = secondaryTextColor.copy(alpha = 0.4f),
+                        modifier = Modifier
+                            .size(20.dp)
+                            .clickable {
+                                mediaPlayer?.release()
+                                mediaPlayer = null
+                                onDelete()
+                            }
                     )
                 }
             }

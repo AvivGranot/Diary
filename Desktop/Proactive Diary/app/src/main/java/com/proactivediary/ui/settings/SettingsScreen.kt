@@ -275,13 +275,13 @@ fun SettingsScreen(
                         value = "Configure",
                         onClick = { showApiKeyDialog = true }
                     )
-                    SettingsDivider()
-                    SettingsRow(
-                        label = "Talk to Your Journal",
-                        value = "Chat with AI",
-                        onClick = onNavigateToTalkToJournal
-                    )
                 }
+                SettingsDivider()
+                SettingsRow(
+                    label = "Talk to Your Journal",
+                    value = "Chat with AI",
+                    onClick = onNavigateToTalkToJournal
+                )
             }
 
             Spacer(Modifier.height(24.dp))

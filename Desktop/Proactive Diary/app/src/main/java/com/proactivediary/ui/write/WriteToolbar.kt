@@ -1,7 +1,10 @@
 package com.proactivediary.ui.write
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,6 +37,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
@@ -180,7 +185,7 @@ fun WriteToolbar(
                     contentDescription = "Writing suggestions",
                     isActive = false,
                     activeColor = textColor,
-                    inactiveColor = secondaryColor.copy(alpha = 0.5f),
+                    inactiveColor = secondaryColor.copy(alpha = 0.7f),
                     onClick = onSuggestionsClick
                 )
             }
@@ -211,18 +216,31 @@ private fun FormatButton(
     inactiveColor: Color,
     onClick: () -> Unit
 ) {
+    var pressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.82f else 1f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 800f),
+        label = "press"
+    )
+
     Icon(
         imageVector = icon,
         contentDescription = contentDescription,
         tint = if (isActive) activeColor else inactiveColor,
         modifier = Modifier
             .size(36.dp)
+            .scale(scale)
             .padding(6.dp)
-            .clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = onClick
-            )
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        pressed = true
+                        tryAwaitRelease()
+                        pressed = false
+                        onClick()
+                    }
+                )
+            }
     )
 }
 

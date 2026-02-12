@@ -1,5 +1,7 @@
 package com.proactivediary.ui.insights
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -29,8 +31,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -363,8 +369,17 @@ private fun MoodTimelineChart(timeline: List<MoodDataPoint>) {
 
 @Composable
 private fun MoodBar(point: MoodDataPoint) {
-    val barHeight = (point.averageMoodScore / 5f * 100).dp
+    val targetHeight = point.averageMoodScore / 5f * 100f
     val barColor = moodToColor(point.dominantMood)
+
+    var appeared by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { appeared = true }
+
+    val animatedHeight by animateFloatAsState(
+        targetValue = if (appeared) targetHeight else 0f,
+        animationSpec = tween(800),
+        label = "barGrow"
+    )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
@@ -377,11 +392,11 @@ private fun MoodBar(point: MoodDataPoint) {
 
         Spacer(Modifier.height(2.dp))
 
-        // Bar
+        // Animated bar
         Box(
             modifier = Modifier
                 .width(28.dp)
-                .height(barHeight)
+                .height(animatedHeight.dp)
                 .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
                 .background(barColor)
         )
@@ -450,7 +465,15 @@ private fun TimePatternRow(pattern: TimePattern, totalEntries: Int) {
 
             Spacer(Modifier.height(4.dp))
 
-            // Progress bar
+            // Animated progress bar
+            var appeared by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { appeared = true }
+            val animatedFill by animateFloatAsState(
+                targetValue = if (appeared) pattern.percentage.coerceIn(0f, 1f) else 0f,
+                animationSpec = tween(800),
+                label = "progressFill"
+            )
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -460,7 +483,7 @@ private fun TimePatternRow(pattern: TimePattern, totalEntries: Int) {
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(pattern.percentage.coerceIn(0f, 1f))
+                        .fillMaxWidth(animatedFill)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(3.dp))
                         .background(

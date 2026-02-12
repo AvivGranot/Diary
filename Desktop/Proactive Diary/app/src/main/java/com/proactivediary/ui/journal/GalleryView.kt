@@ -118,8 +118,8 @@ fun GalleryView(
             columns = GridCells.Fixed(3),
             modifier = modifier.fillMaxSize(),
             contentPadding = PaddingValues(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             items(galleryImages, key = { it.imageMetadata.id }) { galleryImage ->
                 val thumbnailFile = viewModel.imageStorageManager.getThumbnailFile(
@@ -133,7 +133,7 @@ fun GalleryView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1f)
-                        .clip(RoundedCornerShape(4.dp))
+                        .clip(RoundedCornerShape(8.dp))
                         .clickable { onImageClick(galleryImage.entryId) },
                     contentScale = ContentScale.Crop
                 )

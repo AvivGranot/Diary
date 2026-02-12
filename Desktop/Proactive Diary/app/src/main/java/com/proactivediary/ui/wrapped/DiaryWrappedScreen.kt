@@ -1,6 +1,9 @@
 package com.proactivediary.ui.wrapped
 
 import android.content.Intent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,8 +30,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,7 +70,19 @@ fun DiaryWrappedScreen(
                 .background(Cream),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator(color = Ink)
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(color = Ink, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    text = "Preparing your story\u2026",
+                    style = TextStyle(
+                        fontFamily = CormorantGaramond,
+                        fontSize = 16.sp,
+                        fontStyle = FontStyle.Italic,
+                        color = InkLight
+                    )
+                )
+            }
         }
         return
     }
@@ -185,25 +205,31 @@ fun DiaryWrappedScreen(
             WrappedCardView(card = card)
         }
 
-        // Progress dots
+        // Instagram Stories-style progress bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp),
-            horizontalArrangement = Arrangement.Center
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             state.cards.forEachIndexed { index, _ ->
-                val isActive = index == pagerState.currentPage
                 Box(
                     modifier = Modifier
-                        .padding(horizontal = 3.dp)
-                        .size(if (isActive) 8.dp else 5.dp)
-                        .clip(CircleShape)
-                        .background(
-                            if (isActive) Ink
-                            else Ink.copy(alpha = 0.2f)
+                        .weight(1f)
+                        .height(2.dp)
+                        .clip(RoundedCornerShape(1.dp))
+                        .background(Ink.copy(alpha = 0.12f))
+                ) {
+                    if (index <= pagerState.currentPage) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight()
+                                .clip(RoundedCornerShape(1.dp))
+                                .background(Ink.copy(alpha = 0.7f))
                         )
-                )
+                    }
+                }
             }
         }
 
@@ -414,18 +440,39 @@ private fun WrappedCardView(card: WrappedCard) {
                     Spacer(Modifier.height(16.dp))
 
                     if (card.bigNumber.isNotBlank()) {
-                        // Check if it's a text number or emoji
                         val isShort = card.bigNumber.length <= 4
-                        Text(
-                            text = card.bigNumber,
-                            style = TextStyle(
-                                fontFamily = CormorantGaramond,
-                                fontSize = if (isShort) 72.sp else 36.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = textColor,
-                                textAlign = TextAlign.Center
+                        // Try count-up animation for numeric values
+                        val numericValue = card.bigNumber.replace(",", "").toIntOrNull()
+                        if (numericValue != null && numericValue > 0) {
+                            val animatable = remember(card.bigNumber) { Animatable(0f) }
+                            LaunchedEffect(card.bigNumber) {
+                                animatable.animateTo(
+                                    targetValue = numericValue.toFloat(),
+                                    animationSpec = tween(1500, easing = FastOutSlowInEasing)
+                                )
+                            }
+                            Text(
+                                text = String.format(java.util.Locale.US, "%,d", animatable.value.toInt()),
+                                style = TextStyle(
+                                    fontFamily = CormorantGaramond,
+                                    fontSize = if (isShort) 72.sp else 36.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = textColor,
+                                    textAlign = TextAlign.Center
+                                )
                             )
-                        )
+                        } else {
+                            Text(
+                                text = card.bigNumber,
+                                style = TextStyle(
+                                    fontFamily = CormorantGaramond,
+                                    fontSize = if (isShort) 72.sp else 36.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = textColor,
+                                    textAlign = TextAlign.Center
+                                )
+                            )
+                        }
                     }
 
                     if (card.subtitle.isNotBlank()) {

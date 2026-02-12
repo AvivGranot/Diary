@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Share
@@ -471,30 +472,44 @@ fun EntryDetailScreen(
                 )
             }
 
-            // "Go Deeper" — AI reflection prompt
-            Spacer(modifier = Modifier.height(24.dp))
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = horizontalPadding),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Text(
-                    text = "Go deeper \u2192",
-                    style = TextStyle(
-                        fontFamily = CormorantGaramond,
-                        fontSize = 15.sp,
-                        fontStyle = FontStyle.Italic,
-                        color = secondaryTextColor.copy(alpha = 0.5f)
-                    ),
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .clickable { showGoDeeper = true }
-                        .padding(horizontal = 20.dp, vertical = 10.dp)
-                )
-            }
+            Spacer(modifier = Modifier.height(80.dp)) // room for floating pill
+        }
 
-            Spacer(modifier = Modifier.height(32.dp))
+        // Floating "Go Deeper" pill
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 20.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            androidx.compose.material3.Surface(
+                modifier = Modifier
+                    .clickable { showGoDeeper = true },
+                shape = RoundedCornerShape(24.dp),
+                shadowElevation = 2.dp,
+                color = textColor.copy(alpha = 0.08f)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = null,
+                        tint = secondaryTextColor.copy(alpha = 0.7f),
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Text(
+                        text = "Go Deeper",
+                        style = TextStyle(
+                            fontFamily = CormorantGaramond,
+                            fontSize = 15.sp,
+                            color = secondaryTextColor
+                        )
+                    )
+                }
+            }
         }
     }
 

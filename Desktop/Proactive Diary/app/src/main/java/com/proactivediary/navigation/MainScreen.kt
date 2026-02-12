@@ -262,6 +262,9 @@ fun MainScreen(
                             },
                             onNavigateToOnThisDay = {
                                 rootNavController.navigate(Routes.OnThisDay.route)
+                            },
+                            onNavigateToTalkToJournal = {
+                                rootNavController.navigate(Routes.TalkToJournal.route)
                             }
                         )
                     }

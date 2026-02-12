@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -47,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.theme.CormorantGaramond
@@ -57,6 +60,7 @@ fun JournalScreen(
     onEntryClick: (String) -> Unit = {},
     onNavigateToWrite: (() -> Unit)? = null,
     onNavigateToOnThisDay: (() -> Unit)? = null,
+    onNavigateToTalkToJournal: (() -> Unit)? = null,
     viewModel: JournalViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -238,6 +242,51 @@ fun JournalScreen(
                     if (state.aiInsight.isAvailable || state.aiInsight.isLocked) {
                         item(key = "ai_insight") {
                             AIInsightCard(data = state.aiInsight)
+                        }
+                    }
+
+                    // Ask your journal entry point
+                    if (onNavigateToTalkToJournal != null && state.entries.size >= 3) {
+                        item(key = "ask_journal") {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 4.dp)
+                                    .clickable { onNavigateToTalkToJournal() },
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.06f)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.AutoAwesome,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f),
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = "Ask your journal",
+                                            style = TextStyle(
+                                                fontFamily = CormorantGaramond,
+                                                fontSize = 16.sp,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        )
+                                        Text(
+                                            text = "Chat with AI about your entries",
+                                            style = TextStyle(
+                                                fontFamily = FontFamily.Default,
+                                                fontSize = 12.sp,
+                                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f)
+                                            )
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
 

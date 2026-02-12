@@ -40,12 +40,24 @@ class ProactiveDiaryApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
-        NotificationChannels.createChannels(this)
-        scheduleLapsedUserCheck()
-        scheduleAIInsightGeneration()
-        scheduleWeeklyDigest()
+        try {
+            NotificationChannels.createChannels(this)
+        } catch (e: Exception) {
+            Log.e("ProactiveDiaryApp", "Failed to create notification channels", e)
+        }
+        try {
+            scheduleLapsedUserCheck()
+            scheduleAIInsightGeneration()
+            scheduleWeeklyDigest()
+        } catch (e: Exception) {
+            Log.e("ProactiveDiaryApp", "Failed to schedule workers", e)
+        }
         rescheduleAlarms()
-        initializeCrashlytics()
+        try {
+            initializeCrashlytics()
+        } catch (e: Exception) {
+            Log.e("ProactiveDiaryApp", "Failed to initialize Crashlytics", e)
+        }
         initializeTemplates()
     }
 

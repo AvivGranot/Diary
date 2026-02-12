@@ -196,33 +196,52 @@ abstract class AppDatabase : RoomDatabase() {
                         USING fts4(title, content, tags, content='entries')
                     """)
 
-                    // Trigger: keep FTS in sync after INSERT
-                    db.execSQL("""
-                        CREATE TRIGGER IF NOT EXISTS entries_ai AFTER INSERT ON entries BEGIN
-                            INSERT INTO entries_fts(docid, title, content, tags)
-                            VALUES (new.rowid, new.title, COALESCE(new.content_plain, new.content), new.tags);
-                        END
-                    """)
+                    ensureFtsTriggers(db)
+                }
 
-                    // Trigger: keep FTS in sync after DELETE
-                    db.execSQL("""
-                        CREATE TRIGGER IF NOT EXISTS entries_ad AFTER DELETE ON entries BEGIN
-                            INSERT INTO entries_fts(entries_fts, docid, title, content, tags)
-                            VALUES('delete', old.rowid, old.title, COALESCE(old.content_plain, old.content), old.tags);
-                        END
-                    """)
-
-                    // Trigger: keep FTS in sync after UPDATE
-                    db.execSQL("""
-                        CREATE TRIGGER IF NOT EXISTS entries_au AFTER UPDATE ON entries BEGIN
-                            INSERT INTO entries_fts(entries_fts, docid, title, content, tags)
-                            VALUES('delete', old.rowid, old.title, COALESCE(old.content_plain, old.content), old.tags);
-                            INSERT INTO entries_fts(docid, title, content, tags)
-                            VALUES (new.rowid, new.title, COALESCE(new.content_plain, new.content), new.tags);
-                        END
-                    """)
+                override fun onOpen(db: SupportSQLiteDatabase) {
+                    super.onOpen(db)
+                    // Self-heal: ensure FTS table and triggers exist on every open.
+                    // Protects against corrupt state from a previously failed delete-all.
+                    try {
+                        db.execSQL("""
+                            CREATE VIRTUAL TABLE IF NOT EXISTS entries_fts
+                            USING fts4(title, content, tags, content='entries')
+                        """)
+                        ensureFtsTriggers(db)
+                    } catch (_: Exception) {
+                        // Non-fatal — search may not work but app won't crash
+                    }
                 }
             }
+        }
+
+        private fun ensureFtsTriggers(db: SupportSQLiteDatabase) {
+            // Trigger: keep FTS in sync after INSERT
+            db.execSQL("""
+                CREATE TRIGGER IF NOT EXISTS entries_ai AFTER INSERT ON entries BEGIN
+                    INSERT INTO entries_fts(docid, title, content, tags)
+                    VALUES (new.rowid, new.title, COALESCE(new.content_plain, new.content), new.tags);
+                END
+            """)
+
+            // Trigger: keep FTS in sync after DELETE
+            db.execSQL("""
+                CREATE TRIGGER IF NOT EXISTS entries_ad AFTER DELETE ON entries BEGIN
+                    INSERT INTO entries_fts(entries_fts, docid, title, content, tags)
+                    VALUES('delete', old.rowid, old.title, COALESCE(old.content_plain, old.content), old.tags);
+                END
+            """)
+
+            // Trigger: keep FTS in sync after UPDATE
+            db.execSQL("""
+                CREATE TRIGGER IF NOT EXISTS entries_au AFTER UPDATE ON entries BEGIN
+                    INSERT INTO entries_fts(entries_fts, docid, title, content, tags)
+                    VALUES('delete', old.rowid, old.title, COALESCE(old.content_plain, old.content), old.tags);
+                    INSERT INTO entries_fts(docid, title, content, tags)
+                    VALUES (new.rowid, new.title, COALESCE(new.content_plain, new.content), new.tags);
+                END
+            """)
         }
     }
 }

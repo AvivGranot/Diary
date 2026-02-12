@@ -1,7 +1,14 @@
 package com.proactivediary.ui.chat
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -44,10 +52,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.proactivediary.data.ai.ChatMessage
 import com.proactivediary.ui.theme.CormorantGaramond
+import kotlinx.coroutines.delay
 
 private val Cream = Color(0xFFF3EEE7)
 private val CreamDark = Color(0xFFE8E0D4)
@@ -81,8 +91,19 @@ fun ChatMessageList(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(messages, key = { it.timestamp }) { message ->
-            AnimatedVisibility(visible = true, enter = fadeIn()) {
-                ChatBubble(message = message)
+            val slideDirection = if (message.isUser) 1 else -1
+            AnimatedVisibility(
+                visible = true,
+                enter = slideInHorizontally(
+                    initialOffsetX = { slideDirection * (it / 3) },
+                    animationSpec = tween(300)
+                ) + fadeIn(tween(300))
+            ) {
+                if (message.isUser) {
+                    ChatBubble(message = message)
+                } else {
+                    TypewriterBubble(message = message)
+                }
             }
         }
 
@@ -120,10 +141,51 @@ private fun ChatBubble(message: ChatMessage) {
             Text(
                 text = message.text,
                 style = TextStyle(
-                    fontFamily = if (isUser) CormorantGaramond else CormorantGaramond,
+                    fontFamily = CormorantGaramond,
                     fontSize = if (isUser) 15.sp else 16.sp,
-                    fontStyle = if (!isUser) FontStyle.Normal else FontStyle.Normal,
                     color = textColor,
+                    lineHeight = 22.sp
+                )
+            )
+        }
+    }
+}
+
+/**
+ * AI bubble with typewriter text reveal effect.
+ */
+@Composable
+private fun TypewriterBubble(message: ChatMessage) {
+    var displayedChars by remember(message.timestamp) { mutableStateOf(0) }
+    val fullText = message.text
+
+    LaunchedEffect(message.timestamp) {
+        // Reveal character by character
+        for (i in 1..fullText.length) {
+            displayedChars = i
+            delay(15) // 15ms per char
+        }
+    }
+
+    val shape = RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp)
+
+    Box(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Box(
+            modifier = Modifier
+                .widthIn(max = 300.dp)
+                .clip(shape)
+                .background(AiBubble)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+        ) {
+            Text(
+                text = fullText.take(displayedChars),
+                style = TextStyle(
+                    fontFamily = CormorantGaramond,
+                    fontSize = 16.sp,
+                    color = Ink,
                     lineHeight = 22.sp
                 )
             )
@@ -133,6 +195,20 @@ private fun ChatBubble(message: ChatMessage) {
 
 @Composable
 private fun TypingIndicator() {
+    val transition = rememberInfiniteTransition(label = "typing")
+
+    val offsets = (0..2).map { index ->
+        transition.animateFloat(
+            initialValue = 0f,
+            targetValue = -6f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(400, delayMillis = index * 150, easing = LinearEasing),
+                repeatMode = RepeatMode.Reverse
+            ),
+            label = "dot$index"
+        )
+    }
+
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp))
@@ -141,10 +217,11 @@ private fun TypingIndicator() {
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        repeat(3) {
+        offsets.forEach { offset ->
             Box(
                 modifier = Modifier
                     .size(6.dp)
+                    .offset { IntOffset(0, offset.value.toInt()) }
                     .clip(CircleShape)
                     .background(InkFaint)
             )

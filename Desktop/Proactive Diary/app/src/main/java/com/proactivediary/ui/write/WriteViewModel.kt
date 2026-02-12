@@ -642,6 +642,19 @@ class WriteViewModel @Inject constructor(
         }
     }
 
+    fun deleteRecording() {
+        viewModelScope.launch {
+            val path = _uiState.value.audioPath ?: return@launch
+            try {
+                val file = java.io.File(path)
+                if (file.exists()) file.delete()
+            } catch (_: Exception) {}
+            _uiState.update { it.copy(audioPath = null) }
+            saveEntry(_uiState.value.content)
+            analyticsService.logFeatureUsed("voice_note_deleted")
+        }
+    }
+
     private fun parseImages(json: String): List<ImageMetadata> {
         return try {
             val type = object : TypeToken<List<ImageMetadata>>() {}.type
