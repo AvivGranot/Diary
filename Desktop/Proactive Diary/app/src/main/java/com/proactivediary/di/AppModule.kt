@@ -4,6 +4,7 @@ import com.proactivediary.data.db.dao.EntryDao
 import com.proactivediary.data.db.dao.GoalCheckInDao
 import com.proactivediary.data.db.dao.GoalDao
 import com.proactivediary.data.db.dao.WritingReminderDao
+import com.proactivediary.data.media.ImageStorageManager
 import com.proactivediary.data.repository.EntryRepository
 import com.proactivediary.data.repository.EntryRepositoryImpl
 import com.proactivediary.data.repository.GoalRepository
@@ -25,8 +26,9 @@ object AppModule {
     @Provides
     @Singleton
     fun provideEntryRepository(
-        entryDao: EntryDao
-    ): EntryRepository = EntryRepositoryImpl(entryDao)
+        entryDao: EntryDao,
+        imageStorageManager: ImageStorageManager
+    ): EntryRepository = EntryRepositoryImpl(entryDao, imageStorageManager)
 
     @Provides
     @Singleton

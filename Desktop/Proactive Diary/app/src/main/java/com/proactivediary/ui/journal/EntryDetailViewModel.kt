@@ -7,6 +7,8 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.proactivediary.data.db.dao.PreferenceDao
 import com.proactivediary.data.db.entities.EntryEntity
+import com.proactivediary.data.media.ImageMetadata
+import com.proactivediary.data.media.ImageStorageManager
 import com.proactivediary.data.repository.EntryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,7 +28,16 @@ data class EntryDetailUiState(
     val entryId: String = "",
     val title: String = "",
     val content: String = "",
+    val contentHtml: String? = null,
     val tags: List<String> = emptyList(),
+    val images: List<ImageMetadata> = emptyList(),
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val locationName: String? = null,
+    val weatherTemp: Double? = null,
+    val weatherCondition: String? = null,
+    val weatherIcon: String? = null,
+    val audioPath: String? = null,
     val wordCount: Int = 0,
     val dateHeader: String = "",
     val colorKey: String = "cream",
@@ -45,6 +56,7 @@ data class EntryDetailUiState(
 class EntryDetailViewModel @Inject constructor(
     private val entryRepository: EntryRepository,
     private val preferenceDao: PreferenceDao,
+    val imageStorageManager: ImageStorageManager,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -107,6 +119,7 @@ class EntryDetailViewModel @Inject constructor(
                 return@launch
             }
             val tags = parseTags(entry.tags)
+            val images = parseImages(entry.images)
 
             val zone = ZoneId.of("America/Los_Angeles")
             val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.US)
@@ -118,8 +131,17 @@ class EntryDetailViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(
                 entryId = entry.id,
                 title = entry.title,
-                content = entry.content,
+                content = entry.contentPlain ?: entry.content,
+                contentHtml = entry.contentHtml,
                 tags = tags,
+                images = images,
+                latitude = entry.latitude,
+                longitude = entry.longitude,
+                locationName = entry.locationName,
+                weatherTemp = entry.weatherTemp,
+                weatherCondition = entry.weatherCondition,
+                weatherIcon = entry.weatherIcon,
+                audioPath = entry.audioPath,
                 wordCount = entry.wordCount,
                 dateHeader = dateHeader,
                 isLoaded = true
@@ -142,6 +164,15 @@ class EntryDetailViewModel @Inject constructor(
     private fun parseTags(json: String): List<String> {
         return try {
             val type = object : TypeToken<List<String>>() {}.type
+            gson.fromJson(json, type) ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun parseImages(json: String): List<ImageMetadata> {
+        return try {
+            val type = object : TypeToken<List<ImageMetadata>>() {}.type
             gson.fromJson(json, type) ?: emptyList()
         } catch (_: Exception) {
             emptyList()

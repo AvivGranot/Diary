@@ -23,7 +23,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.proactivediary"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.proactivediary"
@@ -117,6 +117,14 @@ dependencies {
 
     // Coil (image loading)
     implementation("io.coil-kt:coil-compose:2.7.0")
+    // Rich Text Editor
+    implementation("com.mohamedrejeb.richeditor:richeditor-compose:1.0.0-rc13")
+
+    // Google Play Services Location
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+
+    // OkHttp (weather API)
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")

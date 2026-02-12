@@ -1,22 +1,27 @@
 package com.proactivediary.navigation
 
 import android.app.Activity
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,22 +37,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
+import com.proactivediary.ui.components.CoachMark
+import com.proactivediary.ui.components.FeatureDiscoveryViewModel
+import com.proactivediary.ui.components.SwipeHint
 import com.proactivediary.ui.goals.GoalsScreen
 import com.proactivediary.ui.journal.JournalScreen
 import com.proactivediary.ui.settings.ReminderManagementScreen
@@ -56,6 +58,7 @@ import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.paywall.PurchaseResult
 import com.proactivediary.ui.settings.SettingsScreen
 import com.proactivediary.ui.write.WriteScreen
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 data class BottomNavItem(
@@ -66,6 +69,9 @@ data class BottomNavItem(
 )
 
 private const val WRITE_TAB = "write_tab"
+private const val PAGE_WRITE = 0
+private const val PAGE_JOURNAL = 1
+private const val PAGE_SETTINGS = 2
 
 val bottomNavItems = listOf(
     BottomNavItem(WRITE_TAB, "Write", Icons.Outlined.Edit, iconSize = 24),
@@ -79,11 +85,9 @@ fun MainScreen(
     deepLinkDestination: String? = null,
     onDeepLinkConsumed: () -> Unit = {},
     billingViewModel: BillingViewModel = hiltViewModel(),
-    mainScreenViewModel: MainScreenViewModel = hiltViewModel()
+    mainScreenViewModel: MainScreenViewModel = hiltViewModel(),
+    discoveryViewModel: FeatureDiscoveryViewModel = hiltViewModel()
 ) {
-    val innerNavController = rememberNavController()
-    val navBackStackEntry by innerNavController.currentBackStackEntryAsState()
-    val currentDestination = navBackStackEntry?.destination
     val subscriptionState by billingViewModel.subscriptionState.collectAsState()
     val isFirstPaywallView by billingViewModel.isFirstPaywallView.collectAsState()
     val currentStreak by mainScreenViewModel.currentStreak.collectAsState()
@@ -94,16 +98,45 @@ fun MainScreen(
     val context = LocalContext.current
     val activity = context as? Activity
 
+    // Coach marks
+    val showWriteHint by discoveryViewModel.showWriteHint.collectAsState()
+    val showSwipeHint by discoveryViewModel.showSwipeHint.collectAsState()
+
+    // Overlay sub-screens (Goals, Reminders) — shown on top of pager
+    var showGoals by remember { mutableStateOf(false) }
+    var showReminders by remember { mutableStateOf(false) }
+
+    // Pager state — starts on Write tab (page 0)
+    val pagerState = rememberPagerState(
+        initialPage = PAGE_WRITE,
+        pageCount = { 3 }
+    )
+
+    // Track the last valid page the user was on before a paywall bounce
+    var lastValidPage by remember { mutableStateOf(PAGE_WRITE) }
+
+    // Sync pager → bottom nav: when user swipes, update selection
+    // Also handle paywall gate: if user swipes to Write while expired, bounce back
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.settledPage }
+            .distinctUntilChanged()
+            .collect { page ->
+                if (page == PAGE_WRITE && !subscriptionState.isActive) {
+                    // User swiped to Write tab but subscription is expired → bounce back
+                    showPaywall = true
+                    pagerState.scrollToPage(lastValidPage)
+                } else {
+                    lastValidPage = page
+                }
+            }
+    }
+
     // After successful payment, navigate to Write tab
     LaunchedEffect(purchaseResult) {
         if (purchaseResult is PurchaseResult.Success) {
             billingViewModel.consumePurchaseResult()
             billingViewModel.refreshSubscriptionState()
-            innerNavController.navigate(WRITE_TAB) {
-                popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
-                launchSingleTop = true
-                restoreState = true
-            }
+            pagerState.animateScrollToPage(PAGE_WRITE)
         }
     }
 
@@ -113,21 +146,13 @@ fun MainScreen(
             when (dest) {
                 "write" -> {
                     if (subscriptionState.isActive) {
-                        innerNavController.navigate(WRITE_TAB) {
-                            popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
+                        pagerState.animateScrollToPage(PAGE_WRITE)
                     } else {
                         showPaywall = true
                     }
                 }
                 "goals" -> {
-                    innerNavController.navigate(Routes.Goals.route) {
-                        popUpTo(innerNavController.graph.startDestinationId) { saveState = true }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
+                    showGoals = true
                 }
             }
             onDeepLinkConsumed()
@@ -137,7 +162,6 @@ fun MainScreen(
     Scaffold(
         bottomBar = {
             Column(modifier = Modifier.navigationBarsPadding()) {
-                // 1px top border
                 HorizontalDivider(
                     modifier = Modifier.fillMaxWidth(),
                     thickness = 1.dp,
@@ -148,23 +172,19 @@ fun MainScreen(
                     containerColor = MaterialTheme.colorScheme.surface,
                     tonalElevation = 0.dp
                 ) {
-                    bottomNavItems.forEach { item ->
-                        val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                    bottomNavItems.forEachIndexed { index, item ->
+                        val selected = pagerState.currentPage == index
                         NavigationBarItem(
                             selected = selected,
                             onClick = {
                                 if (!selected) {
                                     // Paywall gate: block Write tab when trial expired
-                                    if (item.route == WRITE_TAB && !subscriptionState.isActive) {
+                                    if (index == PAGE_WRITE && !subscriptionState.isActive) {
                                         showPaywall = true
                                         return@NavigationBarItem
                                     }
-                                    innerNavController.navigate(item.route) {
-                                        popUpTo(innerNavController.graph.startDestinationId) {
-                                            saveState = item.route != Routes.Settings.route
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = item.route != Routes.Settings.route
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(index)
                                     }
                                 }
                             },
@@ -175,7 +195,7 @@ fun MainScreen(
                                         contentDescription = item.label,
                                         modifier = Modifier.size(item.iconSize.dp)
                                     )
-                                    if (item.route == WRITE_TAB && !subscriptionState.isActive) {
+                                    if (index == PAGE_WRITE && !subscriptionState.isActive) {
                                         Icon(
                                             imageVector = Icons.Outlined.Lock,
                                             contentDescription = "Pro",
@@ -207,75 +227,122 @@ fun MainScreen(
             }
         }
     ) { padding ->
-        NavHost(
-            navController = innerNavController,
-            startDestination = WRITE_TAB,
-            modifier = Modifier.padding(padding)
-        ) {
-            composable(WRITE_TAB) {
-                WriteScreen(
-                    onOpenDesignStudio = {
-                        rootNavController.navigate(Routes.DesignStudio.createRoute(edit = true))
-                    },
-                    onEntrySaved = {
-                        scope.launch {
-                            billingViewModel.refreshSubscriptionState()
-                        }
+        Box(modifier = Modifier.padding(padding)) {
+            // Swipeable tab pages
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize(),
+                beyondViewportPageCount = 1,
+                key = { it }
+            ) { page ->
+                when (page) {
+                    PAGE_WRITE -> {
+                        WriteScreen(
+                            onOpenDesignStudio = {
+                                rootNavController.navigate(Routes.DesignStudio.createRoute(edit = true))
+                            },
+                            onEntrySaved = {
+                                scope.launch {
+                                    billingViewModel.refreshSubscriptionState()
+                                }
+                            }
+                        )
                     }
-                )
-            }
-            composable(Routes.Journal.route) {
-                JournalScreen(
-                    onEntryClick = { entryId ->
-                        rootNavController.navigate(Routes.EntryDetail.createRoute(entryId))
+                    PAGE_JOURNAL -> {
+                        JournalScreen(
+                            onEntryClick = { entryId ->
+                                rootNavController.navigate(Routes.EntryDetail.createRoute(entryId))
+                            },
+                            onNavigateToWrite = {
+                                if (subscriptionState.isActive) {
+                                    scope.launch { pagerState.animateScrollToPage(PAGE_WRITE) }
+                                } else {
+                                    showPaywall = true
+                                }
+                            },
+                            onNavigateToOnThisDay = {
+                                rootNavController.navigate(Routes.OnThisDay.route)
+                            }
+                        )
                     }
-                )
+                    PAGE_SETTINGS -> {
+                        SettingsScreen(
+                            onOpenDesignStudio = {
+                                rootNavController.navigate(Routes.DesignStudio.createRoute(edit = true))
+                            },
+                            onNavigateToGoals = {
+                                showGoals = true
+                            },
+                            onNavigateToReminders = {
+                                showReminders = true
+                            },
+                            onNavigateToTypewriter = {
+                                rootNavController.navigate(Routes.Typewriter.route) {
+                                    popUpTo(Routes.Main.route) { inclusive = true }
+                                }
+                            },
+                            onNavigateToYearInReview = {
+                                rootNavController.navigate(Routes.YearInReview.route)
+                            },
+                            onNavigateToBugReport = {
+                                rootNavController.navigate(Routes.ContactSupport.createRoute("bug"))
+                            },
+                            onNavigateToSupport = {
+                                rootNavController.navigate(Routes.ContactSupport.createRoute("support"))
+                            },
+                            onNavigateToTalkToJournal = {
+                                rootNavController.navigate(Routes.TalkToJournal.route)
+                            },
+                            onNavigateToDiaryWrapped = {
+                                rootNavController.navigate(Routes.DiaryWrapped.route)
+                            },
+                            onNavigateToThemeEvolution = {
+                                rootNavController.navigate(Routes.ThemeEvolution.route)
+                            }
+                        )
+                    }
+                }
             }
-            composable(Routes.Goals.route) {
+
+            // Goals overlay
+            AnimatedVisibility(
+                visible = showGoals,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+            ) {
                 GoalsScreen(
-                    onBack = { innerNavController.popBackStack() }
+                    onBack = { showGoals = false }
                 )
             }
-            composable(Routes.Reminders.route) {
+
+            // Reminders overlay
+            AnimatedVisibility(
+                visible = showReminders,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+            ) {
                 ReminderManagementScreen(
-                    onBack = { innerNavController.popBackStack() }
+                    onBack = { showReminders = false }
                 )
             }
-            composable(Routes.Settings.route) {
-                SettingsScreen(
-                    onOpenDesignStudio = {
-                        rootNavController.navigate(Routes.DesignStudio.createRoute(edit = true))
-                    },
-                    onNavigateToGoals = {
-                        innerNavController.navigate(Routes.Goals.route) {
-                            launchSingleTop = true
-                        }
-                    },
-                    onNavigateToReminders = {
-                        innerNavController.navigate(Routes.Reminders.route) {
-                            launchSingleTop = true
-                        }
-                    },
-                    onNavigateToTypewriter = {
-                        rootNavController.navigate(Routes.Typewriter.route) {
-                            popUpTo(Routes.Main.route) { inclusive = true }
-                        }
-                    },
-                    onNavigateToYearInReview = {
-                        rootNavController.navigate(Routes.YearInReview.route)
-                    },
-                    onNavigateToBugReport = {
-                        rootNavController.navigate(Routes.ContactSupport.createRoute("bug"))
-                    },
-                    onNavigateToSupport = {
-                        rootNavController.navigate(Routes.ContactSupport.createRoute("support"))
-                    }
-                )
-            }
+
+            // Coach marks — shown on top of everything
+            CoachMark(
+                message = "Start writing. Your entries auto-save.",
+                visible = showWriteHint && pagerState.currentPage == PAGE_WRITE,
+                onDismiss = { discoveryViewModel.dismissWriteHint() },
+                alignment = Alignment.Center,
+                offsetY = (-40).dp
+            )
+
+            SwipeHint(
+                visible = showSwipeHint && !showWriteHint,
+                onDismiss = { discoveryViewModel.dismissSwipeHint() }
+            )
         }
     }
 
-    // Paywall dialog — no auth gate, take payment first
+    // Paywall dialog
     if (showPaywall) {
         PaywallDialog(
             onDismiss = {
@@ -285,8 +352,8 @@ fun MainScreen(
             entryCount = subscriptionState.entryCount,
             totalWords = subscriptionState.totalWords,
             isFirstPaywallView = isFirstPaywallView,
-            monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$2/month",
-            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$20/year",
+            monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$5/month",
+            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$30/year",
             onSelectPlan = { sku ->
                 billingViewModel.markPaywallViewed()
                 activity?.let { billingViewModel.launchPurchase(it, sku) }

@@ -52,7 +52,7 @@ class BillingViewModel @Inject constructor(
 
     companion object {
         /** Show paywall after this many entries (engagement-gated, not time-gated) */
-        const val ENTRY_GATE_THRESHOLD = 10
+        const val ENTRY_GATE_THRESHOLD = 30
 
         // Preference keys for offline cache
         private const val KEY_CACHED_PLAN = "billing_cached_plan"
@@ -152,8 +152,8 @@ class BillingViewModel @Inject constructor(
 
         if (entryCount < ENTRY_GATE_THRESHOLD) {
             val entriesLeft = ENTRY_GATE_THRESHOLD - entryCount
-            // Log trial milestones at 3, 5, 7, 9 entries (deduplicated)
-            if (entryCount in listOf(3, 5, 7, 9) && entryCount !in loggedTrialMilestones) {
+            // Log trial milestones (deduplicated)
+            if (entryCount in listOf(5, 10, 15, 20, 25) && entryCount !in loggedTrialMilestones) {
                 loggedTrialMilestones.add(entryCount)
                 analyticsService.logTrialMilestone(entryCount, entriesLeft)
             }

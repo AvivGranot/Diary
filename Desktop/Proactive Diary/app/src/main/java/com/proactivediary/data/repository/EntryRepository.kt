@@ -24,4 +24,6 @@ interface EntryRepository {
     suspend fun getLastEntryTimestamp(): Long?
     suspend fun getPage(limit: Int, offset: Int): List<EntryEntity>
     suspend fun getTotalCount(): Int
+    fun getEntryDatesInRange(startMs: Long, endMs: Long): Flow<List<Long>>
+    fun getEntriesWithImages(): Flow<List<EntryEntity>>
 }

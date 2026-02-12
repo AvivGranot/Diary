@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.sqlite.db.SimpleSQLiteQuery
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -82,18 +83,43 @@ class SettingsViewModel @Inject constructor(
     private val _isStreakEnabled = MutableStateFlow(true)
     val isStreakEnabled: StateFlow<Boolean> = _isStreakEnabled
 
+    // AI insights toggle
+    private val _isAIEnabled = MutableStateFlow(false)
+    val isAIEnabled: StateFlow<Boolean> = _isAIEnabled
+
     // Delete confirmation state
     private val _deleteStep = MutableStateFlow(0) // 0=none, 1=first dialog, 2=type DELETE
     val deleteStep: StateFlow<Int> = _deleteStep
 
     init {
         loadStreakPref()
+        loadAIPref()
     }
 
     private fun loadStreakPref() {
         viewModelScope.launch {
             val pref = preferenceDao.get("streak_enabled")
             _isStreakEnabled.value = pref?.value != "false"
+        }
+    }
+
+    private fun loadAIPref() {
+        viewModelScope.launch {
+            val pref = preferenceDao.get("ai_insights_enabled")
+            _isAIEnabled.value = pref?.value == "true"
+        }
+    }
+
+    fun toggleAIInsights(enabled: Boolean) {
+        _isAIEnabled.value = enabled
+        viewModelScope.launch {
+            preferenceDao.insert(PreferenceEntity("ai_insights_enabled", if (enabled) "true" else "false"))
+        }
+    }
+
+    fun setApiKey(key: String) {
+        viewModelScope.launch {
+            preferenceDao.insert(PreferenceEntity("ai_api_key", key))
         }
     }
 
@@ -124,12 +150,54 @@ class SettingsViewModel @Inject constructor(
 
     fun executeDeleteAll(onComplete: () -> Unit) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                entryDao.deleteAll()
-                goalDao.deleteAll()
-                goalCheckInDao.deleteAll()
-                writingReminderDao.deleteAll()
-                preferenceDao.deleteAll()
+            withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                try {
+                    // Drop FTS triggers first to prevent cascade crash during bulk delete
+                    entryDao.rawExec(SimpleSQLiteQuery("DROP TRIGGER IF EXISTS entries_ad"))
+                    entryDao.rawExec(SimpleSQLiteQuery("DROP TRIGGER IF EXISTS entries_ai"))
+                    entryDao.rawExec(SimpleSQLiteQuery("DROP TRIGGER IF EXISTS entries_au"))
+
+                    // Clear FTS index
+                    entryDao.rawExec(SimpleSQLiteQuery("DELETE FROM entries_fts"))
+
+                    // Delete all data
+                    entryDao.deleteAll()
+                    goalDao.deleteAll()
+                    goalCheckInDao.deleteAll()
+                    writingReminderDao.deleteAll()
+                    preferenceDao.deleteAll()
+
+                    // Recreate FTS triggers for fresh entries
+                    entryDao.rawExec(SimpleSQLiteQuery("""
+                        CREATE TRIGGER IF NOT EXISTS entries_ai AFTER INSERT ON entries BEGIN
+                            INSERT INTO entries_fts(docid, title, content, tags)
+                            VALUES (new.rowid, new.title, COALESCE(new.content_plain, new.content), new.tags);
+                        END
+                    """.trimIndent()))
+                    entryDao.rawExec(SimpleSQLiteQuery("""
+                        CREATE TRIGGER IF NOT EXISTS entries_ad AFTER DELETE ON entries BEGIN
+                            INSERT INTO entries_fts(entries_fts, docid, title, content, tags)
+                            VALUES('delete', old.rowid, old.title, COALESCE(old.content_plain, old.content), old.tags);
+                        END
+                    """.trimIndent()))
+                    entryDao.rawExec(SimpleSQLiteQuery("""
+                        CREATE TRIGGER IF NOT EXISTS entries_au AFTER UPDATE ON entries BEGIN
+                            INSERT INTO entries_fts(entries_fts, docid, title, content, tags)
+                            VALUES('delete', old.rowid, old.title, COALESCE(old.content_plain, old.content), old.tags);
+                            INSERT INTO entries_fts(docid, title, content, tags)
+                            VALUES (new.rowid, new.title, COALESCE(new.content_plain, new.content), new.tags);
+                        END
+                    """.trimIndent()))
+                } catch (_: Exception) {
+                    // If trigger drop fails, still try basic delete
+                    try {
+                        entryDao.deleteAll()
+                        goalDao.deleteAll()
+                        goalCheckInDao.deleteAll()
+                        writingReminderDao.deleteAll()
+                        preferenceDao.deleteAll()
+                    } catch (_: Exception) { }
+                }
             }
             _deleteStep.value = 0
             onComplete()

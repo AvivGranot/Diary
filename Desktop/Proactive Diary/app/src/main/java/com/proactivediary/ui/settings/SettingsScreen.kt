@@ -66,6 +66,9 @@ fun SettingsScreen(
     onNavigateToYearInReview: () -> Unit = {},
     onNavigateToBugReport: () -> Unit = {},
     onNavigateToSupport: () -> Unit = {},
+    onNavigateToTalkToJournal: () -> Unit = {},
+    onNavigateToDiaryWrapped: () -> Unit = {},
+    onNavigateToThemeEvolution: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
     billingViewModel: BillingViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel()
@@ -73,6 +76,7 @@ fun SettingsScreen(
 
     val fontSize by viewModel.fontSize.collectAsState()
     val isStreakEnabled by viewModel.isStreakEnabled.collectAsState()
+    val isAIEnabled by viewModel.isAIEnabled.collectAsState()
     val designSummary by viewModel.diaryDesignSummary.collectAsState()
     val activeReminderCount by viewModel.activeReminderCount.collectAsState()
     val activeGoalCount by viewModel.activeGoalCount.collectAsState()
@@ -89,6 +93,8 @@ fun SettingsScreen(
     var showFontSizeMenu by remember { mutableStateOf(false) }
     var showPrivacyPolicy by remember { mutableStateOf(false) }
     var showTermsOfService by remember { mutableStateOf(false) }
+    var showApiKeyDialog by remember { mutableStateOf(false) }
+    var apiKeyInput by remember { mutableStateOf("") }
     var deleteConfirmText by remember { mutableStateOf("") }
 
     val context = LocalContext.current
@@ -230,6 +236,56 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(24.dp))
 
+            // AI INSIGHTS section
+            SectionHeader("AI INSIGHTS")
+            Spacer(Modifier.height(8.dp))
+            SettingsCard {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "Weekly AI Insights",
+                            style = TextStyle(fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                        )
+                        Text(
+                            text = "Analyze your writing patterns weekly",
+                            style = TextStyle(fontSize = 11.sp, color = MaterialTheme.colorScheme.secondary)
+                        )
+                    }
+                    Switch(
+                        checked = isAIEnabled,
+                        onCheckedChange = { viewModel.toggleAIInsights(it) },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MaterialTheme.colorScheme.onBackground,
+                            checkedTrackColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f),
+                            uncheckedThumbColor = MaterialTheme.colorScheme.secondary,
+                            uncheckedTrackColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                        )
+                    )
+                }
+                if (isAIEnabled) {
+                    SettingsDivider()
+                    SettingsRow(
+                        label = "API Key",
+                        value = "Configure",
+                        onClick = { showApiKeyDialog = true }
+                    )
+                    SettingsDivider()
+                    SettingsRow(
+                        label = "Talk to Your Journal",
+                        value = "Chat with AI",
+                        onClick = onNavigateToTalkToJournal
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
+
             // SUBSCRIPTION section
             SectionHeader("SUBSCRIPTION")
             Spacer(Modifier.height(8.dp))
@@ -336,10 +392,22 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // YOUR BOOK section
-            SectionHeader("YOUR BOOK")
+            // YOUR STORY section
+            SectionHeader("YOUR STORY")
             Spacer(Modifier.height(8.dp))
             SettingsCard {
+                SettingsRow(
+                    label = "Diary Wrapped",
+                    value = "Your story so far",
+                    onClick = onNavigateToDiaryWrapped
+                )
+                SettingsDivider()
+                SettingsRow(
+                    label = "Theme Evolution",
+                    value = "Mood & growth patterns",
+                    onClick = onNavigateToThemeEvolution
+                )
+                SettingsDivider()
                 SettingsRow(
                     label = "Year in Review",
                     value = "${java.time.LocalDate.now().year}",
@@ -450,8 +518,8 @@ fun SettingsScreen(
             onDismiss = { showPaywall = false },
             entryCount = subState.entryCount,
             totalWords = subState.totalWords,
-            monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$2/month",
-            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$20/year",
+            monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$5/month",
+            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$30/year",
             onSelectPlan = { sku ->
                 activity?.let { billingViewModel.launchPurchase(it, sku) }
                 showPaywall = false
@@ -502,7 +570,7 @@ fun SettingsScreen(
 
                     Text("Network Connections", style = sectionStyle)
                     Spacer(Modifier.height(4.dp))
-                    Text("The only network connections this app makes are to Google Play for subscription management and to Firebase for optional account authentication. Nothing you write ever leaves your device.", style = bodyStyle)
+                    Text("Network connections: Google Play (subscriptions), Firebase (optional auth), Open-Meteo (weather data). If you enable AI Insights, your entry text is sent to the Anthropic API using your own API key. AI Insights are opt-in only.", style = bodyStyle)
                     Spacer(Modifier.height(12.dp))
 
                     Text("Personal Information", style = sectionStyle)
@@ -680,6 +748,65 @@ fun SettingsScreen(
     // Export options dialog
     if (showExportOptions) {
         // Handled by DropdownMenu above
+    }
+
+    // API Key dialog
+    if (showApiKeyDialog) {
+        AlertDialog(
+            onDismissRequest = { showApiKeyDialog = false },
+            title = {
+                Text(
+                    text = "Claude API Key",
+                    style = TextStyle(
+                        fontFamily = CormorantGaramond,
+                        fontSize = 20.sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Enter your Anthropic API key to enable AI-powered weekly insights. Your key is stored locally and never shared.",
+                        style = TextStyle(fontSize = 13.sp, color = MaterialTheme.colorScheme.secondary)
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    TextField(
+                        value = apiKeyInput,
+                        onValueChange = { apiKeyInput = it },
+                        placeholder = { Text("sk-ant-...") },
+                        singleLine = true,
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = MaterialTheme.colorScheme.onBackground,
+                            unfocusedIndicatorColor = MaterialTheme.colorScheme.secondary
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.setApiKey(apiKeyInput)
+                        apiKeyInput = ""
+                        showApiKeyDialog = false
+                    },
+                    enabled = apiKeyInput.isNotBlank()
+                ) {
+                    Text("Save", color = MaterialTheme.colorScheme.onBackground)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showApiKeyDialog = false
+                    apiKeyInput = ""
+                }) {
+                    Text("Cancel", color = MaterialTheme.colorScheme.secondary)
+                }
+            },
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     }
 }
 

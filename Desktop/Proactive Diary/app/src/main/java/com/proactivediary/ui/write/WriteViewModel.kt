@@ -6,10 +6,17 @@ import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.proactivediary.analytics.AnalyticsService
+import android.net.Uri
+import com.proactivediary.data.db.dao.InsightDao
 import com.proactivediary.data.db.dao.PreferenceDao
 import com.proactivediary.data.db.entities.PreferenceEntity
 import com.proactivediary.data.db.entities.EntryEntity
+import com.proactivediary.data.location.LocationService
+import com.proactivediary.data.media.AudioRecorderService
+import com.proactivediary.data.media.ImageMetadata
+import com.proactivediary.data.media.ImageStorageManager
 import com.proactivediary.data.repository.EntryRepository
+import com.proactivediary.data.weather.WeatherService
 import com.proactivediary.data.repository.StreakRepository
 import com.proactivediary.domain.WritingGoalService
 import com.proactivediary.domain.model.TaggedContact
@@ -80,6 +87,7 @@ data class WriteUiState(
     val entryId: String = "",
     val title: String = "",
     val content: String = "",
+    val contentHtml: String? = null,
     val tags: List<String> = emptyList(),
     val wordCount: Int = 0,
     val isSaving: Boolean = false,
@@ -101,10 +109,22 @@ data class WriteUiState(
     val goalCompletedMessage: String? = null,
     val weeklyGoalProgress: String? = null,
     val taggedContacts: List<TaggedContact> = emptyList(),
+    val images: List<ImageMetadata> = emptyList(),
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val locationName: String? = null,
+    val weatherTemp: Double? = null,
+    val weatherCondition: String? = null,
+    val weatherIcon: String? = null,
+    val templateId: String? = null,
+    val templatePrompts: List<String> = emptyList(),
+    val currentPromptIndex: Int = 0,
     val showStreakCelebration: Int = 0,
     val newEntrySaved: Boolean = false,
     val requestInAppReview: Boolean = false,
-    val showFirstEntryCelebration: Boolean = false
+    val showFirstEntryCelebration: Boolean = false,
+    val audioPath: String? = null,
+    val isRecording: Boolean = false
 )
 
 @OptIn(FlowPreview::class)
@@ -116,6 +136,11 @@ class WriteViewModel @Inject constructor(
     private val writingGoalService: WritingGoalService,
     private val streakRepository: StreakRepository,
     private val inAppReviewService: InAppReviewService,
+    val imageStorageManager: ImageStorageManager,
+    private val audioRecorderService: AudioRecorderService,
+    private val locationService: LocationService,
+    private val weatherService: WeatherService,
+    private val insightDao: InsightDao,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -142,12 +167,18 @@ class WriteViewModel @Inject constructor(
         loadOrCreateEntry(entryIdArg)
         setupAutoSave()
         loadGoalProgress()
+        loadSmartPrompt()
         analyticsService.logWriteScreenViewed()
 
         val pacificZone = java.time.ZoneId.of("America/Los_Angeles")
         val today = LocalDate.now(pacificZone)
         val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", Locale.US)
         _uiState.value = _uiState.value.copy(dateHeader = today.format(formatter))
+
+        // Auto-fetch location and weather for new entries
+        if (entryIdArg == null) {
+            fetchLocationAndWeather()
+        }
     }
 
     override fun onCleared() {
@@ -162,13 +193,25 @@ class WriteViewModel @Inject constructor(
                 val now = System.currentTimeMillis()
                 val tagsJson = gson.toJson(state.tags)
                 val contactsJson = gson.toJson(state.taggedContacts)
+                val imagesJson = gson.toJson(state.images)
                 val entry = EntryEntity(
                     id = state.entryId,
                     title = state.title,
                     content = state.content,
+                    contentHtml = state.contentHtml,
+                    contentPlain = state.content,
                     mood = null,
                     tags = tagsJson,
                     taggedContacts = contactsJson,
+                    images = imagesJson,
+                    latitude = state.latitude,
+                    longitude = state.longitude,
+                    locationName = state.locationName,
+                    weatherTemp = state.weatherTemp,
+                    weatherCondition = state.weatherCondition,
+                    weatherIcon = state.weatherIcon,
+                    templateId = state.templateId,
+                    audioPath = state.audioPath,
                     wordCount = state.wordCount,
                     createdAt = entryRepository.getByIdSync(state.entryId)?.createdAt
                         ?: now,
@@ -220,12 +263,22 @@ class WriteViewModel @Inject constructor(
                 if (entry != null) {
                     val tags = parseTags(entry.tags)
                     val contacts = parseTaggedContacts(entry.taggedContacts)
+                    val images = parseImages(entry.images)
                     _uiState.value = _uiState.value.copy(
                         entryId = entry.id,
                         title = entry.title,
                         content = entry.content,
+                        contentHtml = entry.contentHtml,
                         tags = tags,
                         taggedContacts = contacts,
+                        images = images,
+                        latitude = entry.latitude,
+                        longitude = entry.longitude,
+                        locationName = entry.locationName,
+                        weatherTemp = entry.weatherTemp,
+                        weatherCondition = entry.weatherCondition,
+                        weatherIcon = entry.weatherIcon,
+                        audioPath = entry.audioPath,
                         wordCount = computeWordCount(entry.content),
                         isLoaded = true,
                         isNewEntry = false
@@ -246,12 +299,22 @@ class WriteViewModel @Inject constructor(
                 if (todayEntry != null) {
                     val tags = parseTags(todayEntry.tags)
                     val contacts = parseTaggedContacts(todayEntry.taggedContacts)
+                    val images = parseImages(todayEntry.images)
                     _uiState.value = _uiState.value.copy(
                         entryId = todayEntry.id,
                         title = todayEntry.title,
                         content = todayEntry.content,
+                        contentHtml = todayEntry.contentHtml,
                         tags = tags,
                         taggedContacts = contacts,
+                        images = images,
+                        latitude = todayEntry.latitude,
+                        longitude = todayEntry.longitude,
+                        locationName = todayEntry.locationName,
+                        weatherTemp = todayEntry.weatherTemp,
+                        weatherCondition = todayEntry.weatherCondition,
+                        weatherIcon = todayEntry.weatherIcon,
+                        audioPath = todayEntry.audioPath,
                         wordCount = computeWordCount(todayEntry.content),
                         isLoaded = true,
                         isNewEntry = false
@@ -317,6 +380,25 @@ class WriteViewModel @Inject constructor(
             wordCount = computeWordCount(newContent)
         )
         _contentFlow.value = newContent
+    }
+
+    fun onRichContentChanged(html: String, plainText: String) {
+        val state = _uiState.value
+        if (!firstEntryStartLogged && state.isNewEntry && state.content.isEmpty() && plainText.isNotEmpty()) {
+            viewModelScope.launch {
+                val logged = preferenceDao.get("first_entry_logged")?.value
+                if (logged == null) {
+                    analyticsService.logFirstEntryStarted(computeWordCount(plainText))
+                }
+            }
+            firstEntryStartLogged = true
+        }
+        _uiState.value = state.copy(
+            content = plainText,
+            contentHtml = html,
+            wordCount = computeWordCount(plainText)
+        )
+        _contentFlow.value = plainText
     }
 
     fun onTitleChanged(newTitle: String) {
@@ -396,14 +478,26 @@ class WriteViewModel @Inject constructor(
                 val now = System.currentTimeMillis()
                 val tagsJson = gson.toJson(state.tags)
                 val contactsJson = gson.toJson(state.taggedContacts)
+                val imagesJson = gson.toJson(state.images)
 
                 val entry = EntryEntity(
                     id = state.entryId,
                     title = state.title,
                     content = text,
+                    contentHtml = state.contentHtml,
+                    contentPlain = text,
                     mood = null,
                     tags = tagsJson,
                     taggedContacts = contactsJson,
+                    images = imagesJson,
+                    latitude = state.latitude,
+                    longitude = state.longitude,
+                    locationName = state.locationName,
+                    weatherTemp = state.weatherTemp,
+                    weatherCondition = state.weatherCondition,
+                    weatherIcon = state.weatherIcon,
+                    templateId = state.templateId,
+                    audioPath = state.audioPath,
                     wordCount = computeWordCount(text),
                     createdAt = if (state.isNewEntry) now else {
                         entryRepository.getByIdSync(state.entryId)?.createdAt ?: now
@@ -494,6 +588,69 @@ class WriteViewModel @Inject constructor(
         }
     }
 
+    fun addImage(uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val state = _uiState.value
+                val metadata = imageStorageManager.saveImage(state.entryId, uri)
+                _uiState.update { it.copy(images = it.images + metadata) }
+                // Trigger save to persist images JSON
+                saveEntry(_uiState.value.content)
+                analyticsService.logFeatureUsed("photo_attached")
+            } catch (e: Exception) {
+                _uiState.update { it.copy(saveError = "Failed to attach photo.") }
+            }
+        }
+    }
+
+    fun removeImage(imageId: String) {
+        viewModelScope.launch {
+            val state = _uiState.value
+            val image = state.images.find { it.id == imageId } ?: return@launch
+            imageStorageManager.deleteImage(state.entryId, image.filename)
+            _uiState.update { it.copy(images = it.images.filter { img -> img.id != imageId }) }
+            // Trigger save to persist images JSON
+            saveEntry(_uiState.value.content)
+            analyticsService.logFeatureUsed("photo_removed")
+        }
+    }
+
+    fun startRecording() {
+        viewModelScope.launch {
+            try {
+                val state = _uiState.value
+                val audioPath = audioRecorderService.startRecording(state.entryId)
+                _uiState.update { it.copy(audioPath = audioPath, isRecording = true) }
+                analyticsService.logFeatureUsed("voice_note_started")
+            } catch (e: Exception) {
+                _uiState.update { it.copy(saveError = "Failed to start recording.") }
+            }
+        }
+    }
+
+    fun stopRecording() {
+        viewModelScope.launch {
+            try {
+                val audioPath = audioRecorderService.stopRecording()
+                _uiState.update { it.copy(audioPath = audioPath, isRecording = false) }
+                // Trigger save to persist audio path
+                saveEntry(_uiState.value.content)
+                analyticsService.logFeatureUsed("voice_note_saved")
+            } catch (e: Exception) {
+                _uiState.update { it.copy(saveError = "Failed to save recording.", isRecording = false) }
+            }
+        }
+    }
+
+    private fun parseImages(json: String): List<ImageMetadata> {
+        return try {
+            val type = object : TypeToken<List<ImageMetadata>>() {}.type
+            gson.fromJson(json, type) ?: emptyList()
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
     private fun parseTags(json: String): List<String> {
         return try {
             val type = object : TypeToken<List<String>>() {}.type
@@ -552,6 +709,90 @@ class WriteViewModel @Inject constructor(
             val progress = writingGoalService.getWritingGoalProgress()
             if (progress != null) {
                 _uiState.value = _uiState.value.copy(weeklyGoalProgress = progress)
+            }
+        }
+    }
+
+    private fun loadSmartPrompt() {
+        viewModelScope.launch {
+            try {
+                val aiEnabled = preferenceDao.getValue("ai_insights_enabled") == "true"
+                if (!aiEnabled) return@launch
+
+                insightDao.getLatestInsight().collect { insight ->
+                    if (insight != null) {
+                        val type = object : TypeToken<List<String>>() {}.type
+                        val aiPrompts: List<String> = try {
+                            gson.fromJson(insight.promptSuggestions, type) ?: emptyList()
+                        } catch (_: Exception) { emptyList() }
+
+                        if (aiPrompts.isNotEmpty()) {
+                            val dayIndex = LocalDate.now().dayOfYear % aiPrompts.size
+                            _uiState.update {
+                                it.copy(dailyPrompt = aiPrompts[dayIndex])
+                            }
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+                // Fallback to static prompts (already set as default)
+            }
+        }
+    }
+
+    fun applyTemplate(templateId: String, prompts: List<String>) {
+        _uiState.update {
+            it.copy(
+                templateId = templateId,
+                templatePrompts = prompts,
+                currentPromptIndex = 0
+            )
+        }
+        analyticsService.logFeatureUsed("template_used")
+    }
+
+    fun advancePrompt() {
+        val state = _uiState.value
+        if (state.currentPromptIndex < state.templatePrompts.size - 1) {
+            _uiState.update { it.copy(currentPromptIndex = it.currentPromptIndex + 1) }
+        }
+    }
+
+    fun dismissTemplate() {
+        _uiState.update { it.copy(templatePrompts = emptyList(), currentPromptIndex = 0) }
+    }
+
+    private fun fetchLocationAndWeather() {
+        viewModelScope.launch {
+            try {
+                val locationData = withContext(Dispatchers.IO) { locationService.getLocation() }
+                if (locationData != null) {
+                    _uiState.update {
+                        it.copy(
+                            latitude = locationData.latitude,
+                            longitude = locationData.longitude,
+                            locationName = locationData.displayName
+                        )
+                    }
+                    analyticsService.logFeatureUsed("location_captured")
+
+                    // Chain weather fetch after location
+                    val weather = withContext(Dispatchers.IO) {
+                        weatherService.getWeather(locationData.latitude, locationData.longitude)
+                    }
+                    if (weather != null) {
+                        _uiState.update {
+                            it.copy(
+                                weatherTemp = weather.temperature,
+                                weatherCondition = weather.condition,
+                                weatherIcon = weather.icon
+                            )
+                        }
+                        analyticsService.logFeatureUsed("weather_captured")
+                    }
+                }
+            } catch (_: Exception) {
+                // Location/weather are optional — silently fail
             }
         }
     }

@@ -7,6 +7,8 @@ import com.proactivediary.data.db.dao.EntryDao
 import com.proactivediary.data.db.dao.GoalCheckInDao
 import com.proactivediary.data.db.dao.GoalDao
 import com.proactivediary.data.db.dao.PreferenceDao
+import com.proactivediary.data.db.dao.InsightDao
+import com.proactivediary.data.db.dao.TemplateDao
 import com.proactivediary.data.db.dao.WritingReminderDao
 import dagger.Module
 import dagger.Provides
@@ -47,4 +49,10 @@ object DatabaseModule {
 
     @Provides
     fun providePreferenceDao(database: AppDatabase): PreferenceDao = database.preferenceDao()
+
+    @Provides
+    fun provideTemplateDao(database: AppDatabase): TemplateDao = database.templateDao()
+
+    @Provides
+    fun provideInsightDao(database: AppDatabase): InsightDao = database.insightDao()
 }

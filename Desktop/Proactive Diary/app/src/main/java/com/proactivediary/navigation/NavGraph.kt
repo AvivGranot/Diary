@@ -23,12 +23,17 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.proactivediary.ui.designstudio.DesignStudioScreen
 import com.proactivediary.ui.journal.EntryDetailScreen
+import com.proactivediary.ui.onboarding.NotificationPermissionScreen
 import com.proactivediary.ui.onboarding.OnboardingGoalsScreen
 import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.typewriter.TypewriterScreen
 import com.proactivediary.ui.export.YearInReviewScreen
+import com.proactivediary.ui.onthisday.OnThisDayScreen
+import com.proactivediary.ui.chat.TalkToJournalScreen
 import com.proactivediary.ui.settings.ContactSupportScreen
+import com.proactivediary.ui.wrapped.DiaryWrappedScreen
+import com.proactivediary.ui.insights.ThemeEvolutionScreen
 import com.proactivediary.ui.write.WriteScreen
 
 @Composable
@@ -103,13 +108,28 @@ fun ProactiveDiaryNavHost(
         composable(Routes.OnboardingGoals.route) {
             OnboardingGoalsScreen(
                 onDone = {
-                    navController.navigate(Routes.Main.route) {
+                    navController.navigate(Routes.NotificationPermission.route) {
                         popUpTo(Routes.OnboardingGoals.route) { inclusive = true }
                     }
                 },
                 onSkip = {
-                    navController.navigate(Routes.Main.route) {
+                    navController.navigate(Routes.NotificationPermission.route) {
                         popUpTo(Routes.OnboardingGoals.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Routes.NotificationPermission.route) {
+            NotificationPermissionScreen(
+                onContinue = {
+                    navController.navigate(Routes.Main.route) {
+                        popUpTo(Routes.NotificationPermission.route) { inclusive = true }
+                    }
+                },
+                onSkip = {
+                    navController.navigate(Routes.Main.route) {
+                        popUpTo(Routes.NotificationPermission.route) { inclusive = true }
                     }
                 }
             )
@@ -166,8 +186,8 @@ fun ProactiveDiaryNavHost(
             if (showYearPaywall) {
                 PaywallDialog(
                     onDismiss = { showYearPaywall = false },
-                    monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$2/month",
-                    annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$20/year",
+                    monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$5/month",
+                    annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$30/year",
                     onSelectPlan = { sku ->
                         yearActivity?.let { billingViewModel.launchPurchase(it, sku) }
                         showYearPaywall = false
@@ -178,6 +198,33 @@ fun ProactiveDiaryNavHost(
                     }
                 )
             }
+        }
+
+        composable(Routes.OnThisDay.route) {
+            OnThisDayScreen(
+                onBack = { navController.popBackStack() },
+                onEntryTap = { entryId ->
+                    navController.navigate(Routes.EntryDetail.createRoute(entryId))
+                }
+            )
+        }
+
+        composable(Routes.TalkToJournal.route) {
+            TalkToJournalScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Routes.DiaryWrapped.route) {
+            DiaryWrappedScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Routes.ThemeEvolution.route) {
+            ThemeEvolutionScreen(
+                onBack = { navController.popBackStack() }
+            )
         }
 
         composable(
@@ -195,8 +242,8 @@ fun ProactiveDiaryNavHost(
     if (showPaywall) {
         PaywallDialog(
             onDismiss = { showPaywall = false },
-            monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$2/month",
-            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$20/year",
+            monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$5/month",
+            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$30/year",
             onSelectPlan = { sku ->
                 activity?.let { billingViewModel.launchPurchase(it, sku) }
                 showPaywall = false

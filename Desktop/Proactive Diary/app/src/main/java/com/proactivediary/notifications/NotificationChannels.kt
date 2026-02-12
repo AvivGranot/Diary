@@ -8,6 +8,7 @@ object NotificationChannels {
     const val CHANNEL_WRITING = "writing_reminders_v2"
     const val CHANNEL_GOALS = "goal_reminders_v2"
     const val CHANNEL_LAPSED = "lapsed_user"
+    const val CHANNEL_DIGEST = "weekly_digest"
 
     fun createChannels(context: Context) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -40,8 +41,17 @@ object NotificationChannels {
             description = "A quiet nudge if you haven't written in a while"
         }
 
+        val digestChannel = NotificationChannel(
+            CHANNEL_DIGEST,
+            "Weekly Digest",
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = "Your weekly writing summary"
+        }
+
         notificationManager.createNotificationChannel(writingChannel)
         notificationManager.createNotificationChannel(goalsChannel)
         notificationManager.createNotificationChannel(lapsedChannel)
+        notificationManager.createNotificationChannel(digestChannel)
     }
 }

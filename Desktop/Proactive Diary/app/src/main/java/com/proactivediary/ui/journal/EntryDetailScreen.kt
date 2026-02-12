@@ -2,6 +2,8 @@ package com.proactivediary.ui.journal
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,8 +13,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -38,8 +42,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
@@ -49,11 +55,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
+import com.mohamedrejeb.richeditor.model.rememberRichTextState
+import com.mohamedrejeb.richeditor.ui.material3.RichTextEditor
+import com.mohamedrejeb.richeditor.ui.material3.RichTextEditorDefaults
 import com.proactivediary.domain.model.DiaryThemeConfig
+import com.proactivediary.ui.components.ImageViewer
 import com.proactivediary.ui.share.ShareCardData
 import com.proactivediary.ui.share.ShareCardDialog
 import com.proactivediary.ui.share.shareCardAsImage
 import androidx.compose.foundation.layout.navigationBarsPadding
+import com.proactivediary.ui.chat.GoDeeperSheet
 import com.proactivediary.ui.theme.CormorantGaramond
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -98,6 +110,8 @@ fun EntryDetailScreen(
     var showMenu by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
+    var showGoDeeper by remember { mutableStateOf(false) }
+    var viewingImageId by remember { mutableStateOf<String?>(null) }
 
     Column(
         modifier = Modifier
@@ -202,6 +216,37 @@ fun EntryDetailScreen(
                 ),
                 modifier = Modifier.padding(horizontal = horizontalPadding)
             )
+
+            // Location and weather chips
+            val locName = state.locationName
+            val wTemp = state.weatherTemp
+            val wCond = state.weatherCondition
+            val wIcon = state.weatherIcon
+            if (locName != null || wCond != null) {
+                Row(
+                    modifier = Modifier.padding(horizontal = horizontalPadding),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (locName != null) {
+                        com.proactivediary.ui.write.LocationChip(
+                            locationName = locName,
+                            latitude = state.latitude,
+                            longitude = state.longitude,
+                            textColor = secondaryTextColor
+                        )
+                    }
+                    if (wTemp != null && wCond != null && wIcon != null) {
+                        com.proactivediary.ui.write.WeatherChip(
+                            temperature = wTemp,
+                            condition = wCond,
+                            weatherIcon = wIcon,
+                            textColor = secondaryTextColor
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(12.dp))
 
             // Title
@@ -295,18 +340,80 @@ fun EntryDetailScreen(
                     }
                 }
 
-                // Content text
-                Text(
-                    text = state.content,
-                    style = TextStyle(
-                        fontFamily = FontFamily.Default,
-                        fontSize = fontSize,
-                        color = textColor,
-                        lineHeight = lineHeightSp
-                    ),
+                // Content text - rich text or plain text
+                if (state.contentHtml != null) {
+                    val readOnlyState = rememberRichTextState()
+                    LaunchedEffect(state.contentHtml) {
+                        readOnlyState.setHtml(state.contentHtml!!)
+                    }
+                    RichTextEditor(
+                        state = readOnlyState,
+                        readOnly = true,
+                        textStyle = TextStyle(
+                            fontFamily = FontFamily.Default,
+                            fontSize = fontSize,
+                            color = textColor,
+                            lineHeight = lineHeightSp
+                        ),
+                        colors = RichTextEditorDefaults.richTextEditorColors(
+                            containerColor = Color.Transparent,
+                            cursorColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = horizontalPadding)
+                    )
+                } else {
+                    Text(
+                        text = state.content,
+                        style = TextStyle(
+                            fontFamily = FontFamily.Default,
+                            fontSize = fontSize,
+                            color = textColor,
+                            lineHeight = lineHeightSp
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = horizontalPadding)
+                    )
+                }
+            }
+
+            // Image gallery
+            if (state.images.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = horizontalPadding)
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = horizontalPadding),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    state.images.forEach { image ->
+                        val thumbnailFile = viewModel.imageStorageManager
+                            .getThumbnailFile(state.entryId, image.filename)
+                        AsyncImage(
+                            model = thumbnailFile,
+                            contentDescription = "Photo",
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable { viewingImageId = image.id },
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                }
+            }
+
+            // Voice note player
+            if (state.audioPath != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                com.proactivediary.ui.components.AudioPlayer(
+                    audioFile = java.io.File(state.audioPath!!),
+                    secondaryTextColor = secondaryTextColor,
+                    modifier = Modifier.padding(horizontal = horizontalPadding)
                 )
             }
 
@@ -364,6 +471,29 @@ fun EntryDetailScreen(
                 )
             }
 
+            // "Go Deeper" — AI reflection prompt
+            Spacer(modifier = Modifier.height(24.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = horizontalPadding),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "Go deeper \u2192",
+                    style = TextStyle(
+                        fontFamily = CormorantGaramond,
+                        fontSize = 15.sp,
+                        fontStyle = FontStyle.Italic,
+                        color = secondaryTextColor.copy(alpha = 0.5f)
+                    ),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .clickable { showGoDeeper = true }
+                        .padding(horizontal = 20.dp, vertical = 10.dp)
+                )
+            }
+
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
@@ -411,6 +541,27 @@ fun EntryDetailScreen(
                 shareCardAsImage(context, bitmap)
                 showShareDialog = false
             }
+        )
+    }
+
+    // Full-screen image viewer
+    viewingImageId?.let { imageId ->
+        val image = state.images.find { it.id == imageId }
+        if (image != null) {
+            val imageFile = viewModel.imageStorageManager
+                .getImageFile(state.entryId, image.filename)
+            ImageViewer(
+                imageFile = imageFile,
+                onDismiss = { viewingImageId = null }
+            )
+        }
+    }
+
+    // "Go Deeper" AI bottom sheet
+    if (showGoDeeper) {
+        GoDeeperSheet(
+            entryId = state.entryId,
+            onDismiss = { showGoDeeper = false }
         )
     }
 }

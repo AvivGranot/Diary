@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -54,10 +55,14 @@ import com.proactivediary.ui.theme.CormorantGaramond
 @Composable
 fun JournalScreen(
     onEntryClick: (String) -> Unit = {},
+    onNavigateToWrite: (() -> Unit)? = null,
+    onNavigateToOnThisDay: (() -> Unit)? = null,
     viewModel: JournalViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
     var entryToDelete by remember { mutableStateOf<DiaryCardData?>(null) }
+    var viewMode by remember { mutableStateOf("list") } // "list", "calendar", "gallery"
+    var selectedDate by remember { mutableStateOf<java.time.LocalDate?>(null) }
 
     Column(
         modifier = Modifier
@@ -72,6 +77,18 @@ fun JournalScreen(
             modifier = Modifier.padding(top = 8.dp)
         )
 
+        // View mode switcher
+        if (!state.isLoading && !state.isEmpty) {
+            ViewModeSwitcher(
+                selectedMode = viewMode,
+                onModeSelected = { mode ->
+                    viewMode = mode
+                    selectedDate = null
+                },
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+        }
+
         when {
             state.isLoading -> {
                 // Loading state - blank
@@ -82,7 +99,9 @@ fun JournalScreen(
                 // Empty state - no entries at all
                 EmptyState(
                     title = "Your writing starts here",
-                    subtitle = "Begin your daily practice to see your entries"
+                    subtitle = "Begin your daily practice to see your entries",
+                    actionLabel = if (onNavigateToWrite != null) "Write your first entry" else null,
+                    onAction = onNavigateToWrite
                 )
             }
 
@@ -95,23 +114,92 @@ fun JournalScreen(
             }
 
             else -> {
-                val listState = rememberLazyListState()
+                when (viewMode) {
+                    "gallery" -> {
+                        GalleryView(
+                            onImageClick = { entryId -> onEntryClick(entryId) }
+                        )
+                    }
+                    "calendar" -> {
+                        Column {
+                            CalendarView(
+                                onDaySelected = { date -> selectedDate = date }
+                            )
 
-                // Trigger loadMore when near the end of the list
-                LaunchedEffect(listState) {
-                    snapshotFlow {
-                        val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-                        val totalItems = listState.layoutInfo.totalItemsCount
-                        lastVisible >= totalItems - 5
-                    }.collect { nearEnd ->
-                        if (nearEnd && state.hasMoreEntries && !state.isLoadingMore) {
-                            viewModel.loadMoreEntries()
+                            // Show filtered entries below calendar
+                            val listState = rememberLazyListState()
+                            val filteredEntries = if (selectedDate != null) {
+                                val zone = java.time.ZoneId.systemDefault()
+                                val dayStart = selectedDate!!.atStartOfDay(zone).toInstant().toEpochMilli()
+                                val dayEnd = selectedDate!!.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
+                                state.entries.filter { it.createdAt in dayStart..dayEnd }
+                            } else {
+                                state.entries
+                            }
+
+                            LazyColumn(
+                                state = listState,
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(horizontal = 0.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                if (selectedDate != null) {
+                                    item {
+                                        Text(
+                                            text = "Entries for ${selectedDate!!.format(java.time.format.DateTimeFormatter.ofPattern("MMMM d, yyyy"))}",
+                                            style = TextStyle(
+                                                fontFamily = CormorantGaramond,
+                                                fontSize = 16.sp,
+                                                color = MaterialTheme.colorScheme.secondary
+                                            ),
+                                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                                        )
+                                    }
+                                }
+
+                                items(filteredEntries, key = { it.id }) { cardData ->
+                                    DiaryCard(
+                                        data = cardData,
+                                        onClick = { onEntryClick(cardData.id) }
+                                    )
+                                }
+
+                                if (filteredEntries.isEmpty()) {
+                                    item {
+                                        Text(
+                                            text = "No entries for this day",
+                                            style = TextStyle(
+                                                fontFamily = FontFamily.Default,
+                                                fontSize = 14.sp,
+                                                fontStyle = FontStyle.Italic,
+                                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f)
+                                            ),
+                                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
-                }
+                    else -> {
+                        // List view
+                        val listState = rememberLazyListState()
 
-                // Entry list grouped by date
-                LazyColumn(
+                        // Trigger loadMore when near the end of the list
+                        LaunchedEffect(listState) {
+                            snapshotFlow {
+                                val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+                                val totalItems = listState.layoutInfo.totalItemsCount
+                                lastVisible >= totalItems - 5
+                            }.collect { nearEnd ->
+                                if (nearEnd && state.hasMoreEntries && !state.isLoadingMore) {
+                                    viewModel.loadMoreEntries()
+                                }
+                            }
+                        }
+
+                        // Entry list grouped by date
+                        LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(horizontal = 0.dp, vertical = 8.dp),
@@ -122,7 +210,8 @@ fun JournalScreen(
                         item(key = "on_this_day") {
                             OnThisDayCard(
                                 entry = state.onThisDay!!,
-                                onClick = { onEntryClick(state.onThisDay!!.entryId) }
+                                onClick = { onEntryClick(state.onThisDay!!.entryId) },
+                                onSeeAll = onNavigateToOnThisDay
                             )
                         }
                     }
@@ -142,6 +231,13 @@ fun JournalScreen(
                                 digest = state.weeklyDigest,
                                 onDismiss = { viewModel.dismissWeeklyDigest() }
                             )
+                        }
+                    }
+
+                    // AI Insight card
+                    if (state.aiInsight.isAvailable || state.aiInsight.isLocked) {
+                        item(key = "ai_insight") {
+                            AIInsightCard(data = state.aiInsight)
                         }
                     }
 
@@ -211,8 +307,10 @@ fun JournalScreen(
                         }
                     }
 
-                    // Bottom spacing
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                            // Bottom spacing
+                            item { Spacer(modifier = Modifier.height(16.dp)) }
+                        }
+                    }
                 }
             }
         }
@@ -263,6 +361,7 @@ fun JournalScreen(
 private fun OnThisDayCard(
     entry: OnThisDayEntry,
     onClick: () -> Unit,
+    onSeeAll: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -297,6 +396,19 @@ private fun OnThisDayCard(
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis
             )
+            if (onSeeAll != null) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "See all memories \u2192",
+                    style = TextStyle(
+                        fontFamily = CormorantGaramond,
+                        fontSize = 13.sp,
+                        fontStyle = FontStyle.Italic,
+                        color = Color(0xFF787878)
+                    ),
+                    modifier = Modifier.clickable(onClick = onSeeAll)
+                )
+            }
         }
     }
 }
@@ -304,7 +416,9 @@ private fun OnThisDayCard(
 @Composable
 private fun EmptyState(
     title: String,
-    subtitle: String
+    subtitle: String,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -334,6 +448,79 @@ private fun EmptyState(
                 ),
                 textAlign = TextAlign.Center
             )
+            if (actionLabel != null && onAction != null) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Surface(
+                    modifier = Modifier
+                        .clickable(onClick = onAction),
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.onBackground
+                ) {
+                    Text(
+                        text = actionLabel,
+                        style = TextStyle(
+                            fontFamily = CormorantGaramond,
+                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.background
+                        ),
+                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+                    )
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun ViewModeSwitcher(
+    selectedMode: String,
+    onModeSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        ViewModeButton(
+            label = "List",
+            isSelected = selectedMode == "list",
+            onClick = { onModeSelected("list") }
+        )
+        ViewModeButton(
+            label = "Calendar",
+            isSelected = selectedMode == "calendar",
+            onClick = { onModeSelected("calendar") }
+        )
+        ViewModeButton(
+            label = "Gallery",
+            isSelected = selectedMode == "gallery",
+            onClick = { onModeSelected("gallery") }
+        )
+    }
+}
+
+@Composable
+private fun ViewModeButton(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        color = if (isSelected) MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+        else Color.Transparent
+    ) {
+        Text(
+            text = label,
+            style = TextStyle(
+                fontFamily = CormorantGaramond,
+                fontSize = 14.sp,
+                color = if (isSelected) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f)
+            ),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
     }
 }

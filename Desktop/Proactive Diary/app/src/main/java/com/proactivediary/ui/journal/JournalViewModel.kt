@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.proactivediary.data.db.dao.InsightDao
 import com.proactivediary.data.db.entities.EntryEntity
 import com.proactivediary.data.repository.EntryRepository
 import com.proactivediary.data.repository.StreakRepository
@@ -48,7 +49,8 @@ data class JournalUiState(
     val weeklyDigest: WeeklyDigest = WeeklyDigest(),
     val onThisDay: OnThisDayEntry? = null,
     val hasMoreEntries: Boolean = false,
-    val isLoadingMore: Boolean = false
+    val isLoadingMore: Boolean = false,
+    val aiInsight: AIInsightData = AIInsightData()
 )
 
 @HiltViewModel
@@ -56,7 +58,8 @@ class JournalViewModel @Inject constructor(
     private val entryRepository: EntryRepository,
     private val searchEngine: SearchEngine,
     private val streakRepository: StreakRepository,
-    private val analyticsService: com.proactivediary.analytics.AnalyticsService
+    private val analyticsService: com.proactivediary.analytics.AnalyticsService,
+    private val insightDao: InsightDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(JournalUiState())
@@ -79,6 +82,7 @@ class JournalViewModel @Inject constructor(
         loadInsights()
         loadWeeklyDigest()
         loadOnThisDay()
+        loadAIInsight()
         logJournalOpened()
     }
 
@@ -265,13 +269,20 @@ class JournalViewModel @Inject constructor(
             emptyList()
         }
 
+        val imageCount = try {
+            val type = object : TypeToken<List<Map<String, Any>>>() {}.type
+            val list: List<Map<String, Any>>? = gson.fromJson(images, type)
+            list?.size ?: 0
+        } catch (_: Exception) { 0 }
+
         return DiaryCardData(
             id = id,
             title = title,
-            content = content,
+            content = contentPlain ?: content,
             tags = tagsList,
             wordCount = wordCount,
-            createdAt = createdAt
+            createdAt = createdAt,
+            imageCount = imageCount
         )
     }
 
@@ -389,7 +400,7 @@ class JournalViewModel @Inject constructor(
                     val pastDate = today.minusDays(daysAgo)
                     val entry = entryRepository.getEntryForDate(pastDate)
                     if (entry != null) {
-                        val firstLine = entry.content.lines()
+                        val firstLine = (entry.contentPlain ?: entry.content).lines()
                             .firstOrNull { it.isNotBlank() }
                             ?.take(120)
                             ?: continue
@@ -406,6 +417,35 @@ class JournalViewModel @Inject constructor(
 
             if (result != null) {
                 _uiState.value = _uiState.value.copy(onThisDay = result)
+            }
+        }
+    }
+
+    private fun loadAIInsight() {
+        viewModelScope.launch {
+            insightDao.getLatestInsight().collect { insight ->
+                if (insight != null) {
+                    val themes: List<String> = try {
+                        val type = object : TypeToken<List<String>>() {}.type
+                        gson.fromJson(insight.themes, type) ?: emptyList()
+                    } catch (_: Exception) { emptyList() }
+
+                    val prompts: List<String> = try {
+                        val type = object : TypeToken<List<String>>() {}.type
+                        gson.fromJson(insight.promptSuggestions, type) ?: emptyList()
+                    } catch (_: Exception) { emptyList() }
+
+                    _uiState.value = _uiState.value.copy(
+                        aiInsight = AIInsightData(
+                            summary = insight.summary,
+                            themes = themes,
+                            moodTrend = insight.moodTrend,
+                            promptSuggestions = prompts,
+                            isAvailable = true,
+                            isLocked = false
+                        )
+                    )
+                }
             }
         }
     }

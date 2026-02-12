@@ -8,8 +8,11 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.proactivediary.data.ai.AIInsightWorker
 import com.proactivediary.notifications.LapsedUserWorker
+import com.proactivediary.notifications.WeeklyDigestWorker
 import com.proactivediary.notifications.NotificationChannels
+import com.proactivediary.data.repository.TemplateRepository
 import com.proactivediary.notifications.NotificationService
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -27,6 +30,9 @@ class ProactiveDiaryApp : Application(), Configuration.Provider {
     @Inject
     lateinit var notificationService: NotificationService
 
+    @Inject
+    lateinit var templateRepository: TemplateRepository
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
@@ -36,8 +42,11 @@ class ProactiveDiaryApp : Application(), Configuration.Provider {
         super.onCreate()
         NotificationChannels.createChannels(this)
         scheduleLapsedUserCheck()
+        scheduleAIInsightGeneration()
+        scheduleWeeklyDigest()
         rescheduleAlarms()
         initializeCrashlytics()
+        initializeTemplates()
     }
 
     private fun rescheduleAlarms() {
@@ -62,6 +71,40 @@ class ProactiveDiaryApp : Application(), Configuration.Provider {
             ExistingPeriodicWorkPolicy.KEEP,
             request
         )
+    }
+
+    private fun scheduleAIInsightGeneration() {
+        val request = PeriodicWorkRequestBuilder<AIInsightWorker>(
+            7, TimeUnit.DAYS
+        ).build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            AIInsightWorker.WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
+    }
+
+    private fun scheduleWeeklyDigest() {
+        val request = PeriodicWorkRequestBuilder<WeeklyDigestWorker>(
+            7, TimeUnit.DAYS
+        ).build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            WeeklyDigestWorker.WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
+    }
+
+    private fun initializeTemplates() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                templateRepository.ensureBuiltInTemplates()
+            } catch (e: Exception) {
+                Log.e("ProactiveDiaryApp", "initializeTemplates: failed", e)
+            }
+        }
     }
 
     private fun initializeCrashlytics() {

@@ -224,6 +224,26 @@ class AnalyticsService @Inject constructor() {
         ))
     }
 
+    // ─── V2 Feature Analytics ───
+    fun logPhotoAttached() = log("photo_attached")
+    fun logPhotoRemoved() = log("photo_removed")
+    fun logLocationCaptured() = log("location_captured")
+    fun logWeatherCaptured() = log("weather_captured")
+
+    fun logTemplateUsed(templateId: String) {
+        log("template_used", bundleOf("template_id" to templateId))
+    }
+
+    fun logVoiceNoteRecorded(durationMs: Long) {
+        log("voice_note_recorded", bundleOf("duration_ms" to durationMs))
+    }
+
+    fun logAIInsightViewed() = log("ai_insight_viewed")
+    fun logAIPromptUsed() = log("ai_prompt_used")
+    fun logCalendarViewOpened() = log("calendar_view_opened")
+    fun logGalleryViewOpened() = log("gallery_view_opened")
+    fun logSwipeNavigationUsed() = log("swipe_navigation_used")
+
     // ─── Helpers ───
     private fun log(event: String, params: Bundle? = null) {
         analytics.logEvent(event, params)

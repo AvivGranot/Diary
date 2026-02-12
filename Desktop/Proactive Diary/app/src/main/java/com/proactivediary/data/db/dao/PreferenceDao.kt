@@ -39,4 +39,7 @@ interface PreferenceDao {
 
     @Query("SELECT * FROM preferences WHERE `key` IN (:keys)")
     fun observeBatch(keys: List<String>): Flow<List<PreferenceEntity>>
+
+    @Query("SELECT value FROM preferences WHERE `key` = :key")
+    suspend fun getValue(key: String): String?
 }

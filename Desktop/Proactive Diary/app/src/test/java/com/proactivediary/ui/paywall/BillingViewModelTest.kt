@@ -62,20 +62,20 @@ class BillingViewModelTest {
     // ─── Entry gate threshold ───
 
     @Test
-    fun `entry gate threshold is 10`() {
-        assertEquals(10, BillingViewModel.ENTRY_GATE_THRESHOLD)
+    fun `entry gate threshold is 30`() {
+        assertEquals(30, BillingViewModel.ENTRY_GATE_THRESHOLD)
     }
 
     @Test
     fun `trial entries left calculation is correct`() {
         val entryCount = 7
         val entriesLeft = (BillingViewModel.ENTRY_GATE_THRESHOLD - entryCount).coerceAtLeast(0)
-        assertEquals(3, entriesLeft)
+        assertEquals(23, entriesLeft)
     }
 
     @Test
     fun `trial entries left does not go negative`() {
-        val entryCount = 15
+        val entryCount = 35
         val entriesLeft = (BillingViewModel.ENTRY_GATE_THRESHOLD - entryCount).coerceAtLeast(0)
         assertEquals(0, entriesLeft)
     }

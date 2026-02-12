@@ -9,8 +9,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -30,7 +34,8 @@ data class DiaryCardData(
     val content: String,
     val tags: List<String>,
     val wordCount: Int,
-    val createdAt: Long
+    val createdAt: Long,
+    val imageCount: Int = 0
 )
 
 @Composable
@@ -120,6 +125,29 @@ fun DiaryCard(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false)
                 )
+            }
+
+            // Image count indicator
+            if (data.imageCount > 0) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Image,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = pencilColor.copy(alpha = 0.5f)
+                    )
+                    Text(
+                        text = "${data.imageCount}",
+                        style = TextStyle(
+                            fontFamily = FontFamily.Default,
+                            fontSize = 12.sp,
+                            color = pencilColor.copy(alpha = 0.5f)
+                        )
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.weight(1f))

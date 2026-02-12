@@ -266,7 +266,7 @@ class BookGenerator(
         yOffset += 8f // spacing before body
 
         // Body text
-        val bodyLayout = createStaticLayout(entry.content, bodyTextPaint, CONTENT_WIDTH.toInt())
+        val bodyLayout = createStaticLayout((entry.contentPlain ?: entry.content), bodyTextPaint, CONTENT_WIDTH.toInt())
         val bodyHeight = bodyLayout.height.toFloat()
         val remainingOnFirstPage = availableHeight - yOffset
 
@@ -410,7 +410,7 @@ class BookGenerator(
         y += 8f // spacing before body
 
         // Body text with multi-page overflow
-        val bodyLayout = createStaticLayout(entry.content, bodyTextPaint, CONTENT_WIDTH.toInt())
+        val bodyLayout = createStaticLayout((entry.contentPlain ?: entry.content), bodyTextPaint, CONTENT_WIDTH.toInt())
         val totalBodyHeight = bodyLayout.height
         var bodyOffset = 0
 
@@ -435,7 +435,7 @@ class BookGenerator(
             }
 
             // Overflow pages
-            while (bodyOffset < entry.content.length) {
+            while (bodyOffset < (entry.contentPlain ?: entry.content).length) {
                 drawPageNumber(canvas, currentPageNum)
                 doc.finishPage(page)
 
@@ -444,7 +444,7 @@ class BookGenerator(
                 canvas = page.canvas
                 drawPageBackground(canvas)
 
-                val remainingText = entry.content.substring(bodyOffset)
+                val remainingText = (entry.contentPlain ?: entry.content).substring(bodyOffset)
                 val overflowLayout = createStaticLayout(remainingText, bodyTextPaint, CONTENT_WIDTH.toInt())
                 val pageAvailable = (availableHeight - 10f).toInt()
 
@@ -454,7 +454,7 @@ class BookGenerator(
                     canvas.translate(MARGIN_LEFT, MARGIN_TOP)
                     overflowLayout.draw(canvas)
                     canvas.restore()
-                    bodyOffset = entry.content.length
+                    bodyOffset = (entry.contentPlain ?: entry.content).length
                 } else {
                     val lastOverflowLine = overflowLayout.getLineForVertical(pageAvailable)
                     if (lastOverflowLine > 0) {
@@ -466,7 +466,7 @@ class BookGenerator(
                         bodyOffset += overflowLayout.getLineEnd(lastOverflowLine - 1)
                     } else {
                         // Can't fit even one line — break out to avoid infinite loop
-                        bodyOffset = entry.content.length
+                        bodyOffset = (entry.contentPlain ?: entry.content).length
                     }
                 }
             }

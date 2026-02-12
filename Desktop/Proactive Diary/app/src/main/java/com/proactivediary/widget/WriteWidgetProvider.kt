@@ -8,7 +8,6 @@ import android.content.Intent
 import android.widget.RemoteViews
 import com.proactivediary.MainActivity
 import com.proactivediary.R
-import com.proactivediary.ui.write.WritingPrompts
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -32,13 +31,18 @@ class WriteWidgetProvider : AppWidgetProvider() {
     ) {
         val views = RemoteViews(context.packageName, R.layout.widget_write)
 
-        // Set today's date
+        // Date — elegant, uppercase
         val today = LocalDate.now()
         val formatter = DateTimeFormatter.ofPattern("EEEE, MMMM d", Locale.getDefault())
-        views.setTextViewText(R.id.widget_date, today.format(formatter))
+        views.setTextViewText(R.id.widget_date, today.format(formatter).uppercase())
 
-        // Set daily writing prompt
-        views.setTextViewText(R.id.widget_prompt, WritingPrompts.dailyPrompt())
+        // Daily wisdom quote from curated historical figures
+        val wisdom = DailyWisdom.todayQuote()
+        views.setTextViewText(R.id.widget_quote, "\u201C${wisdom.text}\u201D")
+        views.setTextViewText(R.id.widget_author, "\u2014 ${wisdom.author}, ${wisdom.context}")
+
+        // Streak — leave empty for now (widget can't easily access Room DB synchronously)
+        views.setTextViewText(R.id.widget_streak, "")
 
         // Tap opens Write tab
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -47,7 +51,7 @@ class WriteWidgetProvider : AppWidgetProvider() {
         }
         val pendingIntent = PendingIntent.getActivity(
             context,
-            0,
+            appWidgetId,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

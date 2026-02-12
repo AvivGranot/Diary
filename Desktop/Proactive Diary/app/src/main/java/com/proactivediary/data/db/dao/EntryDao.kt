@@ -72,4 +72,13 @@ interface EntryDao {
 
     @RawQuery
     suspend fun rawExec(query: SupportSQLiteQuery): Int
+
+    @Query("SELECT created_at FROM entries WHERE created_at BETWEEN :startMs AND :endMs ORDER BY created_at ASC")
+    fun getEntryDatesInRange(startMs: Long, endMs: Long): Flow<List<Long>>
+
+    @Query("SELECT * FROM entries WHERE images != '[]' ORDER BY created_at DESC")
+    fun getEntriesWithImages(): Flow<List<EntryEntity>>
+
+    @Query("SELECT * FROM entries WHERE created_at BETWEEN :startMs AND :endMs ORDER BY created_at ASC")
+    suspend fun getEntriesBetween(startMs: Long, endMs: Long): List<EntryEntity>
 }

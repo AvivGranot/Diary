@@ -42,8 +42,8 @@ fun PaywallDialog(
     entryCount: Int = 0,
     totalWords: Int = 0,
     isFirstPaywallView: Boolean = true,
-    monthlyPrice: String = "$2/month",
-    annualPrice: String = "$20/year"
+    monthlyPrice: String = "$5/month",
+    annualPrice: String = "$30/year"
 ) {
     // Remove auth gate: always go directly to purchase
     val handlePlanSelect: (String) -> Unit = { sku -> onSelectPlan(sku) }
@@ -104,11 +104,11 @@ fun PaywallDialog(
                         .padding(horizontal = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    FeatureRow("Unlimited writing")
-                    FeatureRow("All Design Studio themes")
-                    FeatureRow("Goal tracking & practice counter")
-                    FeatureRow("Export your writing")
-                    FeatureRow("Everything stays on your device")
+                    FeatureRow("Unlimited writing & photos")
+                    FeatureRow("AI-powered writing insights")
+                    FeatureRow("Templates & guided programs")
+                    FeatureRow("Voice notes & advanced export")
+                    FeatureRow("Privacy-first \u2014 your data stays on device")
                 }
 
                 Spacer(Modifier.height(24.dp))

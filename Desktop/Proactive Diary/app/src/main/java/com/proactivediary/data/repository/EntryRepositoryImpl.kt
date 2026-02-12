@@ -4,6 +4,7 @@ import android.database.sqlite.SQLiteException
 import androidx.sqlite.db.SimpleSQLiteQuery
 import com.proactivediary.data.db.dao.EntryDao
 import com.proactivediary.data.db.entities.EntryEntity
+import com.proactivediary.data.media.ImageStorageManager
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 import java.time.LocalTime
@@ -11,7 +12,8 @@ import java.time.ZoneId
 import javax.inject.Inject
 
 class EntryRepositoryImpl @Inject constructor(
-    private val entryDao: EntryDao
+    private val entryDao: EntryDao,
+    private val imageStorageManager: ImageStorageManager
 ) : EntryRepository {
 
     override fun getAllEntries(): Flow<List<EntryEntity>> =
@@ -51,6 +53,9 @@ class EntryRepositoryImpl @Inject constructor(
         entryDao.update(entry)
 
     override suspend fun delete(entryId: String) {
+        // Clean up associated image files
+        try { imageStorageManager.deleteAllImages(entryId) } catch (_: Exception) { }
+
         try {
             entryDao.deleteById(entryId)
         } catch (_: SQLiteException) {
@@ -99,6 +104,12 @@ class EntryRepositoryImpl @Inject constructor(
 
     override suspend fun getTotalCount(): Int =
         entryDao.getTotalCount()
+
+    override fun getEntryDatesInRange(startMs: Long, endMs: Long): Flow<List<Long>> =
+        entryDao.getEntryDatesInRange(startMs, endMs)
+
+    override fun getEntriesWithImages(): Flow<List<EntryEntity>> =
+        entryDao.getEntriesWithImages()
 
     private fun todayRange(): Pair<Long, Long> {
         val zone = ZoneId.systemDefault()
