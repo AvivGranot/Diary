@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -842,10 +843,6 @@ private fun WriteArea(
     val gridColor = secondaryTextColor.copy(alpha = 0.08f)
     val numberColor = secondaryTextColor.copy(alpha = 0.3f)
 
-    // Baseline offset: lines sit below text baselines, like ruled paper.
-    // Text ascent is ~70% of font size; we place lines at ~85% of each line slot.
-    val baselineOffset = lineHeightPx * 0.78f
-
     Box(modifier = modifier) {
         // Canvas lines drawn behind text
         Canvas(
@@ -860,7 +857,7 @@ private fun WriteArea(
             when (canvas) {
                 "lined" -> {
                     for (i in 0 until lineCount) {
-                        val y = baselineOffset + i * lineHeightPx
+                        val y = (i + 1) * lineHeightPx
                         drawLine(
                             color = canvasLineColor,
                             start = Offset(0f, y),
@@ -873,7 +870,7 @@ private fun WriteArea(
                     val horizontalSpacingPx = with(density) { 24.dp.toPx() }
                     val dotRadius = with(density) { 2.dp.toPx() }
                     for (row in 0 until lineCount) {
-                        val y = baselineOffset + row * lineHeightPx
+                        val y = (row + 1) * lineHeightPx
                         var x = 0f
                         while (x <= width) {
                             drawCircle(
@@ -888,7 +885,7 @@ private fun WriteArea(
                 "grid" -> {
                     val horizontalSpacingPx = with(density) { 24.dp.toPx() }
                     for (i in 0 until lineCount) {
-                        val y = baselineOffset + i * lineHeightPx
+                        val y = (i + 1) * lineHeightPx
                         drawLine(
                             color = gridColor,
                             start = Offset(0f, y),
@@ -909,7 +906,7 @@ private fun WriteArea(
                 }
                 "numbered" -> {
                     for (i in 0 until lineCount) {
-                        val y = baselineOffset + i * lineHeightPx
+                        val y = (i + 1) * lineHeightPx
                         drawLine(
                             color = canvasLineColor,
                             start = Offset(0f, y),
@@ -983,6 +980,7 @@ private fun WriteArea(
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent
                     ),
+                    contentPadding = PaddingValues(0.dp),
                     modifier = Modifier.fillMaxSize()
                 )
             }

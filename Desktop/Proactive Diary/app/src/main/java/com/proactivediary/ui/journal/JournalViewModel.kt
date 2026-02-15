@@ -79,6 +79,7 @@ class JournalViewModel @Inject constructor(
 
     init {
         loadInitialEntries()
+        observeEntryChanges()
         loadInsights()
         loadWeeklyDigest()
         loadOnThisDay()
@@ -121,19 +122,28 @@ class JournalViewModel @Inject constructor(
                     isEmpty = true
                 )
             }
+        }
+    }
 
-            // NOW start observing for real-time updates (after initial load is done)
-            // coerceAtLeast(1) prevents the observer from emitting 0 entries
-            // when data exists but currentOffset hasn't been set yet
+    private fun observeEntryChanges() {
+        viewModelScope.launch {
             entryRepository.getAllEntries()
-                .catch { /* already handled above */ }
+                .catch { /* silently handle */ }
                 .collect { entities ->
+                    val currentState = _uiState.value
+                    // Skip while initial load hasn't completed
+                    if (currentState.isLoading) return@collect
+                    // Skip during active search
+                    if (currentState.searchQuery.isNotBlank()) return@collect
+
                     totalEntryCount = entities.size
-                    // Always re-map visible entries so title/content updates are reflected
-                    val visibleCount = currentOffset.coerceAtLeast(1).coerceAtMost(entities.size)
+                    // Expand visible window when new entries arrive
+                    val visibleCount = maxOf(currentOffset, entities.size)
+                        .coerceAtMost(entities.size)
+                    currentOffset = visibleCount
                     val cards = entities.take(visibleCount).map { it.toCardData() }
                     val grouped = groupByDate(cards)
-                    _uiState.value = _uiState.value.copy(
+                    _uiState.value = currentState.copy(
                         entries = cards,
                         groupedEntries = grouped,
                         isEmpty = cards.isEmpty(),
