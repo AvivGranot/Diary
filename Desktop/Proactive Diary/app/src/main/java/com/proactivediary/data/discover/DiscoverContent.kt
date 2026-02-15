@@ -621,6 +621,414 @@ object DiscoverContent {
             source = "Letter to Oskar Pollak, 1904",
             category = "Literature",
             era = "Modern"
+        ),
+
+        // ── Additional Philosophy ───────────────────────────────
+
+        DiscoverEntry(
+            id = "marcus_4",
+            author = "Marcus Aurelius",
+            authorYears = "121\u2013180 AD",
+            title = "On obstacles",
+            excerpt = "The impediment to action advances action. What stands in the way becomes the way.",
+            source = "Meditations, Book V",
+            category = "Philosophy",
+            era = "Ancient"
+        ),
+        DiscoverEntry(
+            id = "seneca_3",
+            author = "Seneca",
+            authorYears = "4 BC\u201365 AD",
+            title = "On anger",
+            excerpt = "The greatest remedy for anger is delay. We suffer more often in imagination than in reality.",
+            source = "Letters to Lucilius, Letter 13",
+            category = "Philosophy",
+            era = "Ancient"
+        ),
+        DiscoverEntry(
+            id = "confucius_1",
+            author = "Confucius",
+            authorYears = "551\u2013479 BC",
+            title = "On perseverance",
+            excerpt = "It does not matter how slowly you go, as long as you do not stop. The man who moves a mountain begins by carrying away small stones.",
+            source = "Analects",
+            category = "Philosophy",
+            era = "Ancient"
+        ),
+        DiscoverEntry(
+            id = "confucius_2",
+            author = "Confucius",
+            authorYears = "551\u2013479 BC",
+            title = "On learning",
+            excerpt = "Real knowledge is to know the extent of one\u2019s ignorance. By three methods we may learn wisdom: first, by reflection, which is noblest; second, by imitation; and third, by experience, which is the bitterest.",
+            source = "Analects",
+            category = "Philosophy",
+            era = "Ancient"
+        ),
+        DiscoverEntry(
+            id = "schopenhauer_1",
+            author = "Arthur Schopenhauer",
+            authorYears = "1788\u20131860",
+            title = "On solitude",
+            excerpt = "A man can be himself only so long as he is alone; and if he does not love solitude, he will not love freedom; for it is only when he is alone that he is really free.",
+            source = "Counsels and Maxims",
+            category = "Philosophy",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "weil_1",
+            author = "Simone Weil",
+            authorYears = "1909\u20131943",
+            title = "On attention",
+            excerpt = "Attention is the rarest and purest form of generosity. The soul empties itself of all its own contents in order to receive the being it is looking at, just as that being is, in all its truth.",
+            source = "Gravity and Grace",
+            category = "Philosophy",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "montaigne_1",
+            author = "Michel de Montaigne",
+            authorYears = "1533\u20131592",
+            title = "On self-knowledge",
+            excerpt = "The greatest thing in the world is to know how to belong to oneself. We are, I know not how, double in ourselves, so that what we believe we disbelieve, and cannot rid ourselves of what we condemn.",
+            source = "Essays, Book I",
+            category = "Philosophy",
+            era = "Renaissance"
+        ),
+
+        // ── Additional Science ──────────────────────────────────
+
+        DiscoverEntry(
+            id = "hawking_1",
+            author = "Stephen Hawking",
+            authorYears = "1942\u20132018",
+            title = "On looking up",
+            excerpt = "Remember to look up at the stars and not down at your feet. Try to make sense of what you see and wonder about what makes the universe exist. Be curious.",
+            source = "Interview, ABC News, 2010",
+            category = "Science",
+            era = "Contemporary"
+        ),
+        DiscoverEntry(
+            id = "curie_3",
+            author = "Marie Curie",
+            authorYears = "1867\u20131934",
+            title = "On dreaming",
+            excerpt = "I am among those who think that science has great beauty. A scientist in the laboratory is not only a technician but also a child placed before natural phenomena which impress like a fairy tale.",
+            source = "Pierre Curie, biographical note, 1923",
+            category = "Science",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "lovelace_1",
+            author = "Ada Lovelace",
+            authorYears = "1815\u20131852",
+            title = "On imagination and science",
+            excerpt = "That brain of mine is something more than merely mortal; as time will show. Imagination is the discovering faculty, pre-eminently. It is that which penetrates into the unseen worlds around us, the worlds of science.",
+            source = "Personal letters, 1841",
+            category = "Science",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "goodall_1",
+            author = "Jane Goodall",
+            authorYears = "1934\u2013",
+            title = "On hope and action",
+            excerpt = "What you do makes a difference, and you have to decide what kind of difference you want to make. Every individual matters. Every individual has a role to play.",
+            source = "Reason for Hope",
+            category = "Science",
+            era = "Contemporary"
+        ),
+        DiscoverEntry(
+            id = "galileo_1",
+            author = "Galileo Galilei",
+            authorYears = "1564\u20131642",
+            title = "On doubt and inquiry",
+            excerpt = "All truths are easy to understand once they are discovered; the point is to discover them. I do not feel obliged to believe that the same God who has endowed us with sense, reason, and intellect has intended us to forgo their use.",
+            source = "Letter to the Grand Duchess Christina, 1615",
+            category = "Science",
+            era = "Renaissance"
+        ),
+        DiscoverEntry(
+            id = "darwin_2",
+            author = "Charles Darwin",
+            authorYears = "1809\u20131882",
+            title = "On small daily acts",
+            excerpt = "A man who dares to waste one hour of time has not discovered the value of life. It is not the strongest of the species that survives, nor the most intelligent, but the one most responsive to change.",
+            source = "Personal letters and notebooks",
+            category = "Science",
+            era = "Modern"
+        ),
+
+        // ── Additional Art ──────────────────────────────────────
+
+        DiscoverEntry(
+            id = "basquiat_1",
+            author = "Jean-Michel Basquiat",
+            authorYears = "1960\u20131988",
+            title = "On originality",
+            excerpt = "I don\u2019t think about art when I\u2019m working. I try to think about life. I don\u2019t listen to what art critics say. I don\u2019t know anybody who needs a critic to find out what art is.",
+            source = "Interview, 1983",
+            category = "Art",
+            era = "Contemporary"
+        ),
+        DiscoverEntry(
+            id = "picasso_1",
+            author = "Pablo Picasso",
+            authorYears = "1881\u20131973",
+            title = "On action",
+            excerpt = "Action is the foundational key to all success. The meaning of life is to find your gift. The purpose of life is to give it away.",
+            source = "Attributed conversations",
+            category = "Art",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "rodin_1",
+            author = "Auguste Rodin",
+            authorYears = "1840\u20131917",
+            title = "On patience in craft",
+            excerpt = "Patience is also a form of action. Nothing is a waste of time if you use the experience wisely. The artist must create a spark before he can make a fire.",
+            source = "Art: Conversations with Paul Gsell",
+            category = "Art",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "hokusai_1",
+            author = "Katsushika Hokusai",
+            authorYears = "1760\u20131849",
+            title = "On lifelong learning",
+            excerpt = "From the age of six I had a mania for drawing. At seventy-three, I began to grasp the structures of nature. When I am eighty I shall have made still more progress. At ninety I shall penetrate the mystery of things.",
+            source = "One Hundred Views of Mount Fuji, postscript",
+            category = "Art",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "kollwitz_1",
+            author = "K\u00e4the Kollwitz",
+            authorYears = "1867\u20131945",
+            title = "On creative duty",
+            excerpt = "I do not want to die until I have faithfully made the most of my talent and cultivated the seed that was placed in me, until the last small twig has grown.",
+            source = "Personal diary, 1920",
+            category = "Art",
+            era = "Modern"
+        ),
+
+        // ── Additional Leadership ───────────────────────────────
+
+        DiscoverEntry(
+            id = "churchill_1",
+            author = "Winston Churchill",
+            authorYears = "1874\u20131965",
+            title = "On perseverance",
+            excerpt = "Success is not final, failure is not fatal: it is the courage to continue that counts. If you\u2019re going through hell, keep going.",
+            source = "Speeches and writings",
+            category = "Leadership",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "keller_1",
+            author = "Helen Keller",
+            authorYears = "1880\u20131968",
+            title = "On doors and windows",
+            excerpt = "When one door of happiness closes, another opens; but often we look so long at the closed door that we do not see the one which has been opened for us. Life is either a daring adventure or nothing.",
+            source = "We Bereaved, 1929",
+            category = "Leadership",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "tubman_1",
+            author = "Harriet Tubman",
+            authorYears = "1822\u20131913",
+            title = "On the first step",
+            excerpt = "Every great dream begins with a dreamer. Always remember, you have within you the strength, the patience, and the passion to reach for the stars to change the world.",
+            source = "Attributed sayings",
+            category = "Leadership",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "teresa_1",
+            author = "Mother Teresa",
+            authorYears = "1910\u20131997",
+            title = "On small things",
+            excerpt = "Not all of us can do great things. But we can do small things with great love. If you judge people, you have no time to love them.",
+            source = "Speeches and letters",
+            category = "Leadership",
+            era = "Contemporary"
+        ),
+        DiscoverEntry(
+            id = "parks_1",
+            author = "Rosa Parks",
+            authorYears = "1913\u20132005",
+            title = "On quiet determination",
+            excerpt = "I have learned over the years that when one\u2019s mind is made up, this diminishes fear; knowing what must be done does away with fear.",
+            source = "Quiet Strength, 1994",
+            category = "Leadership",
+            era = "Contemporary"
+        ),
+        DiscoverEntry(
+            id = "malala_1",
+            author = "Malala Yousafzai",
+            authorYears = "1997\u2013",
+            title = "On the power of voice",
+            excerpt = "One child, one teacher, one book, one pen can change the world. When the whole world is silent, even one voice becomes powerful.",
+            source = "Speech to United Nations, 2013",
+            category = "Leadership",
+            era = "Contemporary"
+        ),
+
+        // ── Additional Spirituality ─────────────────────────────
+
+        DiscoverEntry(
+            id = "rumi_4",
+            author = "Rumi",
+            authorYears = "1207\u20131273",
+            title = "On starting",
+            excerpt = "Start a huge, foolish project, like Noah. It makes absolutely no difference what people think of you.",
+            source = "Collected poems",
+            category = "Spirituality",
+            era = "Ancient"
+        ),
+        DiscoverEntry(
+            id = "hafiz_1",
+            author = "Hafiz",
+            authorYears = "1315\u20131390",
+            title = "On fear and love",
+            excerpt = "Fear is the cheapest room in the house. I would like to see you living in better conditions. Your heart and my heart are very, very old friends.",
+            source = "The Gift: Poems by Hafiz",
+            category = "Spirituality",
+            era = "Ancient"
+        ),
+        DiscoverEntry(
+            id = "gibran_1",
+            author = "Kahlil Gibran",
+            authorYears = "1883\u20131931",
+            title = "On joy and sorrow",
+            excerpt = "Your joy is your sorrow unmasked. The deeper that sorrow carves into your being, the more joy you can contain. When you are joyous, look deep into your heart and you shall find it is only that which has given you sorrow that is giving you joy.",
+            source = "The Prophet, 1923",
+            category = "Spirituality",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "gibran_2",
+            author = "Kahlil Gibran",
+            authorYears = "1883\u20131931",
+            title = "On work and love",
+            excerpt = "Work is love made visible. And if you cannot work with love but only with distaste, it is better that you should leave your work and sit at the gate of the temple and take alms of those who work with joy.",
+            source = "The Prophet, 1923",
+            category = "Spirituality",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "watts_1",
+            author = "Alan Watts",
+            authorYears = "1915\u20131973",
+            title = "On the present",
+            excerpt = "This is the real secret of life\u2014to be completely engaged with what you are doing in the here and now. And instead of calling it work, realize it is play.",
+            source = "The Essence of Alan Watts",
+            category = "Spirituality",
+            era = "Contemporary"
+        ),
+        DiscoverEntry(
+            id = "tolle_1",
+            author = "Eckhart Tolle",
+            authorYears = "1948\u2013",
+            title = "On acceptance",
+            excerpt = "Whatever the present moment contains, accept it as if you had chosen it. Always work with it, not against it. Make it your friend and ally, not your enemy.",
+            source = "The Power of Now, 1997",
+            category = "Spirituality",
+            era = "Contemporary"
+        ),
+
+        // ── Additional Literature ───────────────────────────────
+
+        DiscoverEntry(
+            id = "dostoevsky_1",
+            author = "Fyodor Dostoevsky",
+            authorYears = "1821\u20131881",
+            title = "On suffering and growth",
+            excerpt = "Pain and suffering are always inevitable for a large intelligence and a deep heart. The soul is healed by being with children, with nature, and with beauty.",
+            source = "Crime and Punishment",
+            category = "Literature",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "rilke_1",
+            author = "Rainer Maria Rilke",
+            authorYears = "1875\u20131926",
+            title = "On patience with the unsolved",
+            excerpt = "Be patient toward all that is unsolved in your heart and try to love the questions themselves. Do not now seek the answers, which cannot be given you because you would not be able to live them.",
+            source = "Letters to a Young Poet, 1903",
+            category = "Literature",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "rilke_2",
+            author = "Rainer Maria Rilke",
+            authorYears = "1875\u20131926",
+            title = "On living the questions",
+            excerpt = "Live the questions now. Perhaps then, someday far in the future, you will gradually, without even noticing it, live your way into the answer.",
+            source = "Letters to a Young Poet, 1903",
+            category = "Literature",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "proust_1",
+            author = "Marcel Proust",
+            authorYears = "1871\u20131922",
+            title = "On discovery",
+            excerpt = "The real voyage of discovery consists not in seeking new landscapes, but in having new eyes.",
+            source = "In Search of Lost Time",
+            category = "Literature",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "hemingway_1",
+            author = "Ernest Hemingway",
+            authorYears = "1899\u20131961",
+            title = "On strength",
+            excerpt = "The world breaks everyone, and afterward, many are strong at the broken places. There is nothing noble in being superior to your fellow man; true nobility is being superior to your former self.",
+            source = "A Farewell to Arms",
+            category = "Literature",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "dickinson_1",
+            author = "Emily Dickinson",
+            authorYears = "1830\u20131886",
+            title = "On dwelling in possibility",
+            excerpt = "I dwell in Possibility, a fairer house than Prose. Forever is composed of Nows. We turn not older with years, but newer every day.",
+            source = "Collected poems",
+            category = "Literature",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "wilde_1",
+            author = "Oscar Wilde",
+            authorYears = "1854\u20131900",
+            title = "On being yourself",
+            excerpt = "Be yourself; everyone else is already taken. To live is the rarest thing in the world. Most people exist, that is all.",
+            source = "Collected aphorisms",
+            category = "Literature",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "morrison_1",
+            author = "Toni Morrison",
+            authorYears = "1931\u20132019",
+            title = "On freedom and writing",
+            excerpt = "If there\u2019s a book that you want to read, but it hasn\u2019t been written yet, then you must write it. You wanna fly, you got to give up the thing that weighs you down.",
+            source = "Speeches and interviews",
+            category = "Literature",
+            era = "Contemporary"
+        ),
+        DiscoverEntry(
+            id = "borges_1",
+            author = "Jorge Luis Borges",
+            authorYears = "1899\u20131986",
+            title = "On time and reading",
+            excerpt = "I have always imagined that Paradise will be a kind of library. Time is the substance I am made of. Time is a river which sweeps me along, but I am the river.",
+            source = "Collected essays",
+            category = "Literature",
+            era = "Contemporary"
         )
     )
 
