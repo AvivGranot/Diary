@@ -1,6 +1,7 @@
 package com.proactivediary.navigation
 
 sealed class Routes(val route: String) {
+    object Discover : Routes("discover")
     object Typewriter : Routes("typewriter")
     object DesignStudio : Routes("design_studio?edit={edit}") {
         fun createRoute(edit: Boolean = false) = "design_studio?edit=$edit"

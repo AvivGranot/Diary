@@ -19,6 +19,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Explore
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Settings
@@ -59,6 +60,7 @@ import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.paywall.PurchaseResult
 import com.proactivediary.ui.settings.SettingsScreen
+import com.proactivediary.ui.discover.DiscoverScreen
 import com.proactivediary.ui.write.WriteScreen
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -71,11 +73,13 @@ data class BottomNavItem(
 )
 
 private const val WRITE_TAB = "write_tab"
-private const val PAGE_WRITE = 0
-private const val PAGE_JOURNAL = 1
-private const val PAGE_SETTINGS = 2
+private const val PAGE_DISCOVER = 0
+private const val PAGE_WRITE = 1
+private const val PAGE_JOURNAL = 2
+private const val PAGE_SETTINGS = 3
 
 val bottomNavItems = listOf(
+    BottomNavItem(Routes.Discover.route, "Discover", Icons.Outlined.Explore),
     BottomNavItem(WRITE_TAB, "Write", Icons.Outlined.Edit, iconSize = 24),
     BottomNavItem(Routes.Journal.route, "Journal", Icons.AutoMirrored.Outlined.MenuBook),
     BottomNavItem(Routes.Settings.route, "Settings", Icons.Outlined.Settings),
@@ -111,12 +115,12 @@ fun MainScreen(
 
     // Pager state — starts on Write tab (page 0)
     val pagerState = rememberPagerState(
-        initialPage = PAGE_WRITE,
-        pageCount = { 3 }
+        initialPage = PAGE_DISCOVER,
+        pageCount = { 4 }
     )
 
     // Track the last valid page the user was on before a paywall bounce
-    var lastValidPage by remember { mutableStateOf(PAGE_WRITE) }
+    var lastValidPage by remember { mutableStateOf(PAGE_DISCOVER) }
 
     // Sync pager → bottom nav: when user swipes, update selection
     // Also handle paywall gate: if user swipes to Write while expired, bounce back
@@ -240,6 +244,17 @@ fun MainScreen(
                 key = { it }
             ) { page ->
                 when (page) {
+                    PAGE_DISCOVER -> {
+                        DiscoverScreen(
+                            onWriteAbout = { inspiration ->
+                                if (subscriptionState.isActive) {
+                                    scope.launch { pagerState.animateScrollToPage(PAGE_WRITE) }
+                                } else {
+                                    showPaywall = true
+                                }
+                            }
+                        )
+                    }
                     PAGE_WRITE -> {
                         WriteScreen(
                             onOpenDesignStudio = {
