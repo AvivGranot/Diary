@@ -1029,6 +1029,175 @@ object DiscoverContent {
             source = "Collected essays",
             category = "Literature",
             era = "Contemporary"
+        ),
+
+        // ── American Visionaries ──────────────────────────────────
+
+        DiscoverEntry(
+            id = "jefferson_1",
+            author = "Thomas Jefferson",
+            authorYears = "1743–1826",
+            title = "On the pursuit of knowledge",
+            excerpt = "I cannot live without books. The glow of one warm thought is to me worth more than money. Nothing can stop the man with the right mental attitude from achieving his goal.",
+            source = "Letters and personal writings",
+            category = "Leadership",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "jefferson_2",
+            author = "Thomas Jefferson",
+            authorYears = "1743–1826",
+            title = "On honesty and action",
+            excerpt = "Honesty is the first chapter in the book of wisdom. Do you want to know who you are? Don\u2019t ask. Act! Action will delineate and define you.",
+            source = "Letters to Nathaniel Macon, 1819",
+            category = "Leadership",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "lincoln_1",
+            author = "Abraham Lincoln",
+            authorYears = "1809–1865",
+            title = "On character and resolve",
+            excerpt = "Nearly all men can stand adversity, but if you want to test a man\u2019s character, give him power. I am a slow walker, but I never walk back.",
+            source = "Speeches and letters",
+            category = "Leadership",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "lincoln_2",
+            author = "Abraham Lincoln",
+            authorYears = "1809–1865",
+            title = "On preparation",
+            excerpt = "Give me six hours to chop down a tree and I will spend the first four sharpening the axe. The best way to predict your future is to create it.",
+            source = "Attributed sayings",
+            category = "Leadership",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "fdr_1",
+            author = "Franklin D. Roosevelt",
+            authorYears = "1882–1945",
+            title = "On courage over fear",
+            excerpt = "The only thing we have to fear is fear itself. Courage is not the absence of fear, but rather the assessment that something else is more important than fear.",
+            source = "First Inaugural Address, 1933",
+            category = "Leadership",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "fdr_2",
+            author = "Franklin D. Roosevelt",
+            authorYears = "1882–1945",
+            title = "On bold persistence",
+            excerpt = "It is common sense to take a method and try it. If it fails, admit it frankly and try another. But above all, try something. A smooth sea never made a skilled sailor.",
+            source = "Address at Oglethorpe University, 1932",
+            category = "Leadership",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "jfk_1",
+            author = "John F. Kennedy",
+            authorYears = "1917–1963",
+            title = "On contribution",
+            excerpt = "Ask not what your country can do for you — ask what you can do for your country. One person can make a difference, and everyone should try.",
+            source = "Inaugural Address, 1961",
+            category = "Leadership",
+            era = "Contemporary"
+        ),
+        DiscoverEntry(
+            id = "jfk_2",
+            author = "John F. Kennedy",
+            authorYears = "1917–1963",
+            title = "On doing hard things",
+            excerpt = "We choose to go to the moon in this decade and do the other things, not because they are easy, but because they are hard, because that goal will serve to organize and measure the best of our energies and skills.",
+            source = "Rice University Speech, 1962",
+            category = "Leadership",
+            era = "Contemporary"
+        ),
+
+        // ── Modern Innovators ─────────────────────────────────────
+
+        DiscoverEntry(
+            id = "jobs_1",
+            author = "Steve Jobs",
+            authorYears = "1955–2011",
+            title = "On connecting the dots",
+            excerpt = "You can\u2019t connect the dots looking forward; you can only connect them looking backwards. So you have to trust that the dots will somehow connect in your future.",
+            source = "Stanford Commencement, 2005",
+            category = "Leadership",
+            era = "Contemporary"
+        ),
+        DiscoverEntry(
+            id = "jobs_2",
+            author = "Steve Jobs",
+            authorYears = "1955–2011",
+            title = "On staying hungry",
+            excerpt = "Stay hungry. Stay foolish. Your time is limited, so don\u2019t waste it living someone else\u2019s life. Have the courage to follow your heart and intuition.",
+            source = "Stanford Commencement, 2005",
+            category = "Leadership",
+            era = "Contemporary"
+        ),
+        DiscoverEntry(
+            id = "musk_1",
+            author = "Elon Musk",
+            authorYears = "1971–",
+            title = "On persistence",
+            excerpt = "When something is important enough, you do it even if the odds are not in your favor. Persistence is very important. You should not give up unless you are forced to give up.",
+            source = "Interviews and talks",
+            category = "Leadership",
+            era = "Contemporary"
+        ),
+        DiscoverEntry(
+            id = "musk_2",
+            author = "Elon Musk",
+            authorYears = "1971–",
+            title = "On thinking from first principles",
+            excerpt = "I think it\u2019s very important to have a feedback loop, where you\u2019re constantly thinking about what you\u2019ve done and how you could be doing it better. Don\u2019t just follow the trend.",
+            source = "Interviews and talks",
+            category = "Science",
+            era = "Contemporary"
+        ),
+
+        // ── Classical Composers ───────────────────────────────────
+
+        DiscoverEntry(
+            id = "mozart_1",
+            author = "Wolfgang Amadeus Mozart",
+            authorYears = "1756–1791",
+            title = "On simplicity in art",
+            excerpt = "Neither a lofty degree of intelligence nor imagination nor both together go to the making of genius. Love, love, love, that is the soul of genius. The music is not in the notes, but in the silence between.",
+            source = "Personal letters",
+            category = "Art",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "mozart_2",
+            author = "Wolfgang Amadeus Mozart",
+            authorYears = "1756–1791",
+            title = "On creative flow",
+            excerpt = "When I am, as it were, completely myself, entirely alone, and of good cheer — it is on such occasions that my ideas flow best and most abundantly. Whence and how they come, I know not, nor can I force them.",
+            source = "Letter to Baron von P., 1789",
+            category = "Art",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "beethoven_1",
+            author = "Ludwig van Beethoven",
+            authorYears = "1770–1827",
+            title = "On music and the soul",
+            excerpt = "Music is the mediator between the spiritual and the sensual life. To play a wrong note is insignificant; to play without passion is inexcusable.",
+            source = "Personal letters and conversations",
+            category = "Art",
+            era = "Modern"
+        ),
+        DiscoverEntry(
+            id = "beethoven_2",
+            author = "Ludwig van Beethoven",
+            authorYears = "1770–1827",
+            title = "On overcoming",
+            excerpt = "I will seize fate by the throat; it shall certainly never wholly overcome me. Music is a higher revelation than all wisdom and philosophy. It is the one incorporeal entrance into the higher world.",
+            source = "Letter to Franz Wegeler, 1801",
+            category = "Art",
+            era = "Modern"
         )
     )
 
