@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
@@ -43,10 +42,18 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
+/**
+ * Dictation button — pure speech-to-text. No audio file is saved.
+ * The spoken word becomes written text, directly into the editor.
+ *
+ * When active: pulsing blue indicator + live waveform + elapsed time + stop.
+ * When inactive: subtle mic icon with "Dictate" label.
+ */
 @Composable
 fun VoiceRecordButton(
     isRecording: Boolean,
@@ -56,14 +63,14 @@ fun VoiceRecordButton(
     modifier: Modifier = Modifier
 ) {
     var durationSeconds by remember { mutableStateOf(0) }
-    var showSaved by remember { mutableStateOf(false) }
+    var showDone by remember { mutableStateOf(false) }
     var wasRecording by remember { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
 
-    // Track recording state transitions for "Saved" feedback
+    // Track dictation state transitions
     LaunchedEffect(isRecording) {
         if (isRecording) {
-            showSaved = false
+            showDone = false
             durationSeconds = 0
             while (true) {
                 delay(1000)
@@ -71,77 +78,52 @@ fun VoiceRecordButton(
             }
         } else {
             if (wasRecording) {
-                showSaved = true
+                showDone = true
                 delay(2000)
-                showSaved = false
+                showDone = false
             }
             durationSeconds = 0
         }
     }
     LaunchedEffect(isRecording) { wasRecording = isRecording }
 
-    // Pulsing scale for the recording state
-    val infiniteTransition = rememberInfiniteTransition(label = "recording")
+    // Breathing pulse for active state
+    val infiniteTransition = rememberInfiniteTransition(label = "dictation")
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 1f,
-        targetValue = 1.08f,
+        targetValue = 1.06f,
         animationSpec = infiniteRepeatable(
-            animation = tween(600, easing = LinearEasing),
+            animation = tween(800, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "pulse"
     )
 
-    // Pulsing alpha for the red dot
-    val dotAlpha by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 0.3f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(500, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "dot"
-    )
-
-    // Waveform bar animations (5 bars at different speeds)
-    val wave1 by infiniteTransition.animateFloat(
-        initialValue = 0.3f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(300), RepeatMode.Reverse), label = "w1"
-    )
-    val wave2 by infiniteTransition.animateFloat(
-        initialValue = 0.5f, targetValue = 0.8f,
-        animationSpec = infiniteRepeatable(tween(450), RepeatMode.Reverse), label = "w2"
-    )
-    val wave3 by infiniteTransition.animateFloat(
-        initialValue = 0.2f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(350), RepeatMode.Reverse), label = "w3"
-    )
-    val wave4 by infiniteTransition.animateFloat(
-        initialValue = 0.6f, targetValue = 0.9f,
-        animationSpec = infiniteRepeatable(tween(500), RepeatMode.Reverse), label = "w4"
-    )
-    val wave5 by infiniteTransition.animateFloat(
-        initialValue = 0.4f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(280), RepeatMode.Reverse), label = "w5"
-    )
+    // Waveform bars — 5 bars at organic rhythms
+    val wave1 by infiniteTransition.animateFloat(0.3f, 1f, infiniteRepeatable(tween(300), RepeatMode.Reverse), label = "w1")
+    val wave2 by infiniteTransition.animateFloat(0.5f, 0.8f, infiniteRepeatable(tween(450), RepeatMode.Reverse), label = "w2")
+    val wave3 by infiniteTransition.animateFloat(0.2f, 1f, infiniteRepeatable(tween(350), RepeatMode.Reverse), label = "w3")
+    val wave4 by infiniteTransition.animateFloat(0.6f, 0.9f, infiniteRepeatable(tween(500), RepeatMode.Reverse), label = "w4")
+    val wave5 by infiniteTransition.animateFloat(0.4f, 1f, infiniteRepeatable(tween(280), RepeatMode.Reverse), label = "w5")
 
     val buttonScale by animateFloatAsState(
         targetValue = if (isRecording) pulseScale else 1f,
         label = "btnScale"
     )
 
+    val activeColor = Color(0xFF1565C0) // DeepMind blue — intelligence, not danger
+
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Record / Stop button
         Row(
             modifier = Modifier
                 .scale(buttonScale)
                 .clip(RoundedCornerShape(20.dp))
                 .background(
-                    if (isRecording) Color(0xFFD32F2F).copy(alpha = 0.12f)
+                    if (isRecording) activeColor.copy(alpha = 0.10f)
                     else secondaryTextColor.copy(alpha = 0.08f)
                 )
                 .clickable {
@@ -153,15 +135,7 @@ fun VoiceRecordButton(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (isRecording) {
-                // Pulsing red dot
-                Canvas(modifier = Modifier.size(8.dp)) {
-                    drawCircle(
-                        color = Color(0xFFD32F2F).copy(alpha = dotAlpha),
-                        radius = size.minDimension / 2
-                    )
-                }
-
-                // Waveform bars
+                // Live waveform
                 val waveHeights = listOf(wave1, wave2, wave3, wave4, wave5)
                 Canvas(
                     modifier = Modifier
@@ -175,7 +149,7 @@ fun VoiceRecordButton(
                         val barHeight = maxHeight * fraction
                         val x = i * (barWidth + gap)
                         drawRoundRect(
-                            color = Color(0xFFD32F2F),
+                            color = activeColor,
                             topLeft = androidx.compose.ui.geometry.Offset(
                                 x, (maxHeight - barHeight) / 2
                             ),
@@ -193,28 +167,28 @@ fun VoiceRecordButton(
                     style = TextStyle(
                         fontFamily = FontFamily.Default,
                         fontSize = 13.sp,
-                        color = Color(0xFFD32F2F)
+                        color = activeColor
                     )
                 )
 
                 Spacer(modifier = Modifier.width(4.dp))
 
-                // Stop icon
+                // Stop
                 Icon(
                     imageVector = Icons.Default.Stop,
-                    contentDescription = "Stop recording",
-                    tint = Color(0xFFD32F2F),
+                    contentDescription = "Stop dictation",
+                    tint = activeColor,
                     modifier = Modifier.size(18.dp)
                 )
             } else {
                 Icon(
                     imageVector = Icons.Default.Mic,
-                    contentDescription = "Start recording",
+                    contentDescription = "Start dictation",
                     tint = secondaryTextColor.copy(alpha = 0.5f),
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
-                    text = "Voice note",
+                    text = "Dictate",
                     style = TextStyle(
                         fontFamily = FontFamily.Default,
                         fontSize = 13.sp,
@@ -224,17 +198,18 @@ fun VoiceRecordButton(
             }
         }
 
-        // "Saved" confirmation
+        // "Done" confirmation — text was captured
         AnimatedVisibility(
-            visible = showSaved,
+            visible = showDone,
             enter = fadeIn(tween(200)),
             exit = fadeOut(tween(400))
         ) {
             Text(
-                text = "Saved",
+                text = "Text added",
                 style = TextStyle(
                     fontFamily = FontFamily.Default,
                     fontSize = 12.sp,
+                    fontStyle = FontStyle.Italic,
                     color = secondaryTextColor.copy(alpha = 0.6f)
                 )
             )

@@ -81,24 +81,19 @@ class DiaryWrappedViewModel @Inject constructor(
                 val allEntries = entryDao.getAllSync()
                 val userName = preferenceDao.getValue("diary_mark_text") ?: ""
 
-                if (allEntries.isEmpty()) {
+                // Filter to current year only
+                val currentYear = LocalDate.now().year
+                val yearEntries = allEntries.filter { entry ->
+                    Instant.ofEpochMilli(entry.createdAt).atZone(zone).toLocalDate().year == currentYear
+                }
+
+                if (yearEntries.isEmpty()) {
                     return@withContext DiaryWrappedUiState(isLoading = false)
                 }
 
-                val cards = buildWrappedCards(allEntries, userName)
+                val cards = buildWrappedCards(yearEntries, userName, currentYear)
 
-                val firstDate = allEntries.minByOrNull { it.createdAt }?.let {
-                    Instant.ofEpochMilli(it.createdAt).atZone(zone).toLocalDate()
-                } ?: LocalDate.now()
-                val lastDate = allEntries.maxByOrNull { it.createdAt }?.let {
-                    Instant.ofEpochMilli(it.createdAt).atZone(zone).toLocalDate()
-                } ?: LocalDate.now()
-
-                val period = if (firstDate.year == lastDate.year) {
-                    "${firstDate.format(dateFormatter)} \u2013 ${lastDate.format(dateFormatter)}, ${lastDate.year}"
-                } else {
-                    "${firstDate.format(dateFormatter)}, ${firstDate.year} \u2013 ${lastDate.format(dateFormatter)}, ${lastDate.year}"
-                }
+                val period = "January \u2013 December $currentYear"
 
                 DiaryWrappedUiState(
                     cards = cards,
@@ -112,17 +107,17 @@ class DiaryWrappedViewModel @Inject constructor(
         }
     }
 
-    private fun buildWrappedCards(entries: List<EntryEntity>, userName: String): List<WrappedCard> {
+    private fun buildWrappedCards(entries: List<EntryEntity>, userName: String, year: Int = LocalDate.now().year): List<WrappedCard> {
         val cards = mutableListOf<WrappedCard>()
         val totalEntries = entries.size
         val totalWords = entries.sumOf { it.wordCount }
 
         // 1. INTRO
-        val greeting = if (userName.isNotBlank()) "Your story so far, $userName" else "Your story so far"
+        val greeting = if (userName.isNotBlank()) "Your $year story, $userName" else "Your $year story"
         cards.add(WrappedCard(
             type = WrappedCardType.INTRO,
             headline = greeting,
-            subtitle = "A look back at your journal",
+            subtitle = "A look back at your year of writing",
             accentColorHex = 0xFF313131
         ))
 
@@ -288,7 +283,7 @@ class DiaryWrappedViewModel @Inject constructor(
             type = WrappedCardType.CLOSING,
             headline = "Keep going",
             subtitle = "Every word you write is a gift to your future self",
-            detail = "$totalEntries entries. $wordsFormatted words. All yours.",
+            detail = "$totalEntries entries. $wordsFormatted words. Your $year in words.",
             accentColorHex = 0xFF313131
         ))
 

@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -55,11 +56,11 @@ fun DiaryCard(
     }
 
     val contentPreview = if (data.title.isNotBlank()) {
-        data.content.take(200)
+        data.content.trimStart().take(200)
     } else {
         val lines = data.content.lines()
         if (lines.size > 1) {
-            lines.drop(1).joinToString("\n").take(200).trim()
+            lines.drop(1).joinToString("\n").trimStart().take(200)
         } else {
             ""
         }
@@ -89,8 +90,26 @@ fun DiaryCard(
                     text = displayTitle,
                     style = TextStyle(
                         fontFamily = CormorantGaramond,
-                        fontSize = 18.sp,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Medium,
                         color = inkColor
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            // Tags — prominent, below title
+            if (data.tags.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = data.tags.joinToString("  ") { "#$it" },
+                    style = TextStyle(
+                        fontFamily = FontFamily.Default,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = inkColor.copy(alpha = 0.45f)
                     ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -135,21 +154,6 @@ fun DiaryCard(
                     )
                 }
 
-                // Tags
-                if (data.tags.isNotEmpty()) {
-                    Text(
-                        text = data.tags.joinToString(", ") { "#$it" },
-                        style = TextStyle(
-                            fontFamily = FontFamily.Default,
-                            fontSize = 12.sp,
-                            color = pencilColor.copy(alpha = 0.7f)
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
-                }
-
                 // Image count indicator
                 if (data.imageCount > 0) {
                     Row(
@@ -175,15 +179,17 @@ fun DiaryCard(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                // Word count
-                Text(
-                    text = "${data.wordCount} words",
-                    style = TextStyle(
-                        fontFamily = FontFamily.Default,
-                        fontSize = 12.sp,
-                        color = pencilColor.copy(alpha = 0.5f)
+                // Word count — only shown at 50+ words (short entries are still valid)
+                if (data.wordCount >= 50) {
+                    Text(
+                        text = "${data.wordCount} words",
+                        style = TextStyle(
+                            fontFamily = FontFamily.Default,
+                            fontSize = 12.sp,
+                            color = pencilColor.copy(alpha = 0.5f)
+                        )
                     )
-                )
+                }
             }
         }
     }

@@ -30,7 +30,6 @@ import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.typewriter.TypewriterScreen
 import com.proactivediary.ui.export.YearInReviewScreen
 import com.proactivediary.ui.onthisday.OnThisDayScreen
-import com.proactivediary.ui.chat.TalkToJournalScreen
 import com.proactivediary.ui.settings.ContactSupportScreen
 import com.proactivediary.ui.wrapped.DiaryWrappedScreen
 import com.proactivediary.ui.insights.ThemeEvolutionScreen
@@ -42,6 +41,8 @@ fun ProactiveDiaryNavHost(
     viewModel: NavViewModel = hiltViewModel(),
     billingViewModel: BillingViewModel = hiltViewModel(),
     deepLinkDestination: String? = null,
+    deepLinkPrompt: String? = null,
+    deepLinkGoalId: String? = null,
     onDeepLinkConsumed: () -> Unit = {}
 ) {
     val startDestination by viewModel.startDestination.collectAsState()
@@ -139,6 +140,8 @@ fun ProactiveDiaryNavHost(
             MainScreen(
                 rootNavController = navController,
                 deepLinkDestination = deepLinkDestination,
+                deepLinkPrompt = deepLinkPrompt,
+                deepLinkGoalId = deepLinkGoalId,
                 onDeepLinkConsumed = onDeepLinkConsumed,
                 billingViewModel = billingViewModel
             )
@@ -206,12 +209,6 @@ fun ProactiveDiaryNavHost(
                 onEntryTap = { entryId ->
                     navController.navigate(Routes.EntryDetail.createRoute(entryId))
                 }
-            )
-        }
-
-        composable(Routes.TalkToJournal.route) {
-            TalkToJournalScreen(
-                onBack = { navController.popBackStack() }
             )
         }
 

@@ -160,7 +160,7 @@ fun DiaryWrappedScreen(
             }
 
             Text(
-                text = "Your Wrapped",
+                text = "Your ${java.time.LocalDate.now().year} Wrapped",
                 style = TextStyle(
                     fontFamily = CormorantGaramond,
                     fontSize = 18.sp,

@@ -124,7 +124,7 @@ fun AttachmentTray(
                             )
                             TrayItem(
                                 icon = Icons.Outlined.Mic,
-                                label = "Record",
+                                label = "Dictate",
                                 textColor = textColor,
                                 secondaryColor = secondaryTextColor,
                                 onClick = {
@@ -134,7 +134,7 @@ fun AttachmentTray(
                             )
                             TrayItem(
                                 icon = Icons.Outlined.Description,
-                                label = "Guided",
+                                label = "Writing Templates",
                                 textColor = textColor,
                                 secondaryColor = secondaryTextColor,
                                 onClick = {
@@ -153,7 +153,7 @@ fun AttachmentTray(
                         ) {
                             TrayItem(
                                 icon = Icons.Outlined.Tag,
-                                label = "#Label",
+                                label = "Tags",
                                 textColor = textColor,
                                 secondaryColor = secondaryTextColor,
                                 onClick = {

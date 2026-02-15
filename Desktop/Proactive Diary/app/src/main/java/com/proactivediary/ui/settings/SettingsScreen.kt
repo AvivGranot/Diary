@@ -32,12 +32,16 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -49,8 +53,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.Canvas
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.auth.AuthViewModel
+import com.proactivediary.notifications.NotificationHealth
+import com.proactivediary.notifications.HealthIssue
 import com.proactivediary.ui.auth.AuthDialog
 import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
@@ -66,7 +74,6 @@ fun SettingsScreen(
     onNavigateToYearInReview: () -> Unit = {},
     onNavigateToBugReport: () -> Unit = {},
     onNavigateToSupport: () -> Unit = {},
-    onNavigateToTalkToJournal: () -> Unit = {},
     onNavigateToDiaryWrapped: () -> Unit = {},
     onNavigateToThemeEvolution: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
@@ -83,6 +90,8 @@ fun SettingsScreen(
     val exportMessage by viewModel.exportMessage.collectAsState()
     val exportUri by viewModel.exportUri.collectAsState()
     val deleteStep by viewModel.deleteStep.collectAsState()
+    val notificationHealth by viewModel.notificationHealth.collectAsState()
+    val isBatteryOptimized by viewModel.isBatteryOptimized.collectAsState()
     val subscriptionState by billingViewModel.subscriptionState.collectAsState()
     val authState by authViewModel.uiState.collectAsState()
 
@@ -93,12 +102,22 @@ fun SettingsScreen(
     var showFontSizeMenu by remember { mutableStateOf(false) }
     var showPrivacyPolicy by remember { mutableStateOf(false) }
     var showTermsOfService by remember { mutableStateOf(false) }
-    var showApiKeyDialog by remember { mutableStateOf(false) }
-    var apiKeyInput by remember { mutableStateOf("") }
     var deleteConfirmText by remember { mutableStateOf("") }
 
     val context = LocalContext.current
     val activity = context as? Activity
+
+    // Refresh notification health when returning from system settings
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refreshNotificationHealth()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     LaunchedEffect(exportMessage) {
         exportMessage?.let {
@@ -215,6 +234,55 @@ fun SettingsScreen(
             SectionHeader("NOTIFICATIONS")
             Spacer(Modifier.height(8.dp))
             SettingsCard {
+                // Notification health status
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(
+                            if (notificationHealth !is NotificationHealth.Healthy)
+                                Modifier.clickable {
+                                    try {
+                                        context.startActivity(viewModel.getNotificationSettingsIntent())
+                                    } catch (_: Exception) { }
+                                }
+                            else Modifier
+                        )
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val dotColor = when (notificationHealth) {
+                            is NotificationHealth.Healthy -> Color(0xFF4CAF50)
+                            is NotificationHealth.Degraded -> Color(0xFFFF9800)
+                            is NotificationHealth.Blocked -> Color(0xFFE53935)
+                        }
+                        Canvas(modifier = Modifier.size(8.dp)) {
+                            drawCircle(color = dotColor)
+                        }
+                        Spacer(Modifier.width(10.dp))
+                        Text(
+                            text = when (notificationHealth) {
+                                is NotificationHealth.Healthy -> "Notifications are working"
+                                is NotificationHealth.Degraded -> "Notifications may be delayed"
+                                is NotificationHealth.Blocked -> "Notifications are blocked"
+                            },
+                            style = TextStyle(fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+                        )
+                    }
+                    if (notificationHealth !is NotificationHealth.Healthy) {
+                        Text(
+                            text = "Fix",
+                            style = TextStyle(
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        )
+                    }
+                }
+                SettingsDivider()
                 SettingsRow(
                     label = "Writing Reminders",
                     value = "$activeReminderCount active",
@@ -228,10 +296,21 @@ fun SettingsScreen(
                 )
                 SettingsDivider()
                 SettingsRow(
-                    label = "Goal Reminders",
-                    value = "$activeGoalCount active",
-                    onClick = onNavigateToGoals
+                    label = "Send Test Notification",
+                    onClick = { viewModel.sendTestNotification() }
                 )
+                if (isBatteryOptimized) {
+                    SettingsDivider()
+                    SettingsRow(
+                        label = "Battery Optimization",
+                        value = "On — may block reminders",
+                        onClick = {
+                            try {
+                                context.startActivity(viewModel.getBatteryOptimizationIntent())
+                            } catch (_: Exception) { }
+                        }
+                    )
+                }
             }
 
             Spacer(Modifier.height(24.dp))
@@ -268,20 +347,6 @@ fun SettingsScreen(
                         )
                     )
                 }
-                if (isAIEnabled) {
-                    SettingsDivider()
-                    SettingsRow(
-                        label = "API Key",
-                        value = "Configure",
-                        onClick = { showApiKeyDialog = true }
-                    )
-                }
-                SettingsDivider()
-                SettingsRow(
-                    label = "Talk to Your Journal",
-                    value = "Chat with AI",
-                    onClick = onNavigateToTalkToJournal
-                )
             }
 
             Spacer(Modifier.height(24.dp))
@@ -351,10 +416,10 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // DATA section
-            SectionHeader("DATA")
+            // DATA section (secondary — no card background)
+            SectionHeaderSecondary("DATA")
             Spacer(Modifier.height(8.dp))
-            SettingsCard {
+            Column {
                 Box {
                     SettingsRow(
                         label = "Export Writing",
@@ -392,10 +457,10 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // YOUR STORY section
-            SectionHeader("YOUR STORY")
+            // YOUR STORY section (secondary)
+            SectionHeaderSecondary("YOUR STORY")
             Spacer(Modifier.height(8.dp))
-            SettingsCard {
+            Column {
                 SettingsRow(
                     label = "Diary Wrapped",
                     value = "Your story so far",
@@ -417,10 +482,10 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // ACCOUNT section
-            SectionHeader("ACCOUNT")
+            // ACCOUNT section (secondary)
+            SectionHeaderSecondary("ACCOUNT")
             Spacer(Modifier.height(8.dp))
-            SettingsCard {
+            Column {
                 if (authViewModel.isAuthenticated) {
                     Row(
                         modifier = Modifier
@@ -458,10 +523,10 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // HELP & SUPPORT section
-            SectionHeader("HELP & SUPPORT")
+            // HELP & SUPPORT section (secondary)
+            SectionHeaderSecondary("HELP & SUPPORT")
             Spacer(Modifier.height(8.dp))
-            SettingsCard {
+            Column {
                 SettingsRow(
                     label = "Report a Bug",
                     onClick = onNavigateToBugReport
@@ -475,10 +540,10 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // ABOUT section
-            SectionHeader("ABOUT")
+            // ABOUT section (secondary)
+            SectionHeaderSecondary("ABOUT")
             Spacer(Modifier.height(8.dp))
-            SettingsCard {
+            Column {
                 SettingsRow(
                     label = "Privacy Policy",
                     onClick = { showPrivacyPolicy = true }
@@ -570,7 +635,7 @@ fun SettingsScreen(
 
                     Text("Network Connections", style = sectionStyle)
                     Spacer(Modifier.height(4.dp))
-                    Text("Network connections: Google Play (subscriptions), Firebase (optional auth), Open-Meteo (weather data). If you enable AI Insights, your entry text is sent to the Anthropic API using your own API key. AI Insights are opt-in only.", style = bodyStyle)
+                    Text("Network connections: Google Play (subscriptions), Firebase (optional auth), Open-Meteo (weather data). If you enable AI Insights, your entry text is analyzed using the Google Gemini API. AI Insights are opt-in only.", style = bodyStyle)
                     Spacer(Modifier.height(12.dp))
 
                     Text("Personal Information", style = sectionStyle)
@@ -750,64 +815,6 @@ fun SettingsScreen(
         // Handled by DropdownMenu above
     }
 
-    // API Key dialog
-    if (showApiKeyDialog) {
-        AlertDialog(
-            onDismissRequest = { showApiKeyDialog = false },
-            title = {
-                Text(
-                    text = "Claude API Key",
-                    style = TextStyle(
-                        fontFamily = CormorantGaramond,
-                        fontSize = 20.sp,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                )
-            },
-            text = {
-                Column {
-                    Text(
-                        text = "Enter your Anthropic API key to enable AI-powered weekly insights. Your key is stored locally and never shared.",
-                        style = TextStyle(fontSize = 13.sp, color = MaterialTheme.colorScheme.secondary)
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    TextField(
-                        value = apiKeyInput,
-                        onValueChange = { apiKeyInput = it },
-                        placeholder = { Text("sk-ant-...") },
-                        singleLine = true,
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = MaterialTheme.colorScheme.onBackground,
-                            unfocusedIndicatorColor = MaterialTheme.colorScheme.secondary
-                        )
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.setApiKey(apiKeyInput)
-                        apiKeyInput = ""
-                        showApiKeyDialog = false
-                    },
-                    enabled = apiKeyInput.isNotBlank()
-                ) {
-                    Text("Save", color = MaterialTheme.colorScheme.onBackground)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    showApiKeyDialog = false
-                    apiKeyInput = ""
-                }) {
-                    Text("Cancel", color = MaterialTheme.colorScheme.secondary)
-                }
-            },
-            containerColor = MaterialTheme.colorScheme.surface
-        )
-    }
 }
 
 @Composable
@@ -818,6 +825,18 @@ private fun SectionHeader(title: String) {
             fontSize = 11.sp,
             letterSpacing = 1.5.sp,
             color = MaterialTheme.colorScheme.secondary
+        )
+    )
+}
+
+@Composable
+private fun SectionHeaderSecondary(title: String) {
+    Text(
+        text = title,
+        style = TextStyle(
+            fontSize = 11.sp,
+            letterSpacing = 1.sp,
+            color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f)
         )
     )
 }

@@ -33,6 +33,10 @@ class AIInsightService @Inject constructor(
         .build()
 
     suspend fun getApiKey(): String? {
+        // 1. Prefer build-time key (developer-provided, no user prompt)
+        val buildKey = com.proactivediary.BuildConfig.GEMINI_API_KEY
+        if (buildKey.isNotBlank()) return buildKey
+        // 2. Fallback: legacy user-provided key (backward compat)
         return preferenceDao.getValue("ai_api_key")
     }
 
@@ -72,20 +76,24 @@ Be empathetic, supportive, and insightful. Never be judgmental."""
         val userMessage = "Here are my journal entries from this past week:\n\n$entriesText"
 
         try {
-            val requestBody = ClaudeRequest(
-                model = "claude-sonnet-4-5-20250929",
-                maxTokens = 500,
-                system = systemPrompt,
-                messages = listOf(
-                    ClaudeMessage(role = "user", content = userMessage)
+            val requestBody = GeminiRequest(
+                contents = listOf(
+                    GeminiContent(
+                        parts = listOf(GeminiPart(text = "$systemPrompt\n\n$userMessage"))
+                    )
+                ),
+                generationConfig = GeminiGenerationConfig(
+                    temperature = 0.7f,
+                    maxOutputTokens = 500,
+                    responseMimeType = "application/json"
                 )
             )
 
             val jsonBody = gson.toJson(requestBody)
+            val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey"
+
             val request = Request.Builder()
-                .url("https://api.anthropic.com/v1/messages")
-                .addHeader("x-api-key", apiKey)
-                .addHeader("anthropic-version", "2023-06-01")
+                .url(url)
                 .addHeader("content-type", "application/json")
                 .post(jsonBody.toRequestBody("application/json".toMediaType()))
                 .build()
@@ -94,8 +102,9 @@ Be empathetic, supportive, and insightful. Never be judgmental."""
             if (!response.isSuccessful) return@withContext null
 
             val responseBody = response.body?.string() ?: return@withContext null
-            val claudeResponse = gson.fromJson(responseBody, ClaudeResponse::class.java)
-            val text = claudeResponse.content?.firstOrNull()?.text ?: return@withContext null
+            val geminiResponse = gson.fromJson(responseBody, GeminiResponse::class.java)
+            val text = geminiResponse.candidates?.firstOrNull()
+                ?.content?.parts?.firstOrNull()?.text ?: return@withContext null
 
             // Parse the JSON response
             val insightJson = gson.fromJson(text, AIInsightJson::class.java)
@@ -117,25 +126,33 @@ data class EntryForAI(
     val content: String
 )
 
-// Claude API request/response models
-private data class ClaudeRequest(
-    val model: String,
-    @SerializedName("max_tokens") val maxTokens: Int,
-    val system: String,
-    val messages: List<ClaudeMessage>
+// Gemini API request/response models
+private data class GeminiRequest(
+    val contents: List<GeminiContent>,
+    val generationConfig: GeminiGenerationConfig? = null
 )
 
-private data class ClaudeMessage(
-    val role: String,
-    val content: String
+private data class GeminiContent(
+    val parts: List<GeminiPart>,
+    val role: String = "user"
 )
 
-private data class ClaudeResponse(
-    val content: List<ClaudeContent>?
+private data class GeminiPart(
+    val text: String
 )
 
-private data class ClaudeContent(
-    val text: String?
+private data class GeminiGenerationConfig(
+    val temperature: Float = 0.7f,
+    @SerializedName("maxOutputTokens") val maxOutputTokens: Int = 500,
+    @SerializedName("responseMimeType") val responseMimeType: String? = null
+)
+
+private data class GeminiResponse(
+    val candidates: List<GeminiCandidate>?
+)
+
+private data class GeminiCandidate(
+    val content: GeminiContent?
 )
 
 private data class AIInsightJson(

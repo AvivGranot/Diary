@@ -54,7 +54,7 @@ fun TouchSection(
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         SectionHeader(
-            number = "03",
+            number = "02",
             title = "Touch",
             subtitle = "The surface beneath your words"
         )

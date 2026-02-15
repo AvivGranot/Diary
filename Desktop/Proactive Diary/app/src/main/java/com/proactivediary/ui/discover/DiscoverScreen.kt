@@ -62,10 +62,17 @@ fun DiscoverScreen(
             .fillMaxSize()
             .background(bgColor)
     ) {
-        // Header
+        // Header — time-aware greeting
+        val hour = java.time.LocalTime.now().hour
+        val greeting = when {
+            hour in 5..11 -> "Good morning"
+            hour in 12..16 -> "Good afternoon"
+            hour in 17..21 -> "Good evening"
+            else -> "Still up?"
+        }
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Discover",
+            text = greeting,
             style = TextStyle(
                 fontFamily = CormorantGaramond,
                 fontSize = 26.sp,
@@ -178,26 +185,35 @@ private fun CategoryChip(
     secondaryColor: androidx.compose.ui.graphics.Color,
     onClick: () -> Unit
 ) {
-    Text(
-        text = label,
-        style = TextStyle(
-            fontFamily = CormorantGaramond,
-            fontSize = 13.sp,
-            fontWeight = if (isSelected) null else FontWeight.Medium,
-            color = if (isSelected) textColor else secondaryColor.copy(alpha = 0.85f)
-        ),
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .background(
-                if (isSelected) textColor.copy(alpha = 0.08f) else androidx.compose.ui.graphics.Color.Transparent,
-                RoundedCornerShape(16.dp)
-            )
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onClick
             )
             .padding(horizontal = 14.dp, vertical = 6.dp)
-    )
+    ) {
+        Text(
+            text = label,
+            style = TextStyle(
+                fontFamily = CormorantGaramond,
+                fontSize = 13.sp,
+                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+                color = if (isSelected) textColor else secondaryColor.copy(alpha = 0.85f)
+            )
+        )
+        if (isSelected) {
+            Spacer(modifier = Modifier.height(3.dp))
+            Box(
+                modifier = Modifier
+                    .width(20.dp)
+                    .height(1.5.dp)
+                    .background(textColor)
+            )
+        }
+    }
 }
 
 @Composable
@@ -267,26 +283,29 @@ private fun DiscoverCard(
                         modifier = Modifier.weight(1f)
                     )
 
-                    // "Write about this" CTA
+                    // "Reflect" pill — obvious, warm, not commanding
                     if (onWriteAbout != null) {
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Write \u2192",
-                            style = TextStyle(
-                                fontFamily = CormorantGaramond,
-                                fontSize = 12.sp,
-                                fontStyle = FontStyle.Italic,
-                                color = secondaryColor.copy(alpha = 0.5f)
-                            ),
-                            modifier = Modifier
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) {
-                                    onWriteAbout("\u201C${entry.excerpt}\u201D \u2014 ${entry.author}")
-                                }
-                                .padding(vertical = 2.dp)
-                        )
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = secondaryColor.copy(alpha = 0.06f),
+                            modifier = Modifier.clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) {
+                                onWriteAbout("\u201C${entry.excerpt}\u201D \u2014 ${entry.author}")
+                            }
+                        ) {
+                            Text(
+                                text = "Reflect",
+                                style = TextStyle(
+                                    fontFamily = CormorantGaramond,
+                                    fontSize = 12.sp,
+                                    color = secondaryColor.copy(alpha = 0.7f)
+                                ),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                            )
+                        }
                     }
                 }
             }

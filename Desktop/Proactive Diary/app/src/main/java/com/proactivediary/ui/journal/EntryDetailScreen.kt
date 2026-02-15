@@ -20,7 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.AutoAwesome
+
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Share
@@ -47,10 +47,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
+
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -68,7 +68,7 @@ import com.proactivediary.ui.share.ShareCardData
 import com.proactivediary.ui.share.ShareCardDialog
 import com.proactivediary.ui.share.shareCardAsImage
 import androidx.compose.foundation.layout.navigationBarsPadding
-import com.proactivediary.ui.chat.ReflectionPromptsSheet
+
 import com.proactivediary.ui.theme.CormorantGaramond
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -81,7 +81,7 @@ fun EntryDetailScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    val haptic = LocalHapticFeedback.current
+
 
     // If entry not found on load, go back immediately
     LaunchedEffect(state.isLoaded, state.isDeleted) {
@@ -114,7 +114,6 @@ fun EntryDetailScreen(
     var showMenu by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
-    var showGoDeeper by remember { mutableStateOf(false) }
     var viewingImageId by remember { mutableStateOf<String?>(null) }
 
     Column(
@@ -480,47 +479,7 @@ fun EntryDetailScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(80.dp)) // room for floating pill
-        }
-
-        // Floating "Go Deeper" pill
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 20.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            androidx.compose.material3.Surface(
-                modifier = Modifier
-                    .clickable {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        showGoDeeper = true
-                    },
-                shape = RoundedCornerShape(24.dp),
-                shadowElevation = 2.dp,
-                color = textColor.copy(alpha = 0.08f)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AutoAwesome,
-                        contentDescription = null,
-                        tint = secondaryTextColor.copy(alpha = 0.7f),
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Text(
-                        text = "Go Deeper",
-                        style = TextStyle(
-                            fontFamily = CormorantGaramond,
-                            fontSize = 15.sp,
-                            color = secondaryTextColor
-                        )
-                    )
-                }
-            }
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 
@@ -583,17 +542,4 @@ fun EntryDetailScreen(
         }
     }
 
-    // "Go Deeper" reflection prompts bottom sheet
-    if (showGoDeeper) {
-        ReflectionPromptsSheet(
-            onDismiss = { showGoDeeper = false },
-            onPromptSelected = { prompt ->
-                showGoDeeper = false
-                onEdit(state.entryId) // Navigate to Write with a new entry
-            },
-            textColor = textColor,
-            secondaryTextColor = secondaryTextColor,
-            backgroundColor = bgColor
-        )
-    }
 }

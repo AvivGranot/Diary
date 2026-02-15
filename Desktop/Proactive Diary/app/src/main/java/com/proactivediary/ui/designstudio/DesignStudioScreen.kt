@@ -49,8 +49,8 @@ fun DesignStudioScreen(
     val revealedSections = remember { mutableStateMapOf<Int, Boolean>() }
 
     // Detect visibility for scroll-reveal animations
-    // Items: 0=divider, 1=soul(section0), 2=form(section1), 3=touch(section2),
-    //        4=canvas(section3), 5=details(section4), 6=mark(section5), 7=summary, 8=bottomPadding
+    // Items: 0=divider, 1=soul(section0), 2=touch(section1), 3=canvas(section2),
+    //        4=form(section3), 5=details(section4), 6=mark(section5), 7=summary, 8=bottomPadding
     val sectionIndices = listOf(1, 2, 3, 4, 5, 6, 7) // indices of animated items
 
     LaunchedEffect(listState) {
@@ -109,26 +109,12 @@ fun DesignStudioScreen(
                         }
                     }
 
-                    // 2: Form — Section 02
+                    // 2: Touch — Section 02
                     item {
                         ScrollRevealWrapper(
                             index = 2,
                             revealed = revealedSections[2] == true,
                             staggerOffset = 1
-                        ) {
-                            FormSection(
-                                selectedForm = state.selectedForm,
-                                onFormSelected = viewModel::selectForm
-                            )
-                        }
-                    }
-
-                    // 3: Touch — Section 03
-                    item {
-                        ScrollRevealWrapper(
-                            index = 3,
-                            revealed = revealedSections[3] == true,
-                            staggerOffset = 2
                         ) {
                             TouchSection(
                                 selectedTexture = state.selectedTexture,
@@ -137,16 +123,30 @@ fun DesignStudioScreen(
                         }
                     }
 
-                    // 4: Canvas — Section 04
+                    // 3: Canvas — Section 03
+                    item {
+                        ScrollRevealWrapper(
+                            index = 3,
+                            revealed = revealedSections[3] == true,
+                            staggerOffset = 2
+                        ) {
+                            CanvasSection(
+                                selectedCanvas = state.selectedCanvas,
+                                onCanvasSelected = viewModel::selectCanvas
+                            )
+                        }
+                    }
+
+                    // 4: Form — Section 04
                     item {
                         ScrollRevealWrapper(
                             index = 4,
                             revealed = revealedSections[4] == true,
                             staggerOffset = 3
                         ) {
-                            CanvasSection(
-                                selectedCanvas = state.selectedCanvas,
-                                onCanvasSelected = viewModel::selectCanvas
+                            FormSection(
+                                selectedForm = state.selectedForm,
+                                onFormSelected = viewModel::selectForm
                             )
                         }
                     }

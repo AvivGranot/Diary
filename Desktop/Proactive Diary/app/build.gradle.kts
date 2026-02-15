@@ -36,6 +36,13 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // AI Insights — Gemini API key injected from local.properties (gitignored)
+        buildConfigField(
+            "String",
+            "GEMINI_API_KEY",
+            "\"${project.findProperty("GEMINI_API_KEY") ?: ""}\""
+        )
     }
 
     signingConfigs {

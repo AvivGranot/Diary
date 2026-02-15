@@ -89,6 +89,8 @@ val bottomNavItems = listOf(
 fun MainScreen(
     rootNavController: NavHostController,
     deepLinkDestination: String? = null,
+    deepLinkPrompt: String? = null,
+    deepLinkGoalId: String? = null,
     onDeepLinkConsumed: () -> Unit = {},
     billingViewModel: BillingViewModel = hiltViewModel(),
     mainScreenViewModel: MainScreenViewModel = hiltViewModel(),
@@ -112,6 +114,9 @@ fun MainScreen(
     // Overlay sub-screens (Goals, Reminders) — shown on top of pager
     var showGoals by remember { mutableStateOf(false) }
     var showReminders by remember { mutableStateOf(false) }
+
+    // Notification prompt carried through deep link → shown as WelcomeBackOverlay → WriteScreen
+    var activeNotificationPrompt by remember { mutableStateOf<String?>(null) }
 
     // Pager state — starts on Write tab (page 0)
     val pagerState = rememberPagerState(
@@ -153,6 +158,7 @@ fun MainScreen(
             when (dest) {
                 "write" -> {
                     if (subscriptionState.isActive) {
+                        activeNotificationPrompt = deepLinkPrompt
                         pagerState.animateScrollToPage(PAGE_WRITE)
                     } else {
                         showPaywall = true
@@ -264,7 +270,10 @@ fun MainScreen(
                                 scope.launch {
                                     billingViewModel.refreshSubscriptionState()
                                 }
-                            }
+                            },
+                            notificationPrompt = activeNotificationPrompt,
+                            notificationStreak = currentStreak,
+                            onNotificationPromptConsumed = { activeNotificationPrompt = null }
                         )
                     }
                     PAGE_JOURNAL -> {
@@ -282,9 +291,6 @@ fun MainScreen(
                             onNavigateToOnThisDay = {
                                 rootNavController.navigate(Routes.OnThisDay.route)
                             },
-                            onNavigateToTalkToJournal = {
-                                rootNavController.navigate(Routes.TalkToJournal.route)
-                            }
                         )
                     }
                     PAGE_SETTINGS -> {
@@ -311,9 +317,6 @@ fun MainScreen(
                             },
                             onNavigateToSupport = {
                                 rootNavController.navigate(Routes.ContactSupport.createRoute("support"))
-                            },
-                            onNavigateToTalkToJournal = {
-                                rootNavController.navigate(Routes.TalkToJournal.route)
                             },
                             onNavigateToDiaryWrapped = {
                                 rootNavController.navigate(Routes.DiaryWrapped.route)

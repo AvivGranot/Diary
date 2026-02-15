@@ -107,7 +107,7 @@ fun YearInReviewScreen(
         }
 
         // YOUR YEAR section header
-        SectionHeader("YOUR YEAR")
+        SectionHeader("YOUR ${state.year}")
         Spacer(Modifier.height(8.dp))
 
         // Stats card

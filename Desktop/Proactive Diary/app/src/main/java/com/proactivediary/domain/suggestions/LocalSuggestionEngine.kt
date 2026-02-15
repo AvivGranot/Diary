@@ -27,13 +27,68 @@ class LocalSuggestionEngine @Inject constructor(
         val moodDeferred = async { generateMoodPatternSuggestions() }
         val habitDeferred = async { generateWritingHabitSuggestions() }
 
-        val all = locationDeferred.await() +
+        val all = (locationDeferred.await() +
             weatherDeferred.await() +
             streakDeferred.await() +
             timeDeferred.await() +
             onThisDayDeferred.await() +
             moodDeferred.await() +
-            habitDeferred.await()
+            habitDeferred.await()).toMutableList()
+
+        // Ensure at least 4 suggestions even for new users with no data
+        if (all.size < 4) {
+            val defaults = listOf(
+                Suggestion(
+                    id = "default_1",
+                    type = SuggestionType.TIME_OF_DAY,
+                    title = "Start with what's on your mind",
+                    subtitle = "Free writing",
+                    prompt = "What's been on your mind lately?\n\n",
+                    iconName = "schedule"
+                ),
+                Suggestion(
+                    id = "default_2",
+                    type = SuggestionType.WRITING_HABIT,
+                    title = "Describe your day in three words",
+                    subtitle = "Quick reflection",
+                    prompt = "If you had to describe today in three words, what would they be? Why?\n\n",
+                    iconName = "edit_note"
+                ),
+                Suggestion(
+                    id = "default_3",
+                    type = SuggestionType.MOOD_PATTERN,
+                    title = "How are you really feeling?",
+                    subtitle = "Emotional check-in",
+                    prompt = "Take a moment \u2014 how are you really feeling right now? Not the polite answer, the real one.\n\n",
+                    iconName = "mood"
+                ),
+                Suggestion(
+                    id = "default_4",
+                    type = SuggestionType.TIME_OF_DAY,
+                    title = "One thing you're grateful for",
+                    subtitle = "Gratitude",
+                    prompt = "What's one thing you're grateful for today, and why does it matter?\n\n",
+                    iconName = "schedule"
+                ),
+                Suggestion(
+                    id = "default_5",
+                    type = SuggestionType.WRITING_HABIT,
+                    title = "A letter to your future self",
+                    subtitle = "Perspective",
+                    prompt = "Write a short letter to yourself one year from now. What do you want to remember?\n\n",
+                    iconName = "edit_note"
+                ),
+                Suggestion(
+                    id = "default_6",
+                    type = SuggestionType.MOOD_PATTERN,
+                    title = "The highlight of your week",
+                    subtitle = "Positive reflection",
+                    prompt = "What was the best moment of your week so far? Describe it in detail.\n\n",
+                    iconName = "mood"
+                )
+            )
+            all.addAll(defaults.take(4 - all.size))
+        }
 
         val dailySeed = LocalDate.now().dayOfYear.toLong()
         all.shuffled(Random(dailySeed)).take(6)

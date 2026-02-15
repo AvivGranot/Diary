@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -39,8 +40,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -50,7 +49,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -63,11 +61,9 @@ fun JournalScreen(
     onEntryClick: (String) -> Unit = {},
     onNavigateToWrite: (() -> Unit)? = null,
     onNavigateToOnThisDay: (() -> Unit)? = null,
-    onNavigateToTalkToJournal: (() -> Unit)? = null,
     viewModel: JournalViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
-    val haptic = LocalHapticFeedback.current
     var entryToDelete by remember { mutableStateOf<DiaryCardData?>(null) }
     var viewMode by remember { mutableStateOf("list") } // "list", "calendar", "gallery"
     var selectedDate by remember { mutableStateOf<java.time.LocalDate?>(null) }
@@ -121,9 +117,9 @@ fun JournalScreen(
             state.isEmpty && state.searchQuery.isBlank() -> {
                 // Empty state - no entries at all
                 EmptyState(
-                    title = "Your writing starts here",
-                    subtitle = "Begin your daily practice to see your entries",
-                    actionLabel = if (onNavigateToWrite != null) "Write your first entry" else null,
+                    title = "This is yours.",
+                    subtitle = "Your first entry is waiting.",
+                    actionLabel = if (onNavigateToWrite != null) "Begin" else null,
                     onAction = onNavigateToWrite
                 )
             }
@@ -261,54 +257,6 @@ fun JournalScreen(
                     if (state.aiInsight.isAvailable || state.aiInsight.isLocked) {
                         item(key = "ai_insight") {
                             AIInsightCard(data = state.aiInsight)
-                        }
-                    }
-
-                    // Ask your journal entry point
-                    if (onNavigateToTalkToJournal != null && state.entries.size >= 3) {
-                        item(key = "ask_journal") {
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 4.dp)
-                                    .clickable {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        onNavigateToTalkToJournal()
-                                    },
-                                shape = RoundedCornerShape(12.dp),
-                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.06f)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.AutoAwesome,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text(
-                                            text = "Ask your journal",
-                                            style = TextStyle(
-                                                fontFamily = CormorantGaramond,
-                                                fontSize = 16.sp,
-                                                color = MaterialTheme.colorScheme.onSurface
-                                            )
-                                        )
-                                        Text(
-                                            text = "Chat with AI about your entries",
-                                            style = TextStyle(
-                                                fontFamily = FontFamily.Default,
-                                                fontSize = 12.sp,
-                                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f)
-                                            )
-                                        )
-                                    }
-                                }
-                            }
                         }
                     }
 
@@ -499,18 +447,11 @@ private fun EmptyState(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(48.dp)
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Edit,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
-                modifier = Modifier.size(48.dp)
-            )
-            Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = title,
                 style = TextStyle(
                     fontFamily = CormorantGaramond,
-                    fontSize = 22.sp,
+                    fontSize = 24.sp,
                     color = MaterialTheme.colorScheme.onBackground
                 ),
                 textAlign = TextAlign.Center
@@ -584,11 +525,12 @@ private fun ViewModeButton(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    Surface(
-        modifier = Modifier.clickable(onClick = onClick),
-        shape = RoundedCornerShape(20.dp),
-        color = if (isSelected) MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
-        else Color.Transparent
+    // Underline-based selection — consistent with Discover's CategoryChip pattern
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .padding(horizontal = 14.dp, vertical = 6.dp)
     ) {
         Text(
             text = label,
@@ -596,9 +538,17 @@ private fun ViewModeButton(
                 fontFamily = CormorantGaramond,
                 fontSize = 14.sp,
                 color = if (isSelected) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f)
-            ),
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                else MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)
+            )
         )
+        if (isSelected) {
+            Spacer(modifier = Modifier.height(3.dp))
+            Box(
+                modifier = Modifier
+                    .width(20.dp)
+                    .height(1.5.dp)
+                    .background(MaterialTheme.colorScheme.onSurface)
+            )
+        }
     }
 }

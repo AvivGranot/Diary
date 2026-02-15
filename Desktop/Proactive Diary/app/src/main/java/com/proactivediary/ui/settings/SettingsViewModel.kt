@@ -23,6 +23,9 @@ import com.proactivediary.data.db.dao.PreferenceDao
 import com.proactivediary.data.db.dao.WritingReminderDao
 import com.proactivediary.data.db.entities.EntryEntity
 import com.proactivediary.data.db.entities.PreferenceEntity
+import com.proactivediary.notifications.NotificationHealth
+import com.proactivediary.notifications.NotificationHealthChecker
+import com.proactivediary.notifications.NotificationService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +49,8 @@ class SettingsViewModel @Inject constructor(
     private val goalDao: GoalDao,
     private val goalCheckInDao: GoalCheckInDao,
     private val writingReminderDao: WritingReminderDao,
+    private val notificationHealthChecker: NotificationHealthChecker,
+    private val notificationService: NotificationService,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -87,6 +92,13 @@ class SettingsViewModel @Inject constructor(
     private val _isAIEnabled = MutableStateFlow(false)
     val isAIEnabled: StateFlow<Boolean> = _isAIEnabled
 
+    // Notification health
+    private val _notificationHealth = MutableStateFlow<NotificationHealth>(NotificationHealth.Healthy)
+    val notificationHealth: StateFlow<NotificationHealth> = _notificationHealth
+
+    private val _isBatteryOptimized = MutableStateFlow(false)
+    val isBatteryOptimized: StateFlow<Boolean> = _isBatteryOptimized
+
     // Delete confirmation state
     private val _deleteStep = MutableStateFlow(0) // 0=none, 1=first dialog, 2=type DELETE
     val deleteStep: StateFlow<Int> = _deleteStep
@@ -94,7 +106,21 @@ class SettingsViewModel @Inject constructor(
     init {
         loadStreakPref()
         loadAIPref()
+        refreshNotificationHealth()
     }
+
+    fun refreshNotificationHealth() {
+        _notificationHealth.value = notificationHealthChecker.getOverallHealth()
+        _isBatteryOptimized.value = notificationHealthChecker.isBatteryOptimized()
+    }
+
+    fun sendTestNotification() {
+        notificationService.scheduleTestNotification()
+    }
+
+    fun getNotificationSettingsIntent() = notificationHealthChecker.getNotificationSettingsIntent()
+    fun getBatteryOptimizationIntent() = notificationHealthChecker.getBatteryOptimizationIntent()
+    fun getExactAlarmSettingsIntent() = notificationHealthChecker.getExactAlarmSettingsIntent()
 
     private fun loadStreakPref() {
         viewModelScope.launch {

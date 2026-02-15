@@ -54,7 +54,7 @@ fun FormSection(
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         SectionHeader(
-            number = "02",
+            number = "04",
             title = "Form",
             subtitle = "How your thoughts take shape on the page"
         )

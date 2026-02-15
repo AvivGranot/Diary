@@ -12,7 +12,6 @@ import com.proactivediary.data.db.dao.PreferenceDao
 import com.proactivediary.data.db.entities.PreferenceEntity
 import com.proactivediary.data.db.entities.EntryEntity
 import com.proactivediary.data.location.LocationService
-import com.proactivediary.data.media.AudioRecorderService
 import com.proactivediary.data.media.ImageMetadata
 import com.proactivediary.data.media.ImageStorageManager
 import com.proactivediary.data.repository.EntryRepository
@@ -126,8 +125,7 @@ data class WriteUiState(
     val requestInAppReview: Boolean = false,
     val showFirstEntryCelebration: Boolean = false,
     val audioPath: String? = null,
-    val isRecording: Boolean = false,
-    val isTranscribing: Boolean = false,
+    val isDictating: Boolean = false,
     val partialTranscript: String = "",
     val speechAvailable: Boolean = false
 )
@@ -142,7 +140,6 @@ class WriteViewModel @Inject constructor(
     private val streakRepository: StreakRepository,
     private val inAppReviewService: InAppReviewService,
     val imageStorageManager: ImageStorageManager,
-    private val audioRecorderService: AudioRecorderService,
     private val speechToTextService: com.proactivediary.data.media.SpeechToTextService,
     private val locationService: LocationService,
     private val weatherService: WeatherService,
@@ -641,52 +638,17 @@ class WriteViewModel @Inject constructor(
         }
     }
 
-    fun startRecording() {
-        viewModelScope.launch {
-            try {
-                val state = _uiState.value
-                val audioPath = audioRecorderService.startRecording(state.entryId)
-                _uiState.update { it.copy(audioPath = audioPath, isRecording = true) }
-                // Start speech-to-text alongside audio recording
-                if (_uiState.value.speechAvailable) {
-                    speechToTextService.startListening()
-                    _uiState.update { it.copy(isTranscribing = true) }
-                }
-                analyticsService.logFeatureUsed("voice_note_started")
-            } catch (e: Exception) {
-                _uiState.update { it.copy(saveError = "Failed to start recording.") }
-            }
-        }
+    fun startDictation() {
+        if (!_uiState.value.speechAvailable) return
+        speechToTextService.startListening()
+        _uiState.update { it.copy(isDictating = true) }
+        analyticsService.logFeatureUsed("dictation_started")
     }
 
-    fun stopRecording() {
-        viewModelScope.launch {
-            try {
-                // Stop speech-to-text first
-                speechToTextService.stopListening()
-                _uiState.update { it.copy(isTranscribing = false, partialTranscript = "") }
-                val audioPath = audioRecorderService.stopRecording()
-                _uiState.update { it.copy(audioPath = audioPath, isRecording = false) }
-                // Trigger save to persist audio path
-                saveEntry(_uiState.value.content)
-                analyticsService.logFeatureUsed("voice_note_saved")
-            } catch (e: Exception) {
-                _uiState.update { it.copy(saveError = "Failed to save recording.", isRecording = false) }
-            }
-        }
-    }
-
-    fun deleteRecording() {
-        viewModelScope.launch {
-            val path = _uiState.value.audioPath ?: return@launch
-            try {
-                val file = java.io.File(path)
-                if (file.exists()) file.delete()
-            } catch (_: Exception) {}
-            _uiState.update { it.copy(audioPath = null) }
-            saveEntry(_uiState.value.content)
-            analyticsService.logFeatureUsed("voice_note_deleted")
-        }
+    fun stopDictation() {
+        speechToTextService.stopListening()
+        _uiState.update { it.copy(isDictating = false, partialTranscript = "") }
+        analyticsService.logFeatureUsed("dictation_completed")
     }
 
     private fun parseImages(json: String): List<ImageMetadata> {
@@ -807,6 +769,18 @@ class WriteViewModel @Inject constructor(
 
     fun dismissTemplate() {
         _uiState.update { it.copy(templatePrompts = emptyList(), currentPromptIndex = 0) }
+    }
+
+    /**
+     * Activates a suggestion as a guided prompt banner above the editor.
+     * Reuses the template prompt infrastructure — the prompt guides, it doesn't become content.
+     */
+    fun activateGuidedPrompt(prompt: String) {
+        _uiState.update { it.copy(
+            templatePrompts = listOf(prompt),
+            currentPromptIndex = 0
+        )}
+        analyticsService.logFeatureUsed("suggestion_guided")
     }
 
     private fun fetchLocationAndWeather() {

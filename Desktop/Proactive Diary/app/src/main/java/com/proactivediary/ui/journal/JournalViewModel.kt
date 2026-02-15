@@ -121,16 +121,16 @@ class JournalViewModel @Inject constructor(
                     isEmpty = true
                 )
             }
-        }
 
-        // Also observe for real-time updates (new entries, edits, deletions)
-        viewModelScope.launch {
+            // NOW start observing for real-time updates (after initial load is done)
+            // coerceAtLeast(1) prevents the observer from emitting 0 entries
+            // when data exists but currentOffset hasn't been set yet
             entryRepository.getAllEntries()
                 .catch { /* already handled above */ }
                 .collect { entities ->
                     totalEntryCount = entities.size
                     // Always re-map visible entries so title/content updates are reflected
-                    val visibleCount = currentOffset.coerceAtMost(entities.size)
+                    val visibleCount = currentOffset.coerceAtLeast(1).coerceAtMost(entities.size)
                     val cards = entities.take(visibleCount).map { it.toCardData() }
                     val grouped = groupByDate(cards)
                     _uiState.value = _uiState.value.copy(

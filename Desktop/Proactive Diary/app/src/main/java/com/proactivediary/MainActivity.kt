@@ -49,6 +49,8 @@ class MainActivity : ComponentActivity() {
 
     private var sessionStartMs = 0L
     private val _deepLinkDestination = MutableStateFlow<String?>(null)
+    private val _deepLinkPrompt = MutableStateFlow<String?>(null)
+    private val _deepLinkGoalId = MutableStateFlow<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -110,10 +112,18 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val deepLink by _deepLinkDestination.collectAsState()
+            val deepLinkPrompt by _deepLinkPrompt.collectAsState()
+            val deepLinkGoalId by _deepLinkGoalId.collectAsState()
             ProactiveDiaryTheme {
                 ProactiveDiaryNavHost(
                     deepLinkDestination = deepLink,
-                    onDeepLinkConsumed = { _deepLinkDestination.value = null }
+                    deepLinkPrompt = deepLinkPrompt,
+                    deepLinkGoalId = deepLinkGoalId,
+                    onDeepLinkConsumed = {
+                        _deepLinkDestination.value = null
+                        _deepLinkPrompt.value = null
+                        _deepLinkGoalId.value = null
+                    }
                 )
             }
         }
@@ -129,6 +139,8 @@ class MainActivity : ComponentActivity() {
         if (destination != null) {
             analyticsService.logNotificationTapped(destination)
             _deepLinkDestination.value = destination
+            _deepLinkPrompt.value = intent.getStringExtra("notification_prompt")
+            _deepLinkGoalId.value = intent.getStringExtra("notification_goal_id")
         }
     }
 

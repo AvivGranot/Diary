@@ -70,7 +70,7 @@ import com.proactivediary.ui.share.ShareCardData
 import com.proactivediary.ui.share.StreakShareData
 import com.proactivediary.ui.share.StreakCardPreview
 import com.proactivediary.ui.share.shareCardAsImage
-import com.proactivediary.ui.suggestions.SuggestionsBottomSheet
+
 import com.proactivediary.ui.theme.CormorantGaramond
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -86,12 +86,25 @@ fun WriteScreen(
     viewModel: WriteViewModel = hiltViewModel(),
     onOpenDesignStudio: (() -> Unit)? = null,
     onShareStreak: ((Int) -> Unit)? = null,
-    onEntrySaved: (() -> Unit)? = null
+    onEntrySaved: (() -> Unit)? = null,
+    notificationPrompt: String? = null,
+    notificationStreak: Int = 0,
+    onNotificationPromptConsumed: (() -> Unit)? = null
 ) {
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val activity = context as? android.app.Activity
     var showTagDialog by remember { mutableStateOf(false) }
+    var showWelcomeBack by remember { mutableStateOf(false) }
+    var welcomeBackPrompt by remember { mutableStateOf<String?>(null) }
+
+    // Handle notification prompt arrival → show WelcomeBackOverlay
+    LaunchedEffect(notificationPrompt) {
+        if (notificationPrompt != null) {
+            welcomeBackPrompt = notificationPrompt
+            showWelcomeBack = true
+        }
+    }
 
     // Contact picker launcher — no READ_CONTACTS permission needed
     val contactPickerLauncher = rememberLauncherForActivityResult(
@@ -136,32 +149,31 @@ fun WriteScreen(
         }
     }
 
-    // Audio permission launcher
-    val audioPermissionLauncher = rememberLauncherForActivityResult(
+    // Mic permission launcher for dictation
+    val micPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
-            viewModel.startRecording()
+            viewModel.startDictation()
         }
     }
 
     var showImagePicker by remember { mutableStateOf(false) }
     var viewingImageId by remember { mutableStateOf<String?>(null) }
     var showTemplatePicker by remember { mutableStateOf(false) }
-    var showSuggestions by remember { mutableStateOf(false) }
     var showAttachmentTray by remember { mutableStateOf(false) }
-    var recordingSeconds by remember { mutableStateOf(0) }
+    var dictationSeconds by remember { mutableStateOf(0) }
 
-    // Track recording duration
-    LaunchedEffect(state.isRecording) {
-        if (state.isRecording) {
-            recordingSeconds = 0
+    // Track dictation duration
+    LaunchedEffect(state.isDictating) {
+        if (state.isDictating) {
+            dictationSeconds = 0
             while (true) {
                 delay(1000)
-                recordingSeconds++
+                dictationSeconds++
             }
         } else {
-            recordingSeconds = 0
+            dictationSeconds = 0
         }
     }
 
@@ -377,51 +389,6 @@ fun WriteScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Template prompt banner (when a template is active) — inline above editor
-                if (state.templatePrompts.isNotEmpty() && state.currentPromptIndex < state.templatePrompts.size) {
-                    GuidedPromptBanner(
-                        prompt = state.templatePrompts[state.currentPromptIndex],
-                        currentIndex = state.currentPromptIndex,
-                        totalPrompts = state.templatePrompts.size,
-                        onNext = { viewModel.advancePrompt() },
-                        onDismiss = { viewModel.dismissTemplate() },
-                        textColor = textColor,
-                        secondaryTextColor = secondaryTextColor,
-                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 4.dp)
-                    )
-                }
-
-                // Writing area — THE MAIN EVENT, immediately visible
-                WriteArea(
-                    content = state.content,
-                    onContentChanged = { viewModel.onContentChanged(it) },
-                    richTextState = richTextState,
-                    canvas = state.canvas,
-                    textColor = textColor,
-                    secondaryTextColor = secondaryTextColor,
-                    horizontalPadding = horizontalPadding,
-                    fontSizeSp = state.fontSize,
-                    lineHeightMultiplier = lineHeightMultiplier,
-                    placeholderText = state.dailyPrompt,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f)
-                )
-
-                // Live transcription partial text (during recording)
-                if (state.isRecording && state.partialTranscript.isNotBlank()) {
-                    Text(
-                        text = state.partialTranscript,
-                        style = TextStyle(
-                            fontFamily = FontFamily.Default,
-                            fontSize = (state.fontSize).sp,
-                            fontStyle = FontStyle.Italic,
-                            color = secondaryTextColor.copy(alpha = 0.4f)
-                        ),
-                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 4.dp)
-                    )
-                }
-
                 // Inline images — adaptive sizing (portrait=60%, landscape=full width)
                 if (state.images.isNotEmpty()) {
                     Spacer(Modifier.height(16.dp))
@@ -472,21 +439,66 @@ fun WriteScreen(
                     }
                 }
 
+                // Template prompt banner (when a template is active) — inline above editor
+                if (state.templatePrompts.isNotEmpty() && state.currentPromptIndex < state.templatePrompts.size) {
+                    GuidedPromptBanner(
+                        prompt = state.templatePrompts[state.currentPromptIndex],
+                        currentIndex = state.currentPromptIndex,
+                        totalPrompts = state.templatePrompts.size,
+                        onNext = { viewModel.advancePrompt() },
+                        onDismiss = { viewModel.dismissTemplate() },
+                        textColor = textColor,
+                        secondaryTextColor = secondaryTextColor,
+                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 4.dp)
+                    )
+                }
+
+                // Writing area — THE MAIN EVENT, immediately visible
+                WriteArea(
+                    content = state.content,
+                    onContentChanged = { viewModel.onContentChanged(it) },
+                    richTextState = richTextState,
+                    canvas = state.canvas,
+                    textColor = textColor,
+                    secondaryTextColor = secondaryTextColor,
+                    horizontalPadding = horizontalPadding,
+                    fontSizeSp = state.fontSize,
+                    lineHeightMultiplier = lineHeightMultiplier,
+                    placeholderText = state.dailyPrompt,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                )
+
+                // Live transcription — ghost text that feels like words materializing
+                if (state.isDictating && state.partialTranscript.isNotBlank()) {
+                    Text(
+                        text = "\u25CF  ${state.partialTranscript}",
+                        style = TextStyle(
+                            fontFamily = FontFamily.Default,
+                            fontSize = (state.fontSize).sp,
+                            color = Color(0xFF1565C0).copy(alpha = 0.5f),
+                            lineHeight = (state.fontSize * lineHeightMultiplier).sp
+                        ),
+                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 2.dp)
+                    )
+                } else if (state.isDictating) {
+                    // Listening indicator when no partial text yet
+                    Text(
+                        text = "\u25CF  Listening\u2026",
+                        style = TextStyle(
+                            fontFamily = FontFamily.Default,
+                            fontSize = 13.sp,
+                            color = Color(0xFF1565C0).copy(alpha = 0.3f)
+                        ),
+                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 2.dp)
+                    )
+                }
+
                 // Attachment strip — only when there are attachments
                 AttachmentStrip(
-                    images = state.images,
-                    thumbnailProvider = { filename ->
-                        viewModel.imageStorageManager.getThumbnailFile(state.entryId, filename)
-                    },
-                    audioPath = state.audioPath,
-                    isRecording = state.isRecording,
                     tags = state.tags,
                     taggedContacts = state.taggedContacts,
-                    onImageClick = { imageId -> viewingImageId = imageId },
-                    onRemoveImage = { imageId -> viewModel.removeImage(imageId) },
-                    onAddPhoto = { showImagePicker = true },
-                    onPlayAudio = { /* AudioPlayer handles this via the full-screen overlay */ },
-                    onDeleteAudio = { viewModel.deleteRecording() },
                     onEditTags = { showTagDialog = true },
                     onRemoveContact = { viewModel.onContactRemoved(it) },
                     secondaryTextColor = secondaryTextColor,
@@ -507,17 +519,17 @@ fun WriteScreen(
                 }
             }
 
-            // Bottom toolbar — with attachment trigger + recording mode
+            // Bottom toolbar — with attachment trigger + dictation mode
             WriteToolbar(
                 wordCount = state.wordCount,
                 showWordCount = showWordCount,
                 colorKey = state.colorKey,
                 richTextState = richTextState,
-                onSuggestionsClick = { showSuggestions = true },
+
                 onAttachmentClick = { showAttachmentTray = true },
-                isRecording = state.isRecording,
-                recordingSeconds = recordingSeconds,
-                onStopRecording = { viewModel.stopRecording() }
+                isDictating = state.isDictating,
+                dictationSeconds = dictationSeconds,
+                onStopDictation = { viewModel.stopDictation() }
             )
         }
 
@@ -568,9 +580,9 @@ fun WriteScreen(
                     true
                 }
                 if (hasPermission) {
-                    viewModel.startRecording()
+                    viewModel.startDictation()
                 } else {
-                    audioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                 }
             },
             onOpenTemplates = { showTemplatePicker = true },
@@ -703,17 +715,19 @@ fun WriteScreen(
         }
     }
 
-    // Suggestions bottom sheet
-    if (showSuggestions) {
-        SuggestionsBottomSheet(
-            onDismiss = { showSuggestions = false },
-            onSuggestionSelected = { suggestion ->
-                showSuggestions = false
-                viewModel.onContentChanged(suggestion.prompt + "\n\n")
-            },
-            textColor = textColor,
-            secondaryTextColor = secondaryTextColor,
-            backgroundColor = bgColor
+
+    // Welcome back overlay — shown when arriving from a notification with a prompt
+    if (showWelcomeBack && welcomeBackPrompt != null) {
+        WelcomeBackOverlay(
+            streak = notificationStreak,
+            prompt = welcomeBackPrompt!!,
+            onDismiss = {
+                showWelcomeBack = false
+                // Activate the prompt as a guided banner in the editor
+                welcomeBackPrompt?.let { viewModel.activateGuidedPrompt(it) }
+                welcomeBackPrompt = null
+                onNotificationPromptConsumed?.invoke()
+            }
         )
     }
 }
@@ -828,6 +842,10 @@ private fun WriteArea(
     val gridColor = secondaryTextColor.copy(alpha = 0.08f)
     val numberColor = secondaryTextColor.copy(alpha = 0.3f)
 
+    // Baseline offset: lines sit below text baselines, like ruled paper.
+    // Text ascent is ~70% of font size; we place lines at ~85% of each line slot.
+    val baselineOffset = lineHeightPx * 0.78f
+
     Box(modifier = modifier) {
         // Canvas lines drawn behind text
         Canvas(
@@ -841,8 +859,8 @@ private fun WriteArea(
 
             when (canvas) {
                 "lined" -> {
-                    for (i in 1..lineCount) {
-                        val y = i * lineHeightPx
+                    for (i in 0 until lineCount) {
+                        val y = baselineOffset + i * lineHeightPx
                         drawLine(
                             color = canvasLineColor,
                             start = Offset(0f, y),
@@ -854,8 +872,8 @@ private fun WriteArea(
                 "dotted" -> {
                     val horizontalSpacingPx = with(density) { 24.dp.toPx() }
                     val dotRadius = with(density) { 2.dp.toPx() }
-                    for (row in 1..lineCount) {
-                        val y = row * lineHeightPx
+                    for (row in 0 until lineCount) {
+                        val y = baselineOffset + row * lineHeightPx
                         var x = 0f
                         while (x <= width) {
                             drawCircle(
@@ -869,8 +887,8 @@ private fun WriteArea(
                 }
                 "grid" -> {
                     val horizontalSpacingPx = with(density) { 24.dp.toPx() }
-                    for (i in 1..lineCount) {
-                        val y = i * lineHeightPx
+                    for (i in 0 until lineCount) {
+                        val y = baselineOffset + i * lineHeightPx
                         drawLine(
                             color = gridColor,
                             start = Offset(0f, y),
@@ -890,8 +908,8 @@ private fun WriteArea(
                     }
                 }
                 "numbered" -> {
-                    for (i in 1..lineCount) {
-                        val y = i * lineHeightPx
+                    for (i in 0 until lineCount) {
+                        val y = baselineOffset + i * lineHeightPx
                         drawLine(
                             color = canvasLineColor,
                             start = Offset(0f, y),

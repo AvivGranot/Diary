@@ -18,49 +18,32 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import com.proactivediary.data.media.ImageMetadata
 import com.proactivediary.domain.model.TaggedContact
-import java.io.File
 
 /**
  * Unified attachment strip below the editor.
- * Only renders when there are actual attachments (images, audio, tags, contacts).
- * Horizontal scroll: [images] | [audio] | [tags] | [contacts]
+ * Only renders when there are actual attachments (tags, contacts).
+ * Horizontal scroll: [tags] | [contacts]
  */
 @Composable
 fun AttachmentStrip(
-    images: List<ImageMetadata>,
-    thumbnailProvider: (String) -> File,
-    audioPath: String?,
-    isRecording: Boolean,
     tags: List<String>,
     taggedContacts: List<TaggedContact>,
-    onImageClick: (String) -> Unit,
-    onRemoveImage: (String) -> Unit,
-    onAddPhoto: () -> Unit,
-    onPlayAudio: () -> Unit,
-    onDeleteAudio: () -> Unit,
     onEditTags: () -> Unit,
     onRemoveContact: (TaggedContact) -> Unit,
     secondaryTextColor: Color,
@@ -68,9 +51,7 @@ fun AttachmentStrip(
     horizontalPadding: Dp,
     modifier: Modifier = Modifier
 ) {
-    val hasContent = (audioPath != null && !isRecording) ||
-            tags.isNotEmpty() ||
-            taggedContacts.isNotEmpty()
+    val hasContent = tags.isNotEmpty() || taggedContacts.isNotEmpty()
 
     AnimatedVisibility(
         visible = hasContent,
@@ -85,49 +66,6 @@ fun AttachmentStrip(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            // Audio player (compact)
-            if (audioPath != null && !isRecording) {
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = secondaryTextColor.copy(alpha = 0.06f)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.PlayArrow,
-                            contentDescription = "Play",
-                            modifier = Modifier
-                                .size(18.dp)
-                                .clickable(onClick = onPlayAudio),
-                            tint = textColor.copy(alpha = 0.6f)
-                        )
-                        Text(
-                            text = "Voice",
-                            style = TextStyle(
-                                fontFamily = FontFamily.Default,
-                                fontSize = 12.sp,
-                                color = secondaryTextColor
-                            )
-                        )
-                        Icon(
-                            Icons.Default.Close,
-                            contentDescription = "Delete",
-                            modifier = Modifier
-                                .size(14.dp)
-                                .clickable(onClick = onDeleteAudio),
-                            tint = secondaryTextColor.copy(alpha = 0.4f)
-                        )
-                    }
-                }
-
-                if (tags.isNotEmpty() || taggedContacts.isNotEmpty()) {
-                    StripDivider(secondaryTextColor)
-                }
-            }
-
             // Tags
             if (tags.isNotEmpty()) {
                 tags.forEach { tag ->

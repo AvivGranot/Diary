@@ -31,9 +31,8 @@ import androidx.compose.material.icons.filled.FormatUnderlined
 import androidx.compose.material.icons.filled.FormatStrikethrough
 import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.FormatListNumbered
-import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.AutoAwesome
+
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -54,10 +53,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mohamedrejeb.richeditor.model.RichTextState
+import com.proactivediary.ui.theme.CormorantGaramond
 import com.proactivediary.domain.model.DiaryThemeConfig
 import com.proactivediary.ui.theme.DiaryColors
 
@@ -67,11 +68,11 @@ fun WriteToolbar(
     showWordCount: Boolean,
     colorKey: String,
     richTextState: RichTextState? = null,
-    onSuggestionsClick: (() -> Unit)? = null,
+
     onAttachmentClick: (() -> Unit)? = null,
-    isRecording: Boolean = false,
-    recordingSeconds: Int = 0,
-    onStopRecording: (() -> Unit)? = null,
+    isDictating: Boolean = false,
+    dictationSeconds: Int = 0,
+    onStopDictation: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val bgColor = DiaryThemeConfig.colorForKey(colorKey)
@@ -101,7 +102,7 @@ fun WriteToolbar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // "+" attachment button
-            if (onAttachmentClick != null && !isRecording) {
+            if (onAttachmentClick != null && !isDictating) {
                 FormatButton(
                     icon = Icons.Outlined.Add,
                     contentDescription = "Add attachment",
@@ -120,12 +121,11 @@ fun WriteToolbar(
                 Spacer(modifier = Modifier.width(4.dp))
             }
 
-            // Recording mode: show recording indicator instead of format buttons
-            if (isRecording) {
-                RecordingIndicator(
-                    durationSeconds = recordingSeconds,
-                    onStop = { onStopRecording?.invoke() },
-                    textColor = textColor,
+            // Dictation mode: show dictation indicator instead of format buttons
+            if (isDictating) {
+                DictationIndicator(
+                    durationSeconds = dictationSeconds,
+                    onStop = { onStopDictation?.invoke() },
                     secondaryColor = secondaryColor
                 )
             } else if (richTextState != null) {
@@ -212,51 +212,31 @@ fun WriteToolbar(
                 )
             }
 
-            // Suggestions button
-            if (onSuggestionsClick != null) {
-                Spacer(modifier = Modifier.width(8.dp))
-                Box(
-                    modifier = Modifier
-                        .width(0.5.dp)
-                        .height(20.dp)
-                        .background(secondaryColor.copy(alpha = 0.15f))
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { onSuggestionsClick() }
-                        .padding(horizontal = 6.dp, vertical = 4.dp)
-                ) {
-                    Icon(
-                        Icons.Outlined.AutoAwesome,
-                        contentDescription = "Ideas",
-                        tint = secondaryColor.copy(alpha = 0.7f),
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    Text(
-                        "Ideas",
-                        style = TextStyle(
-                            fontSize = 11.sp,
-                            color = secondaryColor.copy(alpha = 0.7f)
-                        )
-                    )
-                }
-            }
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Word count
-            if (showWordCount) {
+            // Word count — only visible at 10+ words, with milestone pulses
+            if (showWordCount && wordCount >= 10) {
+                val milestones = listOf(100, 250, 500, 1000)
+                val isMilestone = wordCount in milestones
+                val countAlpha by animateFloatAsState(
+                    targetValue = if (isMilestone) 0.6f else 0.4f,
+                    animationSpec = tween(if (isMilestone) 400 else 200),
+                    label = "wc_alpha"
+                )
+                val countScale by animateFloatAsState(
+                    targetValue = if (isMilestone) 1.08f else 1f,
+                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f),
+                    label = "wc_scale"
+                )
                 Text(
                     text = "$wordCount words",
                     style = TextStyle(
                         fontFamily = FontFamily.Default,
                         fontSize = 12.sp,
-                        color = secondaryColor
-                    )
+                        color = secondaryColor.copy(alpha = countAlpha)
+                    ),
+                    modifier = Modifier.scale(countScale)
                 )
             }
         }
@@ -301,44 +281,38 @@ private fun FormatButton(
 }
 
 /**
- * Compact recording indicator for the toolbar.
- * Shows: pulsing red dot + waveform bars + timer + stop button
+ * Compact dictation indicator for the toolbar.
+ * Shows: breathing dot + waveform bars + "Finish" button.
+ * No timer — time pressure kills creative expression.
+ * Blue tone — intelligence, not danger.
  */
 @Composable
-private fun RecordingIndicator(
+private fun DictationIndicator(
     durationSeconds: Int,
     onStop: () -> Unit,
-    textColor: Color,
     secondaryColor: Color
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "rec")
+    val infiniteTransition = rememberInfiniteTransition(label = "dict")
 
-    // Pulsing red dot
-    val dotAlpha by infiniteTransition.animateFloat(
-        initialValue = 1f,
-        targetValue = 0.3f,
-        animationSpec = infiniteRepeatable(tween(500, easing = LinearEasing), RepeatMode.Reverse),
-        label = "dot"
-    )
+    // Breathing dot — universal "active" indicator
+    val dotAlpha by infiniteTransition.animateFloat(0.4f, 0.8f, infiniteRepeatable(tween(1200), RepeatMode.Reverse), label = "dot")
 
-    // 5 waveform bars
+    // 5 waveform bars at organic rhythms
     val wave1 by infiniteTransition.animateFloat(0.3f, 1f, infiniteRepeatable(tween(300), RepeatMode.Reverse), label = "w1")
     val wave2 by infiniteTransition.animateFloat(0.5f, 0.8f, infiniteRepeatable(tween(450), RepeatMode.Reverse), label = "w2")
     val wave3 by infiniteTransition.animateFloat(0.2f, 1f, infiniteRepeatable(tween(350), RepeatMode.Reverse), label = "w3")
     val wave4 by infiniteTransition.animateFloat(0.6f, 0.9f, infiniteRepeatable(tween(500), RepeatMode.Reverse), label = "w4")
     val wave5 by infiniteTransition.animateFloat(0.4f, 1f, infiniteRepeatable(tween(280), RepeatMode.Reverse), label = "w5")
 
-    val redColor = Color(0xFFD32F2F)
-    val minutes = durationSeconds / 60
-    val seconds = durationSeconds % 60
+    val dictColor = Color(0xFF1565C0)
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        // Pulsing red dot
-        Canvas(modifier = Modifier.size(8.dp)) {
-            drawCircle(color = redColor.copy(alpha = dotAlpha), radius = size.minDimension / 2)
+        // Breathing dot
+        Canvas(modifier = Modifier.size(6.dp)) {
+            drawCircle(color = dictColor.copy(alpha = dotAlpha))
         }
 
         // Waveform bars
@@ -350,7 +324,7 @@ private fun RecordingIndicator(
             waveHeights.forEachIndexed { i, fraction ->
                 val barH = maxH * fraction
                 drawRoundRect(
-                    color = redColor,
+                    color = dictColor,
                     topLeft = androidx.compose.ui.geometry.Offset(i * (barWidth + gap), (maxH - barH) / 2),
                     size = androidx.compose.ui.geometry.Size(barWidth, barH),
                     cornerRadius = androidx.compose.ui.geometry.CornerRadius(barWidth / 2)
@@ -358,20 +332,21 @@ private fun RecordingIndicator(
             }
         }
 
-        // Timer
-        Text(
-            text = String.format("%d:%02d", minutes, seconds),
-            style = TextStyle(fontFamily = FontFamily.Default, fontSize = 13.sp, color = redColor)
-        )
+        Spacer(modifier = Modifier.weight(1f))
 
-        // Stop button
-        Icon(
-            imageVector = Icons.Filled.Stop,
-            contentDescription = "Stop recording",
-            tint = redColor,
+        // "Finish" stop button — conclusive, not rushed
+        Text(
+            text = "Finish",
+            style = TextStyle(
+                fontFamily = FontFamily.Default,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = dictColor
+            ),
             modifier = Modifier
-                .size(24.dp)
+                .clip(RoundedCornerShape(8.dp))
                 .clickable(onClick = onStop)
+                .padding(horizontal = 10.dp, vertical = 4.dp)
         )
     }
 }

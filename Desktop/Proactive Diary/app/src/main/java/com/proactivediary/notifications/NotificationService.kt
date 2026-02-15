@@ -181,6 +181,29 @@ class NotificationService @Inject constructor(
         }
     }
 
+    /**
+     * Schedule a test notification 5 seconds from now.
+     * Proves the full pipeline: AlarmManager → AlarmReceiver → NotificationManager.
+     */
+    fun scheduleTestNotification() {
+        val triggerTime = System.currentTimeMillis() + 5000
+
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
+            putExtra(AlarmReceiver.EXTRA_TYPE, AlarmReceiver.TYPE_TEST)
+            putExtra(AlarmReceiver.EXTRA_ID, "test")
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            AlarmReceiver.TEST_NOTIFICATION_ID,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        scheduleExact(triggerTime, pendingIntent)
+        Log.d("NotificationService", "Test notification scheduled for 5 seconds from now")
+    }
+
     // --- Private helpers ---
 
     /**
@@ -195,7 +218,7 @@ class NotificationService @Inject constructor(
                     AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent
                 )
             } else {
-                // Exact alarm permission not granted — use best-effort
+                Log.w("NotificationService", "Exact alarm permission not granted — using inexact fallback. Notifications may be delayed.")
                 alarmManager.setAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent
                 )

@@ -13,7 +13,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.proactivediary.MainActivity
 import com.proactivediary.R
-import com.proactivediary.data.repository.StreakRepository
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +34,12 @@ class AlarmReceiver : BroadcastReceiver() {
         val id = intent.getStringExtra(EXTRA_ID) ?: return
         val label = intent.getStringExtra(EXTRA_LABEL) ?: "Proactive Diary"
         val daysJson = intent.getStringExtra(EXTRA_DAYS) ?: "[0,1,2,3,4,5,6]"
+
+        // Test notifications don't reschedule and ignore day checks
+        if (type == TYPE_TEST) {
+            showTestNotification(context)
+            return
+        }
 
         // Always reschedule tomorrow's exact alarm (since we no longer use setRepeating)
         rescheduleNextAlarm(context, intent, type, id)
@@ -61,9 +66,15 @@ class AlarmReceiver : BroadcastReceiver() {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+        // Get beautiful content from the engine
+        val content = NotificationContentEngine.getWritingContent()
+        val notificationId = reminderId.hashCode() and 0x7FFFFFFF
+
+        // Main tap intent — carries the prompt through the deep link chain
         val tapIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(EXTRA_TAB, TAB_WRITE)
+            putExtra(EXTRA_PROMPT, content.prompt)
         }
 
         val pendingIntent = PendingIntent.getActivity(
@@ -73,16 +84,48 @@ class AlarmReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        // "Start Writing" action — same deep link with prompt
+        val startWritingIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_TAB, TAB_WRITE)
+            putExtra(EXTRA_PROMPT, content.prompt)
+        }
+        val startWritingPending = PendingIntent.getActivity(
+            context,
+            reminderId.hashCode() + 500000,
+            startWritingIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // "Remind Me Later" action — snooze 30 min
+        val snoozeIntent = Intent(context, SnoozeReceiver::class.java).apply {
+            putExtra(SnoozeReceiver.EXTRA_NOTIFICATION_ID, notificationId)
+            putExtra(EXTRA_TYPE, TYPE_WRITING)
+            putExtra(EXTRA_ID, reminderId)
+            putExtra(EXTRA_LABEL, label)
+            putExtra(EXTRA_DAYS, "[0,1,2,3,4,5,6]")
+            putExtra(EXTRA_TIME, "")
+        }
+        val snoozePending = PendingIntent.getBroadcast(
+            context,
+            reminderId.hashCode() + 600000,
+            snoozeIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(context, NotificationChannels.CHANNEL_WRITING)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Time to write")
-            .setContentText(label)
+            .setContentTitle(content.title)
+            .setContentText(content.body)
+            .setStyle(NotificationCompat.BigTextStyle()
+                .bigText(content.body + "\n\n\u201C" + content.prompt + "\u201D"))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
+            .addAction(0, "Start Writing", startWritingPending)
+            .addAction(0, "Remind Me Later", snoozePending)
             .build()
 
-        val notificationId = reminderId.hashCode() and 0x7FFFFFFF
         notificationManager.notify(notificationId, notification)
     }
 
@@ -90,9 +133,14 @@ class AlarmReceiver : BroadcastReceiver() {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+        val content = NotificationContentEngine.getGoalContent(goalTitle)
+        val notificationId = (goalId.hashCode() and 0x7FFFFFFF) or 0x40000000
+
+        // Main tap intent — opens Goals screen
         val tapIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(EXTRA_TAB, TAB_GOALS)
+            putExtra(EXTRA_GOAL_ID, goalId)
         }
 
         val pendingIntent = PendingIntent.getActivity(
@@ -102,16 +150,46 @@ class AlarmReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        // "Check In" action — records check-in without opening app
+        val checkInIntent = Intent(context, GoalCheckInReceiver::class.java).apply {
+            putExtra(GoalCheckInReceiver.EXTRA_GOAL_ID, goalId)
+            putExtra(GoalCheckInReceiver.EXTRA_NOTIFICATION_ID, notificationId)
+        }
+        val checkInPending = PendingIntent.getBroadcast(
+            context,
+            goalId.hashCode() + 700000,
+            checkInIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        // "Remind Me Later" action
+        val snoozeIntent = Intent(context, SnoozeReceiver::class.java).apply {
+            putExtra(SnoozeReceiver.EXTRA_NOTIFICATION_ID, notificationId)
+            putExtra(EXTRA_TYPE, TYPE_GOAL)
+            putExtra(EXTRA_ID, goalId)
+            putExtra(EXTRA_LABEL, goalTitle)
+            putExtra(EXTRA_DAYS, "[0,1,2,3,4,5,6]")
+            putExtra(EXTRA_TIME, "")
+        }
+        val snoozePending = PendingIntent.getBroadcast(
+            context,
+            goalId.hashCode() + 800000,
+            snoozeIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(context, NotificationChannels.CHANNEL_GOALS)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Goal check-in")
-            .setContentText("Have you worked on \"$goalTitle\" today?")
+            .setContentTitle(content.title)
+            .setContentText(content.body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(content.body))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
+            .addAction(0, "Check In", checkInPending)
+            .addAction(0, "Remind Me Later", snoozePending)
             .build()
 
-        val notificationId = (goalId.hashCode() and 0x7FFFFFFF) or 0x40000000
         notificationManager.notify(notificationId, notification)
     }
 
@@ -150,9 +228,13 @@ class AlarmReceiver : BroadcastReceiver() {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+        val content = NotificationContentEngine.getFallbackContent(streak)
+        val notificationId = (reminderId.hashCode() and 0x7FFFFFFF) or 0x20000000
+
         val tapIntent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra(EXTRA_TAB, TAB_WRITE)
+            putExtra(EXTRA_PROMPT, content.prompt)
         }
 
         val pendingIntent = PendingIntent.getActivity(
@@ -162,23 +244,45 @@ class AlarmReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val body = if (streak > 0) {
-            "You're on a $streak-day streak. Don't break it."
-        } else {
-            "You haven't written in your diary today. Even a few words count."
-        }
-
         val notification = NotificationCompat.Builder(context, NotificationChannels.CHANNEL_WRITING)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Still time to write")
-            .setContentText(body)
+            .setContentTitle(content.title)
+            .setContentText(content.body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(content.body))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()
 
-        val notificationId = (reminderId.hashCode() and 0x7FFFFFFF) or 0x20000000
         notificationManager.notify(notificationId, notification)
+    }
+
+    private fun showTestNotification(context: Context) {
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val tapIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_TAB, TAB_WRITE)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            TEST_NOTIFICATION_ID,
+            tapIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, NotificationChannels.CHANNEL_WRITING)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("Notifications are working.")
+            .setContentText("You'll hear from us at your next scheduled reminder.")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        notificationManager.notify(TEST_NOTIFICATION_ID, notification)
     }
 
     /**
@@ -245,12 +349,17 @@ class AlarmReceiver : BroadcastReceiver() {
         const val EXTRA_TIME = "notification_time"
         const val EXTRA_FALLBACK_ENABLED = "fallback_enabled"
         const val EXTRA_TAB = "destination"
+        const val EXTRA_PROMPT = "notification_prompt"
+        const val EXTRA_GOAL_ID = "notification_goal_id"
 
         const val TYPE_WRITING = "writing"
         const val TYPE_GOAL = "goal"
         const val TYPE_FALLBACK = "fallback_check"
+        const val TYPE_TEST = "test"
 
         const val TAB_WRITE = "write"
         const val TAB_GOALS = "goals"
+
+        const val TEST_NOTIFICATION_ID = 9998
     }
 }

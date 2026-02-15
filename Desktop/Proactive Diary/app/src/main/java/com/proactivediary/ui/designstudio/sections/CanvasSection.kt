@@ -67,7 +67,7 @@ fun CanvasSection(
 
     Column(modifier = modifier.fillMaxWidth()) {
         SectionHeader(
-            number = "04",
+            number = "03",
             title = "Canvas",
             subtitle = "The lines on your page shape the thoughts you put on them"
         )

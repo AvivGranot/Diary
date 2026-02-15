@@ -111,7 +111,21 @@ fun PaywallDialog(
                     FeatureRow("Privacy-first \u2014 your data stays on device")
                 }
 
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(16.dp))
+
+                // Privacy promise — shown before pricing, not after
+                Text(
+                    text = "Everything stays on your device.\nWe never see what you write.",
+                    style = TextStyle(
+                        fontFamily = CormorantGaramond,
+                        fontStyle = FontStyle.Italic,
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f)
+                    ),
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(20.dp))
 
                 // Free trial CTA for first-time paywall viewers
                 if (isFirstPaywallView) {
@@ -168,9 +182,9 @@ fun PaywallDialog(
 
                 Spacer(Modifier.height(12.dp))
 
-                // Urgency line
+                // Reassurance
                 Text(
-                    text = "Your entries are safe. Upgrade to keep your practice going.",
+                    text = "Cancel anytime. Your entries are always yours.",
                     style = TextStyle(
                         fontFamily = CormorantGaramond,
                         fontStyle = FontStyle.Italic,
@@ -193,18 +207,6 @@ fun PaywallDialog(
                     )
                 }
 
-                Spacer(Modifier.height(8.dp))
-
-                // Privacy note
-                Text(
-                    text = "Your data stays on your device.\nWe never see what you write.",
-                    style = TextStyle(
-                        fontSize = 12.sp,
-                        fontStyle = FontStyle.Italic,
-                        color = MaterialTheme.colorScheme.secondary
-                    ),
-                    textAlign = TextAlign.Center
-                )
             }
         }
     }
