@@ -72,7 +72,14 @@ import com.proactivediary.ui.share.StreakCardPreview
 import com.proactivediary.ui.share.shareCardAsImage
 import com.proactivediary.ui.suggestions.SuggestionsBottomSheet
 import com.proactivediary.ui.theme.CormorantGaramond
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.AsyncImage
 
 @Composable
 fun WriteScreen(
@@ -413,6 +420,56 @@ fun WriteScreen(
                         ),
                         modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 4.dp)
                     )
+                }
+
+                // Inline images — adaptive sizing (portrait=60%, landscape=full width)
+                if (state.images.isNotEmpty()) {
+                    Spacer(Modifier.height(16.dp))
+                    state.images.forEach { image ->
+                        val thumbnailFile = viewModel.imageStorageManager
+                            .getThumbnailFile(state.entryId, image.filename)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = horizontalPadding),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Box {
+                                AsyncImage(
+                                    model = thumbnailFile,
+                                    contentDescription = "Photo",
+                                    modifier = Modifier
+                                        .then(
+                                            if (image.isPortrait)
+                                                Modifier.fillMaxWidth(0.6f)
+                                            else
+                                                Modifier.fillMaxWidth()
+                                        )
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .clickable { viewingImageId = image.id },
+                                    contentScale = ContentScale.FillWidth
+                                )
+                                // Remove button (top-right)
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(4.dp)
+                                        .size(24.dp)
+                                        .background(Color.Black.copy(alpha = 0.4f), CircleShape)
+                                        .clickable { viewModel.removeImage(image.id) },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.Close,
+                                        contentDescription = "Remove",
+                                        modifier = Modifier.size(14.dp),
+                                        tint = Color.White
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(12.dp))
+                    }
                 }
 
                 // Attachment strip — only when there are attachments

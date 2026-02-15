@@ -183,7 +183,8 @@ private fun CategoryChip(
         style = TextStyle(
             fontFamily = CormorantGaramond,
             fontSize = 13.sp,
-            color = if (isSelected) textColor else secondaryColor.copy(alpha = 0.5f)
+            fontWeight = if (isSelected) null else FontWeight.Medium,
+            color = if (isSelected) textColor else secondaryColor.copy(alpha = 0.85f)
         ),
         modifier = Modifier
             .background(

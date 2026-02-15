@@ -68,7 +68,7 @@ import com.proactivediary.ui.share.ShareCardData
 import com.proactivediary.ui.share.ShareCardDialog
 import com.proactivediary.ui.share.shareCardAsImage
 import androidx.compose.foundation.layout.navigationBarsPadding
-import com.proactivediary.ui.chat.GoDeeperSheet
+import com.proactivediary.ui.chat.ReflectionPromptsSheet
 import com.proactivediary.ui.theme.CormorantGaramond
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -385,29 +385,34 @@ fun EntryDetailScreen(
                 }
             }
 
-            // Image gallery
+            // Image gallery — inline, adaptive sizing
             if (state.images.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(16.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState())
-                        .padding(horizontal = horizontalPadding),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    state.images.forEach { image ->
-                        val thumbnailFile = viewModel.imageStorageManager
-                            .getThumbnailFile(state.entryId, image.filename)
+                state.images.forEach { image ->
+                    val thumbnailFile = viewModel.imageStorageManager
+                        .getThumbnailFile(state.entryId, image.filename)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = horizontalPadding),
+                        contentAlignment = Alignment.Center
+                    ) {
                         AsyncImage(
                             model = thumbnailFile,
                             contentDescription = "Photo",
                             modifier = Modifier
-                                .size(80.dp)
+                                .then(
+                                    if (image.isPortrait)
+                                        Modifier.fillMaxWidth(0.6f)
+                                    else
+                                        Modifier.fillMaxWidth()
+                                )
                                 .clip(RoundedCornerShape(8.dp))
                                 .clickable { viewingImageId = image.id },
-                            contentScale = ContentScale.Crop
+                            contentScale = ContentScale.FillWidth
                         )
                     }
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
             }
 
@@ -578,11 +583,17 @@ fun EntryDetailScreen(
         }
     }
 
-    // "Go Deeper" AI bottom sheet
+    // "Go Deeper" reflection prompts bottom sheet
     if (showGoDeeper) {
-        GoDeeperSheet(
-            entryId = state.entryId,
-            onDismiss = { showGoDeeper = false }
+        ReflectionPromptsSheet(
+            onDismiss = { showGoDeeper = false },
+            onPromptSelected = { prompt ->
+                showGoDeeper = false
+                onEdit(state.entryId) // Navigate to Write with a new entry
+            },
+            textColor = textColor,
+            secondaryTextColor = secondaryTextColor,
+            backgroundColor = bgColor
         )
     }
 }

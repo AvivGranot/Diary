@@ -107,7 +107,7 @@ fun AttachmentTray(
 
                         Spacer(Modifier.height(20.dp))
 
-                        // Row 1: Photo, Voice, Template
+                        // Row 1: Photo, Record, Guided
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
@@ -124,7 +124,7 @@ fun AttachmentTray(
                             )
                             TrayItem(
                                 icon = Icons.Outlined.Mic,
-                                label = "Voice",
+                                label = "Record",
                                 textColor = textColor,
                                 secondaryColor = secondaryTextColor,
                                 onClick = {
@@ -134,7 +134,7 @@ fun AttachmentTray(
                             )
                             TrayItem(
                                 icon = Icons.Outlined.Description,
-                                label = "Template",
+                                label = "Guided",
                                 textColor = textColor,
                                 secondaryColor = secondaryTextColor,
                                 onClick = {
@@ -146,14 +146,14 @@ fun AttachmentTray(
 
                         Spacer(Modifier.height(16.dp))
 
-                        // Row 2: Tags, People
+                        // Row 2: #Label, Share
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
                             TrayItem(
                                 icon = Icons.Outlined.Tag,
-                                label = "Tags",
+                                label = "#Label",
                                 textColor = textColor,
                                 secondaryColor = secondaryTextColor,
                                 onClick = {
@@ -163,7 +163,7 @@ fun AttachmentTray(
                             )
                             TrayItem(
                                 icon = Icons.Outlined.Person,
-                                label = "People",
+                                label = "Share",
                                 textColor = textColor,
                                 secondaryColor = secondaryTextColor,
                                 onClick = {

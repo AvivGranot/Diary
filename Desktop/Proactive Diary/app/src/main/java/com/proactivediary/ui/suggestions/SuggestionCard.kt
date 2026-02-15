@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.EditNote
@@ -107,5 +108,6 @@ private fun iconForType(type: SuggestionType): ImageVector {
         SuggestionType.ON_THIS_DAY -> Icons.Outlined.CalendarToday
         SuggestionType.MOOD_PATTERN -> Icons.Outlined.Mood
         SuggestionType.WRITING_HABIT -> Icons.Outlined.EditNote
+        SuggestionType.REFLECTION -> Icons.Outlined.AutoAwesome
     }
 }

@@ -49,9 +49,9 @@ fun DesignStudioScreen(
     val revealedSections = remember { mutableStateMapOf<Int, Boolean>() }
 
     // Detect visibility for scroll-reveal animations
-    // Items: 0=preview, 1=divider, 2=soul(section0), 3=form(section1), 4=touch(section2),
-    //        5=canvas(section3), 6=details(section4), 7=mark(section5), 8=summary, 9=bottomPadding
-    val sectionIndices = listOf(2, 3, 4, 5, 6, 7, 8) // indices of animated items
+    // Items: 0=divider, 1=soul(section0), 2=form(section1), 3=touch(section2),
+    //        4=canvas(section3), 5=details(section4), 6=mark(section5), 7=summary, 8=bottomPadding
+    val sectionIndices = listOf(1, 2, 3, 4, 5, 6, 7) // indices of animated items
 
     LaunchedEffect(listState) {
         snapshotFlow {
@@ -76,6 +76,9 @@ fun DesignStudioScreen(
                 onBack = if (isEditMode) onNavigateToGoals else null
             )
 
+            // Pinned preview — always visible above scrollable sections
+            DiaryPreview(state = state)
+
             Box(
                 modifier = Modifier
                     .weight(1f)
@@ -85,23 +88,18 @@ fun DesignStudioScreen(
                     state = listState,
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    // 0: Diary Preview
-                    item {
-                        DiaryPreview(state = state)
-                    }
-
-                    // 1: First divider
+                    // 0: First divider
                     item {
                         Spacer(modifier = Modifier.height(4.dp))
                         SectionDivider()
                         Spacer(modifier = Modifier.height(28.dp))
                     }
 
-                    // 2: Soul — Section 01
+                    // 1: Soul — Section 01
                     item {
                         ScrollRevealWrapper(
-                            index = 2,
-                            revealed = revealedSections[2] == true,
+                            index = 1,
+                            revealed = revealedSections[1] == true,
                             staggerOffset = 0
                         ) {
                             SoulSection(
@@ -111,11 +109,11 @@ fun DesignStudioScreen(
                         }
                     }
 
-                    // 3: Form — Section 02
+                    // 2: Form — Section 02
                     item {
                         ScrollRevealWrapper(
-                            index = 3,
-                            revealed = revealedSections[3] == true,
+                            index = 2,
+                            revealed = revealedSections[2] == true,
                             staggerOffset = 1
                         ) {
                             FormSection(
@@ -125,11 +123,11 @@ fun DesignStudioScreen(
                         }
                     }
 
-                    // 4: Touch — Section 03
+                    // 3: Touch — Section 03
                     item {
                         ScrollRevealWrapper(
-                            index = 4,
-                            revealed = revealedSections[4] == true,
+                            index = 3,
+                            revealed = revealedSections[3] == true,
                             staggerOffset = 2
                         ) {
                             TouchSection(
@@ -139,11 +137,11 @@ fun DesignStudioScreen(
                         }
                     }
 
-                    // 5: Canvas — Section 04
+                    // 4: Canvas — Section 04
                     item {
                         ScrollRevealWrapper(
-                            index = 5,
-                            revealed = revealedSections[5] == true,
+                            index = 4,
+                            revealed = revealedSections[4] == true,
                             staggerOffset = 3
                         ) {
                             CanvasSection(
@@ -153,11 +151,11 @@ fun DesignStudioScreen(
                         }
                     }
 
-                    // 6: Details — Section 05
+                    // 5: Details — Section 05
                     item {
                         ScrollRevealWrapper(
-                            index = 6,
-                            revealed = revealedSections[6] == true,
+                            index = 5,
+                            revealed = revealedSections[5] == true,
                             staggerOffset = 4
                         ) {
                             DetailsSection(
@@ -167,11 +165,11 @@ fun DesignStudioScreen(
                         }
                     }
 
-                    // 7: Mark — Section 06
+                    // 6: Mark — Section 06
                     item {
                         ScrollRevealWrapper(
-                            index = 7,
-                            revealed = revealedSections[7] == true,
+                            index = 6,
+                            revealed = revealedSections[6] == true,
                             staggerOffset = 5
                         ) {
                             MarkSection(
@@ -185,11 +183,11 @@ fun DesignStudioScreen(
                         }
                     }
 
-                    // 8: Summary Card
+                    // 7: Summary Card
                     item {
                         ScrollRevealWrapper(
-                            index = 8,
-                            revealed = revealedSections[8] == true,
+                            index = 7,
+                            revealed = revealedSections[7] == true,
                             staggerOffset = 6
                         ) {
                             Spacer(modifier = Modifier.height(20.dp))
@@ -197,7 +195,7 @@ fun DesignStudioScreen(
                         }
                     }
 
-                    // 9: Bottom padding for footer clearance
+                    // 8: Bottom padding for footer clearance
                     item {
                         Spacer(modifier = Modifier.height(140.dp))
                     }

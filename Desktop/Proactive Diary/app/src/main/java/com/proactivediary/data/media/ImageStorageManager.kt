@@ -19,7 +19,9 @@ data class ImageMetadata(
     val width: Int,
     val height: Int,
     val addedAt: Long
-)
+) {
+    val isPortrait: Boolean get() = height > width
+}
 
 @Singleton
 class ImageStorageManager @Inject constructor(

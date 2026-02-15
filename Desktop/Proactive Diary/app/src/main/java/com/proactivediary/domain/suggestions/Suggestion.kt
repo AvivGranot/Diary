@@ -18,5 +18,6 @@ enum class SuggestionType {
     TIME_OF_DAY,
     ON_THIS_DAY,
     MOOD_PATTERN,
-    WRITING_HABIT
+    WRITING_HABIT,
+    REFLECTION
 }

@@ -160,7 +160,7 @@ fun OnboardingGoalsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 32.dp)
         ) {
-            // --- Section 01: Goals ---
+            // --- Section 01: Writing Reminders ---
             Text(
                 text = "01",
                 style = MaterialTheme.typography.labelSmall,
@@ -168,13 +168,57 @@ fun OnboardingGoalsScreen(
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "Goals",
+                text = "Writing Reminders",
                 style = MaterialTheme.typography.headlineLarge,
                 color = inkColor
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                text = "What do you want to track?",
+                text = "Build the habit. We\u2019ll gently nudge you.",
+                style = TextStyle(
+                    fontFamily = CormorantGaramond,
+                    fontSize = 16.sp,
+                    fontStyle = FontStyle.Italic
+                ),
+                color = pencilColor
+            )
+
+            Spacer(Modifier.height(20.dp))
+
+            OnboardingRemindersSection(
+                reminders = reminders,
+                onReminderChanged = { index, reminder -> reminders[index] = reminder },
+                onReminderAdded = {
+                    if (reminders.size < 5) {
+                        reminders.add(ReminderInput("Custom reminder", 12, 0))
+                    }
+                },
+                onReminderRemoved = { index -> reminders.removeAt(index) },
+                canAddMore = reminders.size < 5,
+                inkColor = inkColor,
+                pencilColor = pencilColor
+            )
+
+            // --- Divider ---
+            Spacer(Modifier.height(24.dp))
+            HorizontalDivider(color = pencilColor.copy(alpha = 0.15f), thickness = 1.dp)
+            Spacer(Modifier.height(24.dp))
+
+            // --- Section 02: Personal Goals ---
+            Text(
+                text = "02",
+                style = MaterialTheme.typography.labelSmall,
+                color = pencilColor
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Personal Goals",
+                style = MaterialTheme.typography.headlineLarge,
+                color = inkColor
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = "Set intentions that matter to you.",
                 style = TextStyle(
                     fontFamily = CormorantGaramond,
                     fontSize = 16.sp,
@@ -214,50 +258,6 @@ fun OnboardingGoalsScreen(
                     modifier = Modifier.clickable { goals.add(GoalInput()) }
                 )
             }
-
-            // --- Divider ---
-            Spacer(Modifier.height(24.dp))
-            HorizontalDivider(color = pencilColor.copy(alpha = 0.15f), thickness = 1.dp)
-            Spacer(Modifier.height(24.dp))
-
-            // --- Section 02: Reminders ---
-            Text(
-                text = "02",
-                style = MaterialTheme.typography.labelSmall,
-                color = pencilColor
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = "Reminders",
-                style = MaterialTheme.typography.headlineLarge,
-                color = inkColor
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = "When should we remind you to write?",
-                style = TextStyle(
-                    fontFamily = CormorantGaramond,
-                    fontSize = 16.sp,
-                    fontStyle = FontStyle.Italic
-                ),
-                color = pencilColor
-            )
-
-            Spacer(Modifier.height(20.dp))
-
-            OnboardingRemindersSection(
-                reminders = reminders,
-                onReminderChanged = { index, reminder -> reminders[index] = reminder },
-                onReminderAdded = {
-                    if (reminders.size < 5) {
-                        reminders.add(ReminderInput("Custom reminder", 12, 0))
-                    }
-                },
-                onReminderRemoved = { index -> reminders.removeAt(index) },
-                canAddMore = reminders.size < 5,
-                inkColor = inkColor,
-                pencilColor = pencilColor
-            )
 
             Spacer(Modifier.height(20.dp))
 

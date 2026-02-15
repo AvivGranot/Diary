@@ -67,19 +67,5 @@ fun DesignNavBar(
             modifier = Modifier.align(Alignment.Center)
         )
 
-        // Right: Heart icon (text-based, non-functional MVP)
-        Text(
-            text = "\u2661",
-            fontSize = 20.sp,
-            color = DiaryColors.Ink,
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = { /* Heart - non-functional MVP */ }
-                )
-                .padding(8.dp)
-        )
     }
 }

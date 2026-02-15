@@ -114,18 +114,6 @@ fun TypewriterScreen(
         enabled = uiState.cursorVisible && uiState.state == TypewriterState.TYPING
     )
 
-    // Chevron pulse: 0.4→1.0→0.4, 2000ms period, ease-in-out
-    val infiniteTransition = rememberInfiniteTransition(label = "chevron")
-    val chevronAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1000, easing = EaseInOut),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "chevronAlpha"
-    )
-
     val pencilColor = Color(0xFF585858)
     val inkColor = Color(0xFF313131)
 
@@ -157,7 +145,6 @@ fun TypewriterScreen(
             WelcomeBackContent(
                 data = uiState.welcomeBackData,
                 alpha = uiState.welcomeBackAlpha,
-                chevronAlpha = chevronAlpha,
                 inkColor = inkColor,
                 pencilColor = pencilColor
             )
@@ -224,12 +211,12 @@ fun TypewriterScreen(
 
                 // CTA: "Now write yours."
                 if (uiState.ctaAlpha > 0f) {
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(48.dp))
                     Text(
                         text = TypewriterViewModel.CTA,
                         style = TextStyle(
                             fontFamily = CormorantGaramond,
-                            fontSize = 24.sp,
+                            fontSize = 32.sp,
                             fontStyle = FontStyle.Normal,
                             color = inkColor
                         ),
@@ -241,24 +228,6 @@ fun TypewriterScreen(
                     )
                 }
 
-                // Chevron — pulsing arrow, tappable (also auto-advances after 0.5s)
-                if (uiState.state == TypewriterState.READY) {
-                    Spacer(modifier = Modifier.height(32.dp))
-                    Icon(
-                        imageVector = Icons.Filled.KeyboardArrowDown,
-                        contentDescription = "Continue",
-                        tint = inkColor,
-                        modifier = Modifier
-                            .size(24.dp)
-                            .alpha(chevronAlpha)
-                            .clickable(
-                                indication = null,
-                                interactionSource = remember { MutableInteractionSource() }
-                            ) {
-                                viewModel.onUserInteraction()
-                            }
-                    )
-                }
             }
         }
     }
@@ -268,10 +237,20 @@ fun TypewriterScreen(
 private fun WelcomeBackContent(
     data: WelcomeBackData,
     alpha: Float,
-    chevronAlpha: Float,
     inkColor: Color,
     pencilColor: Color
 ) {
+    // Chevron pulse: 0.4→1.0→0.4, 2000ms period, ease-in-out
+    val infiniteTransition = rememberInfiniteTransition(label = "chevron")
+    val chevronAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.4f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1000, easing = EaseInOut),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "chevronAlpha"
+    )
     Column(
         modifier = Modifier
             .fillMaxSize()

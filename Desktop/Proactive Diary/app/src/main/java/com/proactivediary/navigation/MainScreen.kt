@@ -350,15 +350,15 @@ fun MainScreen(
 
             // Coach marks — shown on top of everything
             CoachMark(
-                message = "Start writing. Your entries auto-save.",
-                visible = showWriteHint && pagerState.currentPage == PAGE_WRITE,
+                message = "Welcome to your diary. Swipe right to start writing.",
+                visible = showWriteHint && pagerState.currentPage == PAGE_DISCOVER,
                 onDismiss = { discoveryViewModel.dismissWriteHint() },
                 alignment = Alignment.Center,
                 offsetY = (-40).dp
             )
 
             SwipeHint(
-                visible = showSwipeHint && !showWriteHint,
+                visible = showSwipeHint && !showWriteHint && pagerState.currentPage == PAGE_DISCOVER,
                 onDismiss = { discoveryViewModel.dismissSwipeHint() }
             )
         }

@@ -68,8 +68,7 @@ fun AttachmentStrip(
     horizontalPadding: Dp,
     modifier: Modifier = Modifier
 ) {
-    val hasContent = images.isNotEmpty() ||
-            (audioPath != null && !isRecording) ||
+    val hasContent = (audioPath != null && !isRecording) ||
             tags.isNotEmpty() ||
             taggedContacts.isNotEmpty()
 
@@ -86,44 +85,6 @@ fun AttachmentStrip(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            // Image thumbnails
-            if (images.isNotEmpty()) {
-                images.forEach { image ->
-                    Box {
-                        AsyncImage(
-                            model = thumbnailProvider(image.filename),
-                            contentDescription = "Photo",
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .clickable { onImageClick(image.id) },
-                            contentScale = ContentScale.Crop
-                        )
-                        // Small remove X
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .size(16.dp)
-                                .background(Color.Black.copy(alpha = 0.5f), CircleShape)
-                                .clickable { onRemoveImage(image.id) },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                Icons.Outlined.Close,
-                                contentDescription = "Remove",
-                                modifier = Modifier.size(10.dp),
-                                tint = Color.White
-                            )
-                        }
-                    }
-                }
-
-                // Divider if more sections follow
-                if (audioPath != null || tags.isNotEmpty() || taggedContacts.isNotEmpty()) {
-                    StripDivider(secondaryTextColor)
-                }
-            }
-
             // Audio player (compact)
             if (audioPath != null && !isRecording) {
                 Surface(

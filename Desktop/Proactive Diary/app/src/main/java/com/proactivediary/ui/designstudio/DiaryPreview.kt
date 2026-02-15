@@ -41,7 +41,7 @@ fun DiaryPreview(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .height(300.dp)
+            .height(200.dp)
             .background(DiaryColors.Paper)
             .padding(vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

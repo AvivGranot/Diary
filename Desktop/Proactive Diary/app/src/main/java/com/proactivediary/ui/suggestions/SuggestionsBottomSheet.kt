@@ -28,6 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -81,6 +82,17 @@ fun SuggestionsBottomSheet(
                 )
             )
 
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Tap a prompt to add it to your entry",
+                style = TextStyle(
+                    fontFamily = FontFamily.Default,
+                    fontSize = 13.sp,
+                    fontStyle = FontStyle.Italic,
+                    color = secondaryTextColor.copy(alpha = 0.5f)
+                )
+            )
+
             Spacer(modifier = Modifier.height(16.dp))
 
             // Tab chips
@@ -98,6 +110,13 @@ fun SuggestionsBottomSheet(
                     textColor = textColor,
                     secondaryColor = secondaryTextColor,
                     onClick = { viewModel.selectTab(1) }
+                )
+                TabChip(
+                    label = "Reflect",
+                    isSelected = state.selectedTab == 2,
+                    textColor = textColor,
+                    secondaryColor = secondaryTextColor,
+                    onClick = { viewModel.selectTab(2) }
                 )
             }
 
@@ -117,10 +136,10 @@ fun SuggestionsBottomSheet(
                     )
                 }
             } else {
-                val suggestions = if (state.selectedTab == 0) {
-                    state.forYouSuggestions
-                } else {
-                    state.recentSuggestions
+                val suggestions = when (state.selectedTab) {
+                    0 -> state.forYouSuggestions
+                    1 -> state.recentSuggestions
+                    else -> state.reflectionPrompts
                 }
 
                 if (suggestions.isEmpty()) {

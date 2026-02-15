@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FormatBold
 import androidx.compose.material.icons.filled.FormatItalic
@@ -46,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
@@ -220,14 +222,28 @@ fun WriteToolbar(
                         .background(secondaryColor.copy(alpha = 0.15f))
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                FormatButton(
-                    icon = Icons.Outlined.AutoAwesome,
-                    contentDescription = "Writing suggestions",
-                    isActive = false,
-                    activeColor = textColor,
-                    inactiveColor = secondaryColor.copy(alpha = 0.7f),
-                    onClick = onSuggestionsClick
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { onSuggestionsClick() }
+                        .padding(horizontal = 6.dp, vertical = 4.dp)
+                ) {
+                    Icon(
+                        Icons.Outlined.AutoAwesome,
+                        contentDescription = "Ideas",
+                        tint = secondaryColor.copy(alpha = 0.7f),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        "Ideas",
+                        style = TextStyle(
+                            fontSize = 11.sp,
+                            color = secondaryColor.copy(alpha = 0.7f)
+                        )
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.weight(1f))
