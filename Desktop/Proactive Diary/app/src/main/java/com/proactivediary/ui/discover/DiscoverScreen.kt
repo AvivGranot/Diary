@@ -12,17 +12,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -143,6 +149,24 @@ fun DiscoverScreen(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Welcome back banner for lapsed users (7+ days away)
+                if (state.welcomeBack.isVisible) {
+                    item(key = "welcome_back") {
+                        AnimatedVisibility(
+                            visible = state.welcomeBack.isVisible,
+                            exit = shrinkVertically()
+                        ) {
+                            WelcomeBackBanner(
+                                entryCount = state.welcomeBack.entryCount,
+                                totalWords = state.welcomeBack.totalWords,
+                                textColor = textColor,
+                                secondaryColor = secondaryColor,
+                                onDismiss = { viewModel.dismissWelcomeBack() }
+                            )
+                        }
+                    }
+                }
+
                 itemsIndexed(
                     items = state.entries,
                     key = { _, entry -> entry.id }
@@ -308,6 +332,73 @@ private fun DiscoverCard(
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WelcomeBackBanner(
+    entryCount: Int,
+    totalWords: Int,
+    textColor: androidx.compose.ui.graphics.Color,
+    secondaryColor: androidx.compose.ui.graphics.Color,
+    onDismiss: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        shadowElevation = 1.dp,
+        color = MaterialTheme.colorScheme.surface
+    ) {
+        Box(modifier = Modifier.padding(20.dp)) {
+            // Dismiss button
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(24.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = "Dismiss",
+                    tint = secondaryColor.copy(alpha = 0.4f),
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+
+            Column(modifier = Modifier.padding(end = 24.dp)) {
+                Text(
+                    text = "Welcome back.",
+                    style = TextStyle(
+                        fontFamily = CormorantGaramond,
+                        fontSize = 22.sp,
+                        color = textColor
+                    )
+                )
+
+                if (entryCount > 0) {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "You have $entryCount ${if (entryCount == 1) "entry" else "entries"} and $totalWords words.",
+                        style = TextStyle(
+                            fontFamily = FontFamily.Default,
+                            fontSize = 13.sp,
+                            color = secondaryColor
+                        )
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Day 1 of a new practice.",
+                    style = TextStyle(
+                        fontFamily = CormorantGaramond,
+                        fontSize = 16.sp,
+                        fontStyle = FontStyle.Italic,
+                        color = textColor.copy(alpha = 0.7f)
+                    )
+                )
             }
         }
     }

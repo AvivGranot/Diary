@@ -5,19 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.db.dao.PreferenceDao
 import com.proactivediary.data.db.entities.PreferenceEntity
-import com.proactivediary.data.repository.EntryRepository
 import com.proactivediary.data.repository.StreakRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
 import javax.inject.Inject
 
 enum class TypewriterState {
@@ -32,11 +26,6 @@ enum class TypewriterState {
     NAVIGATING
 }
 
-data class WelcomeBackData(
-    val entryCount: Int = 0,
-    val totalWords: Int = 0
-)
-
 data class TypewriterUiState(
     val state: TypewriterState = TypewriterState.IDLE,
     val visibleCharCount: Int = 0,
@@ -45,24 +34,20 @@ data class TypewriterUiState(
     val attributionAlpha: Float = 0f,
     val ctaAlpha: Float = 0f,
     val ctaTranslateY: Float = 24f,
-    val skipVisible: Boolean = true,
     val screenAlpha: Float = 1f,
     val isFirstLaunch: Boolean = true,
     val isNavigating: Boolean = false,
     val isLoaded: Boolean = false,
     val practiceDay: Int = 0,
     val practiceDayAlpha: Float = 0f,
-    val showWelcomeBack: Boolean = false,
-    val welcomeBackData: WelcomeBackData = WelcomeBackData(),
-    val welcomeBackAlpha: Float = 0f
+    val beginButtonAlpha: Float = 0f
 )
 
 @HiltViewModel
 class TypewriterViewModel @Inject constructor(
     private val preferenceDao: PreferenceDao,
     private val analyticsService: AnalyticsService,
-    private val streakRepository: StreakRepository,
-    private val entryRepository: EntryRepository
+    private val streakRepository: StreakRepository
 ) : ViewModel() {
 
     companion object {
@@ -81,13 +66,11 @@ class TypewriterViewModel @Inject constructor(
         private const val ATTRIBUTION_FADE_MS = 500L
         private const val PAUSE_2_MS = 300L
         private const val CTA_SLIDE_MS = 400L
-        private const val SKIP_APPEAR_MS = 0L
         private const val SCREEN_FADE_MS = 400L
-        private const val AUTO_ADVANCE_MS = 3000L
-        private const val RETURN_AUTO_ADVANCE_MS = 500L
+        private const val BEGIN_BUTTON_DELAY_MS = 800L
+        private const val BEGIN_BUTTON_FADE_MS = 400L
 
         private const val PREF_KEY = "first_launch_completed"
-        private const val LAPSED_THRESHOLD_DAYS = 7L
     }
 
     private val _uiState = MutableStateFlow(TypewriterUiState())
@@ -102,8 +85,6 @@ class TypewriterViewModel @Inject constructor(
 
     private suspend fun loadPracticeDay() {
         val streak = streakRepository.calculateWritingStreak()
-        // Practice day = streak count + 1 (today is the next day of practice)
-        // For first-time users, show "1." — their first day
         val day = if (streak > 0) streak else 1
         _uiState.value = _uiState.value.copy(practiceDay = day)
     }
@@ -115,32 +96,17 @@ class TypewriterViewModel @Inject constructor(
             isFirstLaunch = isFirst,
             isLoaded = true
         )
-        // Animation is started from onScreenVisible() once Compose is actually rendering
     }
 
     fun onScreenVisible() {
-        if (_uiState.value.state != TypewriterState.IDLE) return // already started
+        if (_uiState.value.state != TypewriterState.IDLE) return
         viewModelScope.launch {
-            val isFirst = _uiState.value.isFirstLaunch
-            if (isFirst) {
-                startFirstLaunchSequence()
-            } else {
-                startReturnSequence()
-            }
+            startOnboardingSequence()
         }
     }
 
-    private suspend fun startFirstLaunchSequence() {
+    private suspend fun startOnboardingSequence() {
         _uiState.value = _uiState.value.copy(state = TypewriterState.IDLE)
-
-        viewModelScope.launch {
-            delay(SKIP_APPEAR_MS)
-            if (_uiState.value.state != TypewriterState.NAVIGATING &&
-                _uiState.value.state != TypewriterState.READY
-            ) {
-                _uiState.value = _uiState.value.copy(skipVisible = true)
-            }
-        }
 
         // T+200ms: cursor appears, typing begins
         delay(INITIAL_DELAY_MS)
@@ -149,7 +115,7 @@ class TypewriterViewModel @Inject constructor(
             cursorVisible = true
         )
 
-        // Type each character at 40ms intervals
+        // Type each character
         val totalChars = QUOTE.length
         for (i in 1..totalChars) {
             if (_uiState.value.state == TypewriterState.NAVIGATING) return
@@ -177,7 +143,7 @@ class TypewriterViewModel @Inject constructor(
 
         if (_uiState.value.state == TypewriterState.NAVIGATING) return
 
-        // PAUSE_1: 600ms silence
+        // PAUSE_1
         _uiState.value = _uiState.value.copy(state = TypewriterState.PAUSE_1)
         delay(PAUSE_1_MS)
 
@@ -198,17 +164,14 @@ class TypewriterViewModel @Inject constructor(
 
         if (_uiState.value.state == TypewriterState.NAVIGATING) return
 
-        // PAUSE_2: 800ms silence
+        // PAUSE_2
         _uiState.value = _uiState.value.copy(state = TypewriterState.PAUSE_2)
         delay(PAUSE_2_MS)
 
         if (_uiState.value.state == TypewriterState.NAVIGATING) return
 
-        // CALL_TO_ACTION: slide up + fade in, 600ms ease-out
-        _uiState.value = _uiState.value.copy(
-            state = TypewriterState.CALL_TO_ACTION,
-            skipVisible = true
-        )
+        // CALL_TO_ACTION: slide up + fade in
+        _uiState.value = _uiState.value.copy(state = TypewriterState.CALL_TO_ACTION)
         val ctaSteps = 30
         val ctaStepDuration = CTA_SLIDE_MS / ctaSteps
         for (step in 1..ctaSteps) {
@@ -237,74 +200,24 @@ class TypewriterViewModel @Inject constructor(
         }
         _uiState.value = _uiState.value.copy(practiceDayAlpha = 1f)
 
-        // Enter READY state — show chevron, user can tap or wait for auto-advance
-        _uiState.value = _uiState.value.copy(state = TypewriterState.READY, skipVisible = false)
+        // Enter READY state
+        _uiState.value = _uiState.value.copy(state = TypewriterState.READY)
 
-        // Auto-advance after brief pause
-        delay(AUTO_ADVANCE_MS)
-        if (_uiState.value.state == TypewriterState.READY) {
-            _uiState.value = _uiState.value.copy(state = TypewriterState.NAVIGATING)
-            analyticsService.logTypewriterCompleted()
-            navigateAway()
+        // Wait 800ms, then fade in the "Begin" button
+        delay(BEGIN_BUTTON_DELAY_MS)
+        if (_uiState.value.state != TypewriterState.READY) return
+
+        val beginSteps = 20
+        val beginStepDuration = BEGIN_BUTTON_FADE_MS / beginSteps
+        for (step in 1..beginSteps) {
+            if (_uiState.value.state != TypewriterState.READY) return
+            val t = step.toFloat() / beginSteps
+            val eased = 1f - (1f - t) * (1f - t)
+            _uiState.value = _uiState.value.copy(beginButtonAlpha = eased)
+            delay(beginStepDuration)
         }
-    }
-
-    private suspend fun startReturnSequence() {
-        // Check if user is lapsed (7+ days since last entry)
-        val isLapsed = withContext(Dispatchers.IO) {
-            val lastEntryMs = entryRepository.getLastEntryTimestamp()
-            if (lastEntryMs != null) {
-                val lastEntryDate = Instant.ofEpochMilli(lastEntryMs)
-                    .atZone(ZoneId.systemDefault())
-                    .toLocalDate()
-                val daysSince = LocalDate.now().toEpochDay() - lastEntryDate.toEpochDay()
-                daysSince >= LAPSED_THRESHOLD_DAYS
-            } else {
-                false
-            }
-        }
-
-        if (isLapsed) {
-            startWelcomeBackSequence()
-        } else {
-            // Play typewriter animation on every launch
-            startFirstLaunchSequence()
-        }
-    }
-
-    private suspend fun startWelcomeBackSequence() {
-        val data = withContext(Dispatchers.IO) {
-            val entryCount = entryRepository.getTotalEntryCountSync()
-            val totalWords = entryRepository.getTotalWordCountSync()
-            WelcomeBackData(entryCount = entryCount, totalWords = totalWords)
-        }
-
-        _uiState.value = _uiState.value.copy(
-            state = TypewriterState.READY,
-            showWelcomeBack = true,
-            welcomeBackData = data,
-            skipVisible = false
-        )
-
-        // Fade in welcome back
-        val steps = 20
-        val stepDuration = 400L / steps
-        for (step in 1..steps) {
-            if (_uiState.value.isNavigating) return
-            val t = step.toFloat() / steps
-            _uiState.value = _uiState.value.copy(welcomeBackAlpha = t)
-            delay(stepDuration)
-        }
-        _uiState.value = _uiState.value.copy(welcomeBackAlpha = 1f)
-        // Wait for user interaction — don't auto-advance
-    }
-
-    fun onSkip() {
-        viewModelScope.launch {
-            analyticsService.logTypewriterSkipped()
-            _uiState.value = _uiState.value.copy(state = TypewriterState.NAVIGATING)
-            navigateAway()
-        }
+        _uiState.value = _uiState.value.copy(beginButtonAlpha = 1f)
+        // User must tap "Begin" or anywhere on screen — no auto-advance
     }
 
     fun onUserInteraction() {
