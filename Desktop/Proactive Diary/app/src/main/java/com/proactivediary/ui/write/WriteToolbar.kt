@@ -1,5 +1,6 @@
 package com.proactivediary.ui.write
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -8,6 +9,10 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -68,7 +73,7 @@ fun WriteToolbar(
     showWordCount: Boolean,
     colorKey: String,
     richTextState: RichTextState? = null,
-
+    hasStartedWriting: Boolean = false,
     onAttachmentClick: (() -> Unit)? = null,
     isDictating: Boolean = false,
     dictationSeconds: Int = 0,
@@ -79,165 +84,198 @@ fun WriteToolbar(
     val textColor = DiaryThemeConfig.textColorFor(colorKey)
     val secondaryColor = DiaryThemeConfig.secondaryTextColorFor(colorKey)
 
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(52.dp)
-            .background(bgColor)
-    ) {
+    Column(modifier = modifier.fillMaxWidth()) {
         // Top divider
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(0.5.dp)
                 .background(secondaryColor.copy(alpha = 0.15f))
-                .align(Alignment.TopCenter)
         )
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-                .padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
+        // Formatting toolbar — only visible once user starts writing
+        AnimatedVisibility(
+            visible = hasStartedWriting || isDictating,
+            enter = expandVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)),
+            exit = shrinkVertically(animationSpec = tween(200)) + fadeOut(animationSpec = tween(200))
         ) {
-            // "+" attachment button
-            if (onAttachmentClick != null && !isDictating) {
-                FormatButton(
-                    icon = Icons.Outlined.Add,
-                    contentDescription = "Add attachment",
-                    isActive = false,
-                    activeColor = textColor,
-                    inactiveColor = secondaryColor.copy(alpha = 0.6f),
-                    onClick = onAttachmentClick
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Box(
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .background(bgColor)
+            ) {
+                Row(
                     modifier = Modifier
-                        .width(0.5.dp)
-                        .height(20.dp)
-                        .background(secondaryColor.copy(alpha = 0.15f))
-                )
-                Spacer(modifier = Modifier.width(4.dp))
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // "+" attachment button
+                    if (onAttachmentClick != null && !isDictating) {
+                        FormatButton(
+                            icon = Icons.Outlined.Add,
+                            contentDescription = "Add attachment",
+                            isActive = false,
+                            activeColor = textColor,
+                            inactiveColor = secondaryColor.copy(alpha = 0.6f),
+                            onClick = onAttachmentClick
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .width(0.5.dp)
+                                .height(20.dp)
+                                .background(secondaryColor.copy(alpha = 0.15f))
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                    }
+
+                    // Dictation mode: show dictation indicator instead of format buttons
+                    if (isDictating) {
+                        DictationIndicator(
+                            durationSeconds = dictationSeconds,
+                            onStop = { onStopDictation?.invoke() },
+                            secondaryColor = secondaryColor
+                        )
+                    } else if (richTextState != null) {
+                        // Inline styles group
+                        FormatButton(
+                            icon = Icons.Filled.FormatBold,
+                            contentDescription = "Bold",
+                            isActive = richTextState.currentSpanStyle.fontWeight == androidx.compose.ui.text.font.FontWeight.Bold,
+                            activeColor = textColor,
+                            inactiveColor = secondaryColor.copy(alpha = 0.4f),
+                            onClick = {
+                                richTextState.toggleSpanStyle(
+                                    androidx.compose.ui.text.SpanStyle(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                )
+                            }
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        FormatButton(
+                            icon = Icons.Filled.FormatItalic,
+                            contentDescription = "Italic",
+                            isActive = richTextState.currentSpanStyle.fontStyle == androidx.compose.ui.text.font.FontStyle.Italic,
+                            activeColor = textColor,
+                            inactiveColor = secondaryColor.copy(alpha = 0.4f),
+                            onClick = {
+                                richTextState.toggleSpanStyle(
+                                    androidx.compose.ui.text.SpanStyle(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
+                                )
+                            }
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        FormatButton(
+                            icon = Icons.Filled.FormatUnderlined,
+                            contentDescription = "Underline",
+                            isActive = richTextState.currentSpanStyle.textDecoration == androidx.compose.ui.text.style.TextDecoration.Underline,
+                            activeColor = textColor,
+                            inactiveColor = secondaryColor.copy(alpha = 0.4f),
+                            onClick = {
+                                richTextState.toggleSpanStyle(
+                                    androidx.compose.ui.text.SpanStyle(textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline)
+                                )
+                            }
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        FormatButton(
+                            icon = Icons.Filled.FormatStrikethrough,
+                            contentDescription = "Strikethrough",
+                            isActive = richTextState.currentSpanStyle.textDecoration == androidx.compose.ui.text.style.TextDecoration.LineThrough,
+                            activeColor = textColor,
+                            inactiveColor = secondaryColor.copy(alpha = 0.4f),
+                            onClick = {
+                                richTextState.toggleSpanStyle(
+                                    androidx.compose.ui.text.SpanStyle(textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough)
+                                )
+                            }
+                        )
+
+                        // Separator
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .width(0.5.dp)
+                                .height(20.dp)
+                                .background(secondaryColor.copy(alpha = 0.15f))
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        // List styles group
+                        FormatButton(
+                            icon = Icons.Filled.FormatListBulleted,
+                            contentDescription = "Bullet list",
+                            isActive = richTextState.isUnorderedList,
+                            activeColor = textColor,
+                            inactiveColor = secondaryColor.copy(alpha = 0.4f),
+                            onClick = { richTextState.toggleUnorderedList() }
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        FormatButton(
+                            icon = Icons.Filled.FormatListNumbered,
+                            contentDescription = "Numbered list",
+                            isActive = richTextState.isOrderedList,
+                            activeColor = textColor,
+                            inactiveColor = secondaryColor.copy(alpha = 0.4f),
+                            onClick = { richTextState.toggleOrderedList() }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    // Word count — only visible at 10+ words, with milestone pulses
+                    if (showWordCount && wordCount >= 10) {
+                        val milestones = listOf(100, 250, 500, 1000)
+                        val isMilestone = wordCount in milestones
+                        val countAlpha by animateFloatAsState(
+                            targetValue = if (isMilestone) 0.6f else 0.4f,
+                            animationSpec = tween(if (isMilestone) 400 else 200),
+                            label = "wc_alpha"
+                        )
+                        val countScale by animateFloatAsState(
+                            targetValue = if (isMilestone) 1.08f else 1f,
+                            animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f),
+                            label = "wc_scale"
+                        )
+                        Text(
+                            text = "$wordCount words",
+                            style = TextStyle(
+                                fontFamily = FontFamily.Default,
+                                fontSize = 12.sp,
+                                color = secondaryColor.copy(alpha = countAlpha)
+                            ),
+                            modifier = Modifier.scale(countScale)
+                        )
+                    }
+                }
             }
+        }
 
-            // Dictation mode: show dictation indicator instead of format buttons
-            if (isDictating) {
-                DictationIndicator(
-                    durationSeconds = dictationSeconds,
-                    onStop = { onStopDictation?.invoke() },
-                    secondaryColor = secondaryColor
-                )
-            } else if (richTextState != null) {
-                // Inline styles group
-                FormatButton(
-                    icon = Icons.Filled.FormatBold,
-                    contentDescription = "Bold",
-                    isActive = richTextState.currentSpanStyle.fontWeight == androidx.compose.ui.text.font.FontWeight.Bold,
-                    activeColor = textColor,
-                    inactiveColor = secondaryColor.copy(alpha = 0.4f),
-                    onClick = {
-                        richTextState.toggleSpanStyle(
-                            androidx.compose.ui.text.SpanStyle(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
-                        )
-                    }
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                FormatButton(
-                    icon = Icons.Filled.FormatItalic,
-                    contentDescription = "Italic",
-                    isActive = richTextState.currentSpanStyle.fontStyle == androidx.compose.ui.text.font.FontStyle.Italic,
-                    activeColor = textColor,
-                    inactiveColor = secondaryColor.copy(alpha = 0.4f),
-                    onClick = {
-                        richTextState.toggleSpanStyle(
-                            androidx.compose.ui.text.SpanStyle(fontStyle = androidx.compose.ui.text.font.FontStyle.Italic)
-                        )
-                    }
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                FormatButton(
-                    icon = Icons.Filled.FormatUnderlined,
-                    contentDescription = "Underline",
-                    isActive = richTextState.currentSpanStyle.textDecoration == androidx.compose.ui.text.style.TextDecoration.Underline,
-                    activeColor = textColor,
-                    inactiveColor = secondaryColor.copy(alpha = 0.4f),
-                    onClick = {
-                        richTextState.toggleSpanStyle(
-                            androidx.compose.ui.text.SpanStyle(textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline)
-                        )
-                    }
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                FormatButton(
-                    icon = Icons.Filled.FormatStrikethrough,
-                    contentDescription = "Strikethrough",
-                    isActive = richTextState.currentSpanStyle.textDecoration == androidx.compose.ui.text.style.TextDecoration.LineThrough,
-                    activeColor = textColor,
-                    inactiveColor = secondaryColor.copy(alpha = 0.4f),
-                    onClick = {
-                        richTextState.toggleSpanStyle(
-                            androidx.compose.ui.text.SpanStyle(textDecoration = androidx.compose.ui.text.style.TextDecoration.LineThrough)
-                        )
-                    }
-                )
-
-                // Separator
-                Spacer(modifier = Modifier.width(8.dp))
-                Box(
-                    modifier = Modifier
-                        .width(0.5.dp)
-                        .height(20.dp)
-                        .background(secondaryColor.copy(alpha = 0.15f))
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-
-                // List styles group
-                FormatButton(
-                    icon = Icons.Filled.FormatListBulleted,
-                    contentDescription = "Bullet list",
-                    isActive = richTextState.isUnorderedList,
-                    activeColor = textColor,
-                    inactiveColor = secondaryColor.copy(alpha = 0.4f),
-                    onClick = { richTextState.toggleUnorderedList() }
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                FormatButton(
-                    icon = Icons.Filled.FormatListNumbered,
-                    contentDescription = "Numbered list",
-                    isActive = richTextState.isOrderedList,
-                    activeColor = textColor,
-                    inactiveColor = secondaryColor.copy(alpha = 0.4f),
-                    onClick = { richTextState.toggleOrderedList() }
-                )
-            }
-
-
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Word count — only visible at 10+ words, with milestone pulses
-            if (showWordCount && wordCount >= 10) {
-                val milestones = listOf(100, 250, 500, 1000)
-                val isMilestone = wordCount in milestones
-                val countAlpha by animateFloatAsState(
-                    targetValue = if (isMilestone) 0.6f else 0.4f,
-                    animationSpec = tween(if (isMilestone) 400 else 200),
-                    label = "wc_alpha"
-                )
-                val countScale by animateFloatAsState(
-                    targetValue = if (isMilestone) 1.08f else 1f,
-                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 400f),
-                    label = "wc_scale"
-                )
-                Text(
-                    text = "$wordCount words",
-                    style = TextStyle(
-                        fontFamily = FontFamily.Default,
-                        fontSize = 12.sp,
-                        color = secondaryColor.copy(alpha = countAlpha)
-                    ),
-                    modifier = Modifier.scale(countScale)
-                )
+        // "+" button row — only visible when user hasn't started writing yet
+        AnimatedVisibility(
+            visible = !hasStartedWriting && !isDictating,
+            enter = expandVertically(animationSpec = tween(200)) + fadeIn(animationSpec = tween(200)),
+            exit = shrinkVertically(animationSpec = tween(300)) + fadeOut(animationSpec = tween(200))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .background(bgColor),
+                contentAlignment = Alignment.Center
+            ) {
+                if (onAttachmentClick != null) {
+                    FormatButton(
+                        icon = Icons.Outlined.Add,
+                        contentDescription = "Add attachment",
+                        isActive = false,
+                        activeColor = textColor,
+                        inactiveColor = secondaryColor.copy(alpha = 0.5f),
+                        onClick = onAttachmentClick
+                    )
+                }
             }
         }
     }

@@ -520,13 +520,13 @@ fun WriteScreen(
                 }
             }
 
-            // Bottom toolbar — with attachment trigger + dictation mode
+            // Bottom toolbar — formatting appears once user starts writing
             WriteToolbar(
                 wordCount = state.wordCount,
                 showWordCount = showWordCount,
                 colorKey = state.colorKey,
                 richTextState = richTextState,
-
+                hasStartedWriting = state.wordCount > 0 || state.title.isNotEmpty(),
                 onAttachmentClick = { showAttachmentTray = true },
                 isDictating = state.isDictating,
                 dictationSeconds = dictationSeconds,
