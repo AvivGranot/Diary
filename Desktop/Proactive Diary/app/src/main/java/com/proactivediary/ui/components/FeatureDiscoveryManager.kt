@@ -54,9 +54,8 @@ class FeatureDiscoveryViewModel @Inject constructor(
 
             // Only show hints after onboarding is complete
             if (onboardingDone) {
-                if (!writeShown) _showWriteHint.value = true
-                // Swipe hint shown after write hint is dismissed (or if write already shown)
-                if (writeShown && !swipeShown) _showSwipeHint.value = true
+                // Single consolidated swipe hint (replaces old two-step write + swipe sequence)
+                if (!swipeShown) _showSwipeHint.value = true
             }
         }
     }

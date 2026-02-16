@@ -167,7 +167,7 @@ fun SwipeHint(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Swipe to browse tabs",
+                            text = "Welcome to your diary.\nSwipe to browse tabs.",
                             style = TextStyle(
                                 fontFamily = CormorantGaramond,
                                 fontSize = 16.sp,

@@ -50,7 +50,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import com.proactivediary.ui.components.CoachMark
 import com.proactivediary.ui.components.FeatureDiscoveryViewModel
 import com.proactivediary.ui.components.SwipeHint
 import com.proactivediary.ui.goals.GoalsScreen
@@ -107,8 +106,7 @@ fun MainScreen(
     val activity = context as? Activity
     val haptic = LocalHapticFeedback.current
 
-    // Coach marks
-    val showWriteHint by discoveryViewModel.showWriteHint.collectAsState()
+    // Coach mark
     val showSwipeHint by discoveryViewModel.showSwipeHint.collectAsState()
 
     // Overlay sub-screens (Goals, Reminders) — shown on top of pager
@@ -351,17 +349,9 @@ fun MainScreen(
                 )
             }
 
-            // Coach marks — shown on top of everything
-            CoachMark(
-                message = "Welcome to your diary. Swipe right to start writing.",
-                visible = showWriteHint && pagerState.currentPage == PAGE_DISCOVER,
-                onDismiss = { discoveryViewModel.dismissWriteHint() },
-                alignment = Alignment.Center,
-                offsetY = (-40).dp
-            )
-
+            // Coach mark — shown on top of everything
             SwipeHint(
-                visible = showSwipeHint && !showWriteHint && pagerState.currentPage == PAGE_DISCOVER,
+                visible = showSwipeHint && pagerState.currentPage == PAGE_DISCOVER,
                 onDismiss = { discoveryViewModel.dismissSwipeHint() }
             )
         }
