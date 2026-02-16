@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "434907129966-o7g9ebl2039f4198mtdre7406f6tir5f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.proactivediary",
+            "certificate_hash": "6968e962b75bae4762434e3607f7600e6a8b5a9b"
+          }
+        },
+        {
           "client_id": "434907129966-s3rb5i0lgntm82pd6bii1k84vool7rni.apps.googleusercontent.com",
           "client_type": 3
         }

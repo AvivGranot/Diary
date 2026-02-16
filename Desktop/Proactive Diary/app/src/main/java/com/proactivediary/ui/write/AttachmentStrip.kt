@@ -42,16 +42,16 @@ import com.proactivediary.domain.model.TaggedContact
  */
 @Composable
 fun AttachmentStrip(
-    tags: List<String>,
+    tags: List<String> = emptyList(),
     taggedContacts: List<TaggedContact>,
-    onEditTags: () -> Unit,
+    onEditTags: () -> Unit = {},
     onRemoveContact: (TaggedContact) -> Unit,
     secondaryTextColor: Color,
     textColor: Color,
     horizontalPadding: Dp,
     modifier: Modifier = Modifier
 ) {
-    val hasContent = tags.isNotEmpty() || taggedContacts.isNotEmpty()
+    val hasContent = taggedContacts.isNotEmpty()
 
     AnimatedVisibility(
         visible = hasContent,
@@ -66,31 +66,6 @@ fun AttachmentStrip(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            // Tags
-            if (tags.isNotEmpty()) {
-                tags.forEach { tag ->
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = secondaryTextColor.copy(alpha = 0.06f),
-                        modifier = Modifier.clickable(onClick = onEditTags)
-                    ) {
-                        Text(
-                            text = "#$tag",
-                            style = TextStyle(
-                                fontFamily = FontFamily.Default,
-                                fontSize = 12.sp,
-                                color = secondaryTextColor
-                            ),
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-                }
-
-                if (taggedContacts.isNotEmpty()) {
-                    StripDivider(secondaryTextColor)
-                }
-            }
-
             // Tagged contacts
             taggedContacts.forEach { contact ->
                 Surface(

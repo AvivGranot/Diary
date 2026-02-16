@@ -25,7 +25,6 @@ import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -52,7 +51,6 @@ fun AttachmentTray(
     onAddPhoto: () -> Unit,
     onStartVoice: () -> Unit,
     onOpenTemplates: () -> Unit,
-    onOpenTags: () -> Unit,
     onOpenContacts: () -> Unit,
     textColor: Color,
     secondaryTextColor: Color,
@@ -146,21 +144,11 @@ fun AttachmentTray(
 
                         Spacer(Modifier.height(16.dp))
 
-                        // Row 2: #Label, Share
+                        // Row 2: Share
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            TrayItem(
-                                icon = Icons.Outlined.Tag,
-                                label = "Tags",
-                                textColor = textColor,
-                                secondaryColor = secondaryTextColor,
-                                onClick = {
-                                    onOpenTags()
-                                    onDismiss()
-                                }
-                            )
                             TrayItem(
                                 icon = Icons.Outlined.Person,
                                 label = "Share",
@@ -171,7 +159,8 @@ fun AttachmentTray(
                                     onDismiss()
                                 }
                             )
-                            // Empty spacer to maintain grid alignment
+                            // Empty spacers to maintain grid alignment
+                            Box(modifier = Modifier.size(72.dp))
                             Box(modifier = Modifier.size(72.dp))
                         }
                     }

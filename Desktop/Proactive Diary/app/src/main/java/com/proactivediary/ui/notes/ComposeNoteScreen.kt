@@ -249,7 +249,7 @@ fun ComposeNoteScreen(
                                     modifier = Modifier.padding(top = 4.dp)
                                 )
                                 false -> Text(
-                                    text = "Not on Proactive Diary yet \u2014 send an invite!",
+                                    text = "Tap below to share with them",
                                     color = DiaryColors.SunsetOrange,
                                     style = MaterialTheme.typography.bodySmall,
                                     modifier = Modifier.padding(top = 4.dp)
@@ -319,12 +319,12 @@ fun ComposeNoteScreen(
                     },
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = DiaryColors.SunsetOrange
+                        containerColor = DiaryColors.Ink
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(Icons.Default.Share, "Invite", modifier = Modifier.size(20.dp))
-                    Text("  Send Invite", fontSize = 16.sp)
+                    Text("  Share Note", fontSize = 16.sp)
                 }
             }
 

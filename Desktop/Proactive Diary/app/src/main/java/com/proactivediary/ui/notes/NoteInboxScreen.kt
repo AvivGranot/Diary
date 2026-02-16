@@ -62,7 +62,7 @@ fun NoteInboxScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onComposeNote,
-                containerColor = DiaryColors.ElectricIndigo
+                containerColor = DiaryColors.WineRed
             ) {
                 Icon(Icons.Default.Add, "Send a note", tint = androidx.compose.ui.graphics.Color.White)
             }

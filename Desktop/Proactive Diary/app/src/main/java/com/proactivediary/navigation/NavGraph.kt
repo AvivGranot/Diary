@@ -135,11 +135,13 @@ fun ProactiveDiaryNavHost(
         composable(Routes.NotificationPermission.route) {
             NotificationPermissionScreen(
                 onContinue = {
+                    viewModel.markOnboardingComplete()
                     navController.navigate(Routes.Main.route) {
                         popUpTo(Routes.NotificationPermission.route) { inclusive = true }
                     }
                 },
                 onSkip = {
+                    viewModel.markOnboardingComplete()
                     navController.navigate(Routes.Main.route) {
                         popUpTo(Routes.NotificationPermission.route) { inclusive = true }
                     }
@@ -261,6 +263,12 @@ fun ProactiveDiaryNavHost(
             QuickAuthScreen(
                 onAuthenticated = {
                     navController.navigate(Routes.WriteFirstNote.route) {
+                        popUpTo(Routes.QuickAuth.route) { inclusive = true }
+                    }
+                },
+                onSkip = {
+                    viewModel.markOnboardingComplete()
+                    navController.navigate(Routes.Main.route) {
                         popUpTo(Routes.QuickAuth.route) { inclusive = true }
                     }
                 }

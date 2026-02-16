@@ -85,8 +85,20 @@ class AuthService @Inject constructor(
             } else {
                 Result.failure(Exception("Unexpected credential type"))
             }
+        } catch (e: androidx.credentials.exceptions.NoCredentialException) {
+            Result.failure(Exception(
+                "No Google account found on this device. Add one in Settings, or tap Skip."
+            ))
+        } catch (e: androidx.credentials.exceptions.GetCredentialCancellationException) {
+            Result.failure(Exception("Sign-in cancelled."))
+        } catch (e: androidx.credentials.exceptions.GetCredentialException) {
+            Result.failure(Exception(
+                "Google Sign-In is temporarily unavailable. Tap Skip to continue."
+            ))
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(Exception(
+                "Something went wrong with sign-in. Tap Skip to continue."
+            ))
         }
     }
 

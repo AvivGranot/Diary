@@ -50,7 +50,7 @@ fun QuotesScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = { viewModel.showComposeSheet() },
-                containerColor = DiaryColors.ElectricIndigo
+                containerColor = DiaryColors.WineRed
             ) {
                 Icon(Icons.Default.Add, "Write a quote", tint = Color.White)
             }
@@ -84,7 +84,7 @@ fun QuotesScreen(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
                             .background(
-                                if (isSelected) DiaryColors.ElectricIndigo
+                                if (isSelected) DiaryColors.Ink
                                 else DiaryColors.Parchment
                             )
                             .clickable { viewModel.selectTab(tab) }
@@ -104,6 +104,20 @@ fun QuotesScreen(
             }
 
             Spacer(modifier = Modifier.height(12.dp))
+
+            // CTA prompt
+            Text(
+                text = "Share your wisdom \u2014 inspire someone today",
+                style = MaterialTheme.typography.bodySmall,
+                fontStyle = FontStyle.Italic,
+                color = DiaryColors.Pencil,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 4.dp)
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
 
             val currentQuotes = when (state.selectedTab) {
                 QuotesTab.TRENDING -> state.trendingQuotes

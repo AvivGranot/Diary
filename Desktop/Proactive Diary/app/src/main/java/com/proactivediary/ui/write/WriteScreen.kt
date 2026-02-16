@@ -249,6 +249,11 @@ fun WriteScreen(
             val current = richTextState.annotatedString.text
             val separator = if (current.isNotEmpty() && !current.endsWith(" ") && !current.endsWith("\n")) " " else ""
             richTextState.setText(current + separator + text)
+            // Sync to ViewModel so auto-save picks up dictated text
+            viewModel.onRichContentChanged(
+                html = richTextState.toHtml(),
+                plainText = richTextState.annotatedString.text
+            )
         }
     }
 
@@ -287,7 +292,7 @@ fun WriteScreen(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
             ) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(40.dp))
 
                 // Personalization mark — header position
                 if (state.markText.isNotBlank() && state.markPosition == "header") {
@@ -587,7 +592,6 @@ fun WriteScreen(
                 }
             },
             onOpenTemplates = { showTemplatePicker = true },
-            onOpenTags = { showTagDialog = true },
             onOpenContacts = { contactPickerLauncher.launch(null) },
             textColor = textColor,
             secondaryTextColor = secondaryTextColor,

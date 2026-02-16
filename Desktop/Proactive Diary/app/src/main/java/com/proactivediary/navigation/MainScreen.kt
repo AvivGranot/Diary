@@ -331,42 +331,35 @@ fun MainScreen(
                 onDismiss = { discoveryViewModel.dismissSwipeHint() }
             )
 
-            // Floating pill bottom navigation
-            Surface(
+            // Bottom navigation — flat, flush, Instagram style
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
                     .navigationBarsPadding()
-                    .padding(horizontal = 24.dp, vertical = 12.dp),
-                shape = RoundedCornerShape(28.dp),
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
-                shadowElevation = 8.dp,
-                tonalElevation = 2.dp
+                    .background(MaterialTheme.colorScheme.surface)
             ) {
+                // Hairline divider
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(0.5.dp)
+                        .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                )
+
                 Row(
                     modifier = Modifier
-                        .padding(horizontal = 8.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        .fillMaxWidth()
+                        .height(49.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     bottomNavItems.forEachIndexed { index, item ->
                         val selected = pagerState.currentPage == index
-                        val indicatorWidth by animateDpAsState(
-                            if (selected) 56.dp else 48.dp,
-                            spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMedium
-                            ),
-                            label = "navWidth"
-                        )
                         Box(
                             modifier = Modifier
-                                .width(indicatorWidth)
-                                .height(48.dp)
-                                .background(
-                                    color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
-                                    else androidx.compose.ui.graphics.Color.Transparent,
-                                    shape = RoundedCornerShape(20.dp)
-                                )
+                                .weight(1f)
+                                .height(49.dp)
                                 .clickable(
                                     interactionSource = remember { MutableInteractionSource() },
                                     indication = null
@@ -388,9 +381,9 @@ fun MainScreen(
                                 Icon(
                                     imageVector = item.icon,
                                     contentDescription = item.label,
-                                    modifier = Modifier.size(22.dp),
-                                    tint = if (selected) MaterialTheme.colorScheme.primary
-                                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                    modifier = Modifier.size(24.dp),
+                                    tint = if (selected) MaterialTheme.colorScheme.onSurface
+                                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
                                 )
                                 if (index == PAGE_WRITE && !subscriptionState.isActive) {
                                     Icon(
@@ -400,7 +393,7 @@ fun MainScreen(
                                             .size(10.dp)
                                             .align(Alignment.TopEnd)
                                             .offset(x = 4.dp, y = (-2).dp),
-                                        tint = MaterialTheme.colorScheme.primary
+                                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                                     )
                                 }
                             }

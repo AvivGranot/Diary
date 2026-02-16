@@ -1,6 +1,8 @@
 package com.proactivediary.ui.onboarding
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,6 +38,7 @@ import com.proactivediary.ui.theme.DiaryColors
 @Composable
 fun QuickAuthScreen(
     onAuthenticated: () -> Unit,
+    onSkip: () -> Unit,
     viewModel: QuickAuthViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -124,6 +128,21 @@ fun QuickAuthScreen(
                 color = DiaryColors.Pencil.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center,
                 lineHeight = 18.sp
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Text(
+                text = "Skip for now",
+                fontSize = 14.sp,
+                color = DiaryColors.Pencil.copy(alpha = 0.6f),
+                modifier = Modifier
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = onSkip
+                    )
+                    .padding(vertical = 8.dp)
             )
         }
     }

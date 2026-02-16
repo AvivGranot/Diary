@@ -234,55 +234,6 @@ fun SettingsScreen(
             SectionHeader("NOTIFICATIONS")
             Spacer(Modifier.height(8.dp))
             SettingsCard {
-                // Notification health status
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .then(
-                            if (notificationHealth !is NotificationHealth.Healthy)
-                                Modifier.clickable {
-                                    try {
-                                        context.startActivity(viewModel.getNotificationSettingsIntent())
-                                    } catch (_: Exception) { }
-                                }
-                            else Modifier
-                        )
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        val dotColor = when (notificationHealth) {
-                            is NotificationHealth.Healthy -> Color(0xFF4CAF50)
-                            is NotificationHealth.Degraded -> Color(0xFFFF9800)
-                            is NotificationHealth.Blocked -> Color(0xFFE53935)
-                        }
-                        Canvas(modifier = Modifier.size(8.dp)) {
-                            drawCircle(color = dotColor)
-                        }
-                        Spacer(Modifier.width(10.dp))
-                        Text(
-                            text = when (notificationHealth) {
-                                is NotificationHealth.Healthy -> "Notifications are working"
-                                is NotificationHealth.Degraded -> "Notifications may be delayed"
-                                is NotificationHealth.Blocked -> "Notifications are blocked"
-                            },
-                            style = TextStyle(fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
-                        )
-                    }
-                    if (notificationHealth !is NotificationHealth.Healthy) {
-                        Text(
-                            text = "Fix",
-                            style = TextStyle(
-                                fontSize = 13.sp,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                        )
-                    }
-                }
-                SettingsDivider()
                 SettingsRow(
                     label = "Writing Reminders",
                     value = "$activeReminderCount active",
@@ -299,18 +250,6 @@ fun SettingsScreen(
                     label = "Send Test Notification",
                     onClick = { viewModel.sendTestNotification() }
                 )
-                if (isBatteryOptimized) {
-                    SettingsDivider()
-                    SettingsRow(
-                        label = "Battery Optimization",
-                        value = "On — may block reminders",
-                        onClick = {
-                            try {
-                                context.startActivity(viewModel.getBatteryOptimizationIntent())
-                            } catch (_: Exception) { }
-                        }
-                    )
-                }
             }
 
             Spacer(Modifier.height(24.dp))

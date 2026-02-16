@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.proactivediary.ui.theme.DiaryColors
 import com.proactivediary.ui.theme.DynamicColors
 import com.proactivediary.ui.theme.PlusJakartaSans
 import java.text.SimpleDateFormat
@@ -56,7 +57,7 @@ fun DiaryCard(
     modifier: Modifier = Modifier
 ) {
     val moodAccent = data.mood?.let { DynamicColors.moodAccent(it) }
-        ?: MaterialTheme.colorScheme.primary
+        ?: DiaryColors.Pencil
 
     val displayTitle = data.title.ifBlank {
         data.content.lines().firstOrNull()?.take(60) ?: ""

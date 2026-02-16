@@ -54,4 +54,10 @@ class NavViewModel @Inject constructor(
             }
         }
     }
+
+    fun markOnboardingComplete() {
+        viewModelScope.launch {
+            preferenceDao.insert(PreferenceEntity("first_launch_completed", "true"))
+        }
+    }
 }
