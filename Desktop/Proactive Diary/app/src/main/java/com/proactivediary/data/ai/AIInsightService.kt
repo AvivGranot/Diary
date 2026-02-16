@@ -33,11 +33,8 @@ class AIInsightService @Inject constructor(
         .build()
 
     suspend fun getApiKey(): String? {
-        // 1. Prefer build-time key (developer-provided, no user prompt)
         val buildKey = com.proactivediary.BuildConfig.GEMINI_API_KEY
-        if (buildKey.isNotBlank()) return buildKey
-        // 2. Fallback: legacy user-provided key (backward compat)
-        return preferenceDao.getValue("ai_api_key")
+        return if (buildKey.isNotBlank()) buildKey else null
     }
 
     suspend fun isEnabled(): Boolean {

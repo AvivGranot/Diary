@@ -143,12 +143,6 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun setApiKey(key: String) {
-        viewModelScope.launch {
-            preferenceDao.insert(PreferenceEntity("ai_api_key", key))
-        }
-    }
-
     fun setFontSize(size: String) {
         viewModelScope.launch {
             preferenceDao.insert(PreferenceEntity("font_size", size))
