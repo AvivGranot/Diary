@@ -39,14 +39,14 @@ fun TypewriterCanvas(
     val textMeasurer = rememberTextMeasurer()
     val density = LocalDensity.current
 
-    val textColor = Color(0xFF585858)
-    val cursorColor = Color(0xFF585858)
+    val textColor = Color.White.copy(alpha = 0.85f)
+    val cursorColor = Color.White
 
     val textStyle = TextStyle(
         fontFamily = CormorantGaramond,
-        fontSize = 20.sp,
+        fontSize = 18.sp,
         fontStyle = FontStyle.Italic,
-        lineHeight = 30.sp,
+        lineHeight = 28.sp,
         color = textColor
     )
 

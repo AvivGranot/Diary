@@ -27,4 +27,21 @@ sealed class Routes(val route: String) {
     object ContactSupport : Routes("contact_support?category={category}") {
         fun createRoute(category: String = "support") = "contact_support?category=$category"
     }
+
+    // Social features
+    object ComposeNote : Routes("compose_note")
+    object NoteInbox : Routes("note_inbox")
+    object EnvelopeReveal : Routes("envelope/{noteId}") {
+        fun createRoute(noteId: String) = "envelope/$noteId"
+    }
+    object Quotes : Routes("quotes")
+    object QuoteDetail : Routes("quote/{quoteId}") {
+        fun createRoute(quoteId: String) = "quote/$quoteId"
+    }
+
+    // New onboarding
+    object SocialSplash : Routes("social_splash")
+    object QuickAuth : Routes("quick_auth")
+    object WriteFirstNote : Routes("write_first_note")
+    object QuotesPreview : Routes("quotes_preview")
 }

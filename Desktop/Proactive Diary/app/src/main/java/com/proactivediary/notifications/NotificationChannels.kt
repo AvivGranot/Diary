@@ -9,6 +9,7 @@ object NotificationChannels {
     const val CHANNEL_GOALS = "goal_reminders_v2"
     const val CHANNEL_LAPSED = "lapsed_user"
     const val CHANNEL_DIGEST = "weekly_digest"
+    const val CHANNEL_NOTES = "anonymous_notes"
 
     fun createChannels(context: Context) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -49,9 +50,18 @@ object NotificationChannels {
             description = "Your weekly writing summary"
         }
 
+        val notesChannel = NotificationChannel(
+            CHANNEL_NOTES,
+            "Anonymous Notes",
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = "Notifications when someone sends you a kind note"
+        }
+
         notificationManager.createNotificationChannel(writingChannel)
         notificationManager.createNotificationChannel(goalsChannel)
         notificationManager.createNotificationChannel(lapsedChannel)
         notificationManager.createNotificationChannel(digestChannel)
+        notificationManager.createNotificationChannel(notesChannel)
     }
 }

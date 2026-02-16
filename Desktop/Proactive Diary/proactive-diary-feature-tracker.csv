@@ -1,0 +1,85 @@
+Feature,Category,Status,Agent,Priority,Effort,Description,Notes
+Typewriter Opening Screen,Onboarding,LIVE,1,Core,Done,"First-launch immersive screen with Benjamin Franklin quote, character-by-character typewriter effect (40ms intervals), skip button at 1.5s, auto-navigate on return","Plays every launch now (not just first)"
+Design Studio (6 sections),Onboarding,LIVE,2,Core,Done,"Color/form/texture/canvas/details/mark customization with live preview, 10 color chips, 3 layouts, 5 textures, 5 canvases, 5 toggles, monogram",Edit mode accessible from Settings
+Goals Onboarding,Onboarding,LIVE,4,Core,Done,"Max 3 goals during onboarding with frequency/time/day pickers, writing reminders with fallback toggle",Skip option available
+Notification Permission Screen,Onboarding,LIVE,12,Core,Done,"Android 13+ notification permission request, inserted after OnboardingGoals",
+Rich Text Editor,Writing,LIVE,3,Core,Done,"HTML editor (richeditor-compose), B/I/U/S/bullet/numbered toolbar, dual storage (content_html + content_plain)",Library: richeditor-compose 1.0.0-rc13
+Auto-Save,Writing,LIVE,3,Core,Done,"5s debounce auto-save with pulsing dot indicator (6dp, top-right)",
+Word Count,Writing,LIVE,3,Core,Done,Real-time word count displayed in Write screen,
+Tag Input,Writing,LIVE,3,Core,Done,"Comma-separated tags, stored as JSON array, themed dialog",
+Same-Day Deduplication,Writing,LIVE,3,Core,Done,Loads existing entry if one exists for today,
+Monogram Header,Writing,LIVE,2/3,Nice-to-have,Done,Custom text (max 20 chars) shown in header/footer with serif/sans font,
+Date Header,Writing,LIVE,3,Nice-to-have,Done,"Format: 'Saturday, February 8, 2026' — togglable in Design Studio",
+Canvas Line Styles,Writing,LIVE,2/3,Core,Done,"5 styles: lined, dotted, grid, numbered, blank with configurable opacity",
+Font Size Preference,Writing,LIVE,5,Nice-to-have,Done,"Small/medium/large option in Settings",
+Photo Attachments,Writing,LIVE,6,High,Done,"Camera/gallery picker, image storage with unique IDs, attachment strip, swipe-to-remove, full-screen viewer",Images stored as JSON paths
+Location Auto-Tagging,Writing,LIVE,7,Medium,Done,"GPS location detection via Google Play Services, auto-tags entries with location name on save",Requires permission
+Weather Auto-Tagging,Writing,LIVE,7,Medium,Done,"OpenWeather API integration, stores temp/condition/icon on entry",
+Voice Notes,Writing,LIVE,10,Medium,Done,"Audio recording (MediaRecorder), speech-to-text transcription, audio player in EntryDetail",
+Guided Templates,Writing,LIVE,8,Medium,Done,"10 pre-built templates across 5 categories (reflection/gratitude/growth/wellness/creative), template picker sheet",User-created templates also supported
+Context Chips,Writing,LIVE,12,Nice-to-have,Done,"Display tags, location, weather, mood as chips in entries",
+Journal Entry List,Journal,LIVE,3,Core,Done,"Entry list with date group headers, content preview (3 lines), mood circle, tags, word count",
+FTS4 Search,Journal,LIVE,3,Core,Done,"Full-text search with 300ms debounce, date-range detection, bold highlighting in snippets",
+Calendar View,Journal,LIVE,9,High,Done,"Month heatmap showing entry density per day, date tap to filter",
+Gallery View,Journal,LIVE,9,Medium,Done,"Grid of entry thumbnails with images/title/date",
+View Mode Switcher,Journal,LIVE,9,Medium,Done,"Toggle between list/calendar/gallery views",
+Swipe-to-Dismiss Delete,Journal,LIVE,3,Core,Done,Swipe entry card to delete with confirmation dialog,
+Entry Detail Screen,Journal,LIVE,3,Core,Done,"Full-screen read view with diary color background, edit/delete from overflow menu",
+Goal Creation & Management,Goals,LIVE,4,Core,Done,"Title/frequency/time/days, create/edit/delete, unlimited goals in main app",
+Goal Progress Tracking,Goals,LIVE,4,Core,Done,"Daily/weekly/monthly progress bars, calculated from check-ins",
+Streak Calculation,Goals,LIVE,4,Core,Done,"Consecutive days tracking, resets if broken, displayed as fire emoji",
+Goal Check-In,Goals,LIVE,4,Core,Done,"Button: outlined when unchecked, filled + disabled when done today",
+Writing Reminders,Notifications,LIVE,4,Core,Done,"Configurable time + days, max 5 reminders, fallback 30min later",
+Goal Reminders,Notifications,LIVE,4,Core,Done,Notification at scheduled time for each active goal,
+Boot Receiver,Notifications,LIVE,4,Core,Done,"Re-registers all alarms after device reboot, manually creates Room DB",
+Notification Health Checker,Notifications,LIVE,12,Nice-to-have,Done,"Validates notification state on app launch, detects disabled channels",
+Lapsed User Notifications,Notifications,LIVE,12,Medium,Done,"WorkManager job detecting inactive users, sends re-engagement notification",
+Weekly Digest Worker,Notifications,LIVE,12,Medium,Done,WorkManager job for AI-powered weekly summary,
+Snooze Support,Notifications,LIVE,12,Nice-to-have,Done,Snooze action on notifications via SnoozeReceiver,
+Dark Mode,Settings,LIVE,5,Core,Done,"Toggle in Settings, writes preference, live switching with Material 3",
+Reminder Management,Settings,LIVE,5,Core,Done,"Dedicated screen to list/edit/delete/add writing reminders",
+Export Diary (JSON),Settings,LIVE,5,Core,Done,Full diary export as JSON file,
+Export Diary (Text),Settings,LIVE,5,Core,Done,Full diary export as plain text,
+Delete All Data,Settings,LIVE,5,Core,Done,"2-step confirmation with text entry, nukes all data",
+Contact Support,Settings,LIVE,12,Nice-to-have,Done,"Categorized support form: feedback, bug report, feature request",
+Privacy Policy & Terms,Settings,LIVE,5,Core,Done,Static legal pages,
+Subscription ($5/mo or $30/yr),Monetization,LIVE,5,Core,Done,"Google Play Billing v7, trial logic, purchase restoration",
+Paywall Gate,Monetization,LIVE,5,Core,Done,"Blocks premium features (Write tab, Wrapped, YearInReview) when subscription expired",
+7-Day Free Trial,Monetization,LIVE,5,Core,Done,"trial_start_date preference, paywall after 7 days",
+Free Tier (30 entries),Monetization,LIVE,12,Core,Done,"Free users limited to 30 entries (upgraded from 10)",
+Discover Screen,Discover,LIVE,12,Medium,Done,"Curated wisdom from great minds: Jefferson, Lincoln, FDR, JFK, Jobs, Musk, Mozart, Beethoven",100 curated entries
+AI Weekly Insights,AI,LIVE,11,High,Done,"Gemini Flash API generates weekly summaries with themes, mood trends, prompt suggestions",Build-time API key (was user-entered)
+AI Insight Cards,AI,LIVE,11,Medium,Done,InsightsCard in JournalScreen showing summary + mood trend + prompts,
+Streak Celebration,Engagement,LIVE,12,Medium,Done,Animated overlay for milestone streaks,
+Welcome Back Overlay,Engagement,LIVE,12,Nice-to-have,Done,Greets returning users who came from a notification,
+Coach Marks,Engagement,LIVE,12,Medium,Done,"Single consolidated coach mark: 'Welcome to your diary. Swipe to browse tabs.'",Was 2 separate marks; consolidated
+On This Day,Engagement,LIVE,12,Medium,Done,Shows past entries from today's date in previous years,
+Diary Wrapped,Engagement,LIVE,12,High,Done,"Spotify Wrapped-style annual recap with statistics (paywalled)",
+Year In Review,Export,LIVE,12,High,Done,"Book-style year summary with statistics (paywalled)",
+Theme Evolution,Engagement,LIVE,12,Nice-to-have,Done,Visualization of design preferences over time,
+Book Generator (PDF),Export,LIVE,12,Medium,Done,"Export entries as printable PDF/text book with metadata",
+Share Entry as Image,Sharing,LIVE,12,Medium,Done,"ShareCardDialog generates shareable entry/streak images",
+Contact Tagging,Sharing,LIVE,12,Nice-to-have,Done,"Mention friends in entries, stored as JSON array",
+Firebase Auth,Auth,LIVE,12,Nice-to-have,Done,"Optional sign-up/sign-in, Google Sign-In support",
+Firebase Analytics,Analytics,LIVE,12,Core,Done,Event tracking throughout the app,
+In-App Review,Play Store,LIVE,12,Nice-to-have,Done,Google Play In-App Review API prompt,
+In-App Update,Play Store,LIVE,12,Nice-to-have,Done,Google Play In-App Update API,
+Store Listing Screenshots,Play Store,LIVE,12,Core,Done,"8 Compose-rendered screenshot frames for Play Store",Screenshot06_Moods was deleted
+HorizontalPager Navigation,Navigation,LIVE,6,Core,Done,"4-page swipeable interface: Discover/Write/Journal/Settings",
+Deep Linking,Navigation,LIVE,5,Core,Done,"Intent extras from notifications: destination, prompts, goal IDs",
+Mood Tracking,Writing,KILLED,3,Was Core,-,"5 mood options (great/good/neutral/bad/terrible) with colored dots, mood selector in Write toolbar, mood trend chart, calendar coloring","KILLED Feb 11. Reason: simplified for v1 launch. 617 lines removed across 28 files."
+Mood Trend Chart,Journal,KILLED,3,Was Medium,-,"Canvas-based 30-day line chart with bezier curves, color-coded mood dots",KILLED with Mood Tracking
+Mood Screenshot (Store),Play Store,KILLED,12,Was Medium,-,"Screenshot06_Moods.kt showing mood patterns for Play Store listing",KILLED with Mood Tracking
+Talk to Journal,AI,KILLED,12,Was High,-,"Full-screen AI chat with your journal. Animated messages, suggested question chips, multi-turn conversation",KILLED Feb 16. Lived ~3 days. 224+100 lines.
+Go Deeper,AI,KILLED,12,Was Medium,-,"Per-entry AI reflection bottom sheet. Auto-started with 'Help me reflect deeper.' prompt",KILLED Feb 16. Lived ~3 days. 113+134 lines.
+AI Chat Components,AI,KILLED,12,Was Medium,-,"Shared chat UI: message bubbles, typing indicator with animated dots, text input, auto-scroll",KILLED Feb 16. 350 lines.
+AI Chat Service (Claude),AI,KILLED,12,Was Medium,-,"OkHttp-based Claude API client with 90s timeout. goDeeper() and talkToJournal() endpoints",KILLED Feb 16. Replaced by Gemini for insights only.
+Reflection Prompts Sheet,AI,KILLED,12,Was Medium,-,"Time-of-day-aware reflection prompts (morning/afternoon/evening) as tappable cards in ModalBottomSheet",KILLED Feb 15. 162 lines.
+Suggestions System (Full),AI,KILLED,11,Was High,-,"7 context-aware suggestion types (location/weather/streak/time/anniversary/mood/writing habit), bottom sheet with For You / Recent tabs, sparkle icon trigger","KILLED Feb 15-16. 806 lines across 7 files."
+Day X Streak Label,Engagement,KILLED,-,Was Nice-to-have,-,"'Day 14' counter next to Write tab label in bottom nav","KILLED Feb 10. Simplified to just 'Write'."
+User API Key Input,Settings,KILLED,-,Was Core,-,"Text field in Settings to paste personal AI API key",KILLED Feb 16. Build-time key replaced it.
+Claude API Backend,AI,REPLACED,-,Was Core,-,Claude API for weekly insights and chat features,Replaced by Gemini Flash API (Feb 15)
+Dual Coach Marks,Engagement,CONSOLIDATED,-,Was Nice-to-have,-,"Separate write hint + swipe hint coach marks",Merged into single coach mark (Feb 16)
+Dark Mode for v1,Settings,DEFERRED,5,Medium,-,"Dark mode exists in code but was discussed as potentially removed for v1 simplicity",Still in codebase; may be removed pre-launch
+Custom Templates,Writing,PARTIAL,8,Low,Small,"User can create own templates (entity supports it), but no dedicated UI for template creation","isBuiltIn field exists; creation flow not built"
+Widget (Daily Wisdom),Engagement,PARTIAL,12,Low,Medium,"WriteWidgetProvider.kt and DailyWisdom.kt exist in codebase","May not be fully wired up"

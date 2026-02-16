@@ -26,15 +26,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.draw
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.DiaryColors
+import com.proactivediary.ui.theme.PlusJakartaSans
 
 @Composable
 fun ShareCardDialog(
@@ -43,29 +47,55 @@ fun ShareCardDialog(
     onShare: (Bitmap) -> Unit
 ) {
     val picture = remember { Picture() }
-    var selectedRatio by remember { mutableStateOf(ShareAspectRatio.SQUARE) }
-    val pencilColor = MaterialTheme.colorScheme.secondary
-    val inkColor = MaterialTheme.colorScheme.onBackground
+    var selectedRatio by remember { mutableStateOf(ShareAspectRatio.STORY) }
+    var selectedStyle by remember { mutableStateOf(ShareCardStyle.SUNSET) }
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.background
+            shape = RoundedCornerShape(20.dp),
+            color = MaterialTheme.colorScheme.surface
         ) {
             Column(
                 modifier = Modifier.padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Share your page",
+                    text = "Share your moment",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
-                        fontSize = 22.sp,
-                        color = inkColor
+                        fontFamily = PlusJakartaSans,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 )
 
-                Spacer(Modifier.height(12.dp))
+                Spacer(Modifier.height(16.dp))
+
+                // Style selector
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    ShareCardStyle.entries.forEach { style ->
+                        val isSelected = style == selectedStyle
+                        Text(
+                            text = style.label,
+                            style = TextStyle(
+                                fontFamily = PlusJakartaSans,
+                                fontSize = 12.sp,
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (isSelected) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
+                                letterSpacing = 0.5.sp
+                            ),
+                            modifier = Modifier
+                                .clickable { selectedStyle = style }
+                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(8.dp))
 
                 // Aspect ratio selector
                 Row(
@@ -77,9 +107,11 @@ fun ShareCardDialog(
                         Text(
                             text = ratio.label,
                             style = TextStyle(
-                                fontSize = 12.sp,
-                                color = if (isSelected) inkColor else pencilColor.copy(alpha = 0.5f),
-                                letterSpacing = 0.5.sp
+                                fontFamily = PlusJakartaSans,
+                                fontSize = 11.sp,
+                                fontWeight = if (isSelected) FontWeight.Medium else FontWeight.Normal,
+                                color = if (isSelected) MaterialTheme.colorScheme.onSurface
+                                else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
                             ),
                             modifier = Modifier
                                 .clickable { selectedRatio = ratio }
@@ -90,7 +122,7 @@ fun ShareCardDialog(
 
                 Spacer(Modifier.height(12.dp))
 
-                // Preview card with picture recording for bitmap capture
+                // Preview card
                 Box(
                     modifier = Modifier
                         .drawWithCache {
@@ -110,18 +142,24 @@ fun ShareCardDialog(
                             }
                         }
                 ) {
-                    ShareCardPreview(data = data, aspectRatio = selectedRatio)
+                    ShareCardPreview(
+                        data = data,
+                        aspectRatio = selectedRatio,
+                        style = selectedStyle
+                    )
                 }
 
                 Spacer(Modifier.height(20.dp))
 
-                // Share button
+                // Share button — gradient
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
-                            color = inkColor,
-                            shape = RoundedCornerShape(4.dp)
+                            brush = Brush.horizontalGradient(
+                                listOf(DiaryColors.ElectricIndigo, DiaryColors.NeonPink)
+                            ),
+                            shape = RoundedCornerShape(12.dp)
                         )
                         .clickable {
                             val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -138,15 +176,17 @@ fun ShareCardDialog(
                             }
                             onShare(bitmap)
                         }
-                        .padding(vertical = 12.dp),
+                        .padding(vertical = 14.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "SHARE",
+                        text = "Share",
                         style = TextStyle(
-                            fontSize = 13.sp,
-                            letterSpacing = 1.sp,
-                            color = MaterialTheme.colorScheme.surface
+                            fontFamily = PlusJakartaSans,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White,
+                            letterSpacing = 0.5.sp
                         )
                     )
                 }
@@ -157,8 +197,9 @@ fun ShareCardDialog(
                     Text(
                         text = "Cancel",
                         style = TextStyle(
-                            fontSize = 12.sp,
-                            color = pencilColor
+                            fontFamily = PlusJakartaSans,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                         )
                     )
                 }

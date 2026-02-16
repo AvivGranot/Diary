@@ -4,8 +4,9 @@ import androidx.compose.ui.graphics.Color
 import com.proactivediary.ui.theme.DiaryColors
 
 data class DiaryThemeConfig(
-    val colorScheme: String = "cream",
-    val primaryColor: Color = DiaryColors.Cream,
+    val colorScheme: String = "indigo",
+    val primaryColor: Color = DiaryColors.IndigoMist,
+    val colorMode: String = "adaptive",
     val form: String = "focused",
     val texture: String = "paper",
     val canvas: String = "lined",
@@ -19,6 +20,13 @@ data class DiaryThemeConfig(
 
         fun colorForKey(key: String): Color {
             return when (key) {
+                // Vibrant (new defaults)
+                "indigo" -> DiaryColors.IndigoMist
+                "pink" -> DiaryColors.PinkMist
+                "teal" -> DiaryColors.TealMist
+                "sunset" -> DiaryColors.OrangeMist
+                "purple" -> DiaryColors.PurpleMist
+                // Classic
                 "cream" -> DiaryColors.Cream
                 "blush" -> DiaryColors.Blush
                 "sage" -> DiaryColors.Sage
@@ -29,7 +37,18 @@ data class DiaryThemeConfig(
                 "wine_red" -> DiaryColors.WineRed
                 "forest" -> DiaryColors.Forest
                 "ocean" -> DiaryColors.Ocean
-                else -> DiaryColors.Cream
+                else -> DiaryColors.IndigoMist
+            }
+        }
+
+        fun accentForKey(key: String): Color {
+            return when (key) {
+                "indigo" -> DiaryColors.ElectricIndigo
+                "pink" -> DiaryColors.NeonPink
+                "teal" -> DiaryColors.CyberTeal
+                "sunset" -> DiaryColors.SunsetOrange
+                "purple" -> DiaryColors.VividPurple
+                else -> DiaryColors.ElectricIndigo
             }
         }
 

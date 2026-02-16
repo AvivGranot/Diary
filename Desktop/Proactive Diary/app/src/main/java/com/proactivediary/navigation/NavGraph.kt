@@ -21,12 +21,23 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.proactivediary.data.social.QuotesRepository
+import com.proactivediary.data.social.UserProfileRepository
 import com.proactivediary.ui.designstudio.DesignStudioScreen
 import com.proactivediary.ui.journal.EntryDetailScreen
+import com.proactivediary.ui.notes.ComposeNoteScreen
+import com.proactivediary.ui.notes.EnvelopeRevealScreen
+import com.proactivediary.ui.notes.NoteInboxScreen
 import com.proactivediary.ui.onboarding.NotificationPermissionScreen
 import com.proactivediary.ui.onboarding.OnboardingGoalsScreen
+import com.proactivediary.ui.onboarding.QuickAuthScreen
+import com.proactivediary.ui.onboarding.QuotesPreviewScreen
+import com.proactivediary.ui.onboarding.QuotesPreviewViewModel
+import com.proactivediary.ui.onboarding.SocialSplashScreen
+import com.proactivediary.ui.onboarding.WriteFirstNoteScreen
 import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
+import com.proactivediary.ui.quotes.QuoteDetailScreen
 import com.proactivediary.ui.typewriter.TypewriterScreen
 import com.proactivediary.ui.export.YearInReviewScreen
 import com.proactivediary.ui.onthisday.OnThisDayScreen
@@ -232,6 +243,93 @@ fun ProactiveDiaryNavHost(
             })
         ) {
             ContactSupportScreen(onBack = { navController.popBackStack() })
+        }
+
+        // ── New Social Onboarding ──
+
+        composable(Routes.SocialSplash.route) {
+            SocialSplashScreen(
+                onContinue = {
+                    navController.navigate(Routes.QuickAuth.route) {
+                        popUpTo(Routes.SocialSplash.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Routes.QuickAuth.route) {
+            QuickAuthScreen(
+                onAuthenticated = {
+                    navController.navigate(Routes.WriteFirstNote.route) {
+                        popUpTo(Routes.QuickAuth.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Routes.WriteFirstNote.route) {
+            WriteFirstNoteScreen(
+                onContinue = {
+                    navController.navigate(Routes.QuotesPreview.route) {
+                        popUpTo(Routes.WriteFirstNote.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Routes.QuotesPreview.route) {
+            // QuotesPreviewScreen needs repos passed directly since it's not a ViewModel-based screen
+            // We'll use hiltViewModel in QuotesPreviewScreen instead
+            QuotesPreviewScreen(
+                onContinue = {
+                    navController.navigate(Routes.NotificationPermission.route) {
+                        popUpTo(Routes.QuotesPreview.route) { inclusive = true }
+                    }
+                },
+                quotesRepository = hiltViewModel<QuotesPreviewViewModel>().quotesRepository,
+                userProfileRepository = hiltViewModel<QuotesPreviewViewModel>().userProfileRepository
+            )
+        }
+
+        // ── Anonymous Notes ──
+
+        composable(Routes.ComposeNote.route) {
+            ComposeNoteScreen(
+                onBack = { navController.popBackStack() },
+                onNoteSent = { navController.popBackStack() }
+            )
+        }
+
+        composable(Routes.NoteInbox.route) {
+            NoteInboxScreen(
+                onBack = { navController.popBackStack() },
+                onNoteClick = { noteId ->
+                    navController.navigate(Routes.EnvelopeReveal.createRoute(noteId))
+                },
+                onComposeNote = {
+                    navController.navigate(Routes.ComposeNote.route)
+                }
+            )
+        }
+
+        composable(
+            route = Routes.EnvelopeReveal.route,
+            arguments = listOf(navArgument("noteId") { type = NavType.StringType })
+        ) {
+            EnvelopeRevealScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // ── Quote Detail ──
+
+        composable(
+            route = Routes.QuoteDetail.route,
+            arguments = listOf(navArgument("quoteId") { type = NavType.StringType })
+        ) {
+            QuoteDetailScreen(
+                onBack = { navController.popBackStack() }
+            )
         }
     }
 

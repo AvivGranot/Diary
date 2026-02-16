@@ -6,8 +6,16 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,21 +23,24 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Explore
+import androidx.compose.material.icons.outlined.FormatQuote
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -59,7 +70,8 @@ import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.paywall.PurchaseResult
 import com.proactivediary.ui.settings.SettingsScreen
-import com.proactivediary.ui.discover.DiscoverScreen
+import com.proactivediary.ui.notes.NoteInboxViewModel
+import com.proactivediary.ui.quotes.QuotesScreen
 import com.proactivediary.ui.write.WriteScreen
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
@@ -72,13 +84,13 @@ data class BottomNavItem(
 )
 
 private const val WRITE_TAB = "write_tab"
-private const val PAGE_DISCOVER = 0
+private const val PAGE_QUOTES = 0
 private const val PAGE_WRITE = 1
 private const val PAGE_JOURNAL = 2
 private const val PAGE_SETTINGS = 3
 
 val bottomNavItems = listOf(
-    BottomNavItem(Routes.Discover.route, "Discover", Icons.Outlined.Explore),
+    BottomNavItem(Routes.Quotes.route, "Quotes", Icons.Outlined.FormatQuote),
     BottomNavItem(WRITE_TAB, "Write", Icons.Outlined.Edit, iconSize = 24),
     BottomNavItem(Routes.Journal.route, "Journal", Icons.AutoMirrored.Outlined.MenuBook),
     BottomNavItem(Routes.Settings.route, "Settings", Icons.Outlined.Settings),
@@ -93,7 +105,8 @@ fun MainScreen(
     onDeepLinkConsumed: () -> Unit = {},
     billingViewModel: BillingViewModel = hiltViewModel(),
     mainScreenViewModel: MainScreenViewModel = hiltViewModel(),
-    discoveryViewModel: FeatureDiscoveryViewModel = hiltViewModel()
+    discoveryViewModel: FeatureDiscoveryViewModel = hiltViewModel(),
+    noteInboxViewModel: NoteInboxViewModel = hiltViewModel()
 ) {
     val subscriptionState by billingViewModel.subscriptionState.collectAsState()
     val isFirstPaywallView by billingViewModel.isFirstPaywallView.collectAsState()
@@ -105,6 +118,7 @@ fun MainScreen(
     val context = LocalContext.current
     val activity = context as? Activity
     val haptic = LocalHapticFeedback.current
+    val unreadNoteCount by noteInboxViewModel.unreadCount.collectAsState(initial = 0)
 
     // Coach mark
     val showSwipeHint by discoveryViewModel.showSwipeHint.collectAsState()
@@ -118,12 +132,12 @@ fun MainScreen(
 
     // Pager state — starts on Write tab (page 0)
     val pagerState = rememberPagerState(
-        initialPage = PAGE_DISCOVER,
+        initialPage = PAGE_QUOTES,
         pageCount = { 4 }
     )
 
     // Track the last valid page the user was on before a paywall bounce
-    var lastValidPage by remember { mutableStateOf(PAGE_DISCOVER) }
+    var lastValidPage by remember { mutableStateOf(PAGE_QUOTES) }
 
     // Sync pager → bottom nav: when user swipes, update selection
     // Also handle paywall gate: if user swipes to Write while expired, bounce back
@@ -165,81 +179,16 @@ fun MainScreen(
                 "goals" -> {
                     showGoals = true
                 }
+                "note_inbox" -> {
+                    rootNavController.navigate(Routes.NoteInbox.route)
+                }
             }
             onDeepLinkConsumed()
         }
     }
 
-    Scaffold(
-        bottomBar = {
-            Column(modifier = Modifier.navigationBarsPadding()) {
-                HorizontalDivider(
-                    modifier = Modifier.fillMaxWidth(),
-                    thickness = 1.dp,
-                    color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f)
-                )
-                NavigationBar(
-                    modifier = Modifier.height(56.dp),
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 0.dp
-                ) {
-                    bottomNavItems.forEachIndexed { index, item ->
-                        val selected = pagerState.currentPage == index
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = {
-                                if (!selected) {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    // Paywall gate: block Write tab when trial expired
-                                    if (index == PAGE_WRITE && !subscriptionState.isActive) {
-                                        showPaywall = true
-                                        return@NavigationBarItem
-                                    }
-                                    scope.launch {
-                                        pagerState.animateScrollToPage(index)
-                                    }
-                                }
-                            },
-                            icon = {
-                                Box {
-                                    Icon(
-                                        imageVector = item.icon,
-                                        contentDescription = item.label,
-                                        modifier = Modifier.size(item.iconSize.dp)
-                                    )
-                                    if (index == PAGE_WRITE && !subscriptionState.isActive) {
-                                        Icon(
-                                            imageVector = Icons.Outlined.Lock,
-                                            contentDescription = "Pro",
-                                            modifier = Modifier
-                                                .size(12.dp)
-                                                .align(Alignment.TopEnd)
-                                                .offset(x = 4.dp, y = (-2).dp),
-                                            tint = MaterialTheme.colorScheme.secondary
-                                        )
-                                    }
-                                }
-                            },
-                            label = {
-                                Text(
-                                    text = item.label,
-                                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp)
-                                )
-                            },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = MaterialTheme.colorScheme.onSurface,
-                                selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                                unselectedIconColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
-                                unselectedTextColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f),
-                                indicatorColor = MaterialTheme.colorScheme.surface
-                            )
-                        )
-                    }
-                }
-            }
-        }
-    ) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
+    Scaffold { padding ->
+        Box(modifier = Modifier.fillMaxSize()) {
             // Swipeable tab pages
             HorizontalPager(
                 state = pagerState,
@@ -248,14 +197,10 @@ fun MainScreen(
                 key = { it }
             ) { page ->
                 when (page) {
-                    PAGE_DISCOVER -> {
-                        DiscoverScreen(
-                            onWriteAbout = { inspiration ->
-                                if (subscriptionState.isActive) {
-                                    scope.launch { pagerState.animateScrollToPage(PAGE_WRITE) }
-                                } else {
-                                    showPaywall = true
-                                }
+                    PAGE_QUOTES -> {
+                        QuotesScreen(
+                            onQuoteClick = { quoteId ->
+                                rootNavController.navigate(Routes.QuoteDetail.createRoute(quoteId))
                             }
                         )
                     }
@@ -327,6 +272,37 @@ fun MainScreen(
                 }
             }
 
+            // Notification bell — top right
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 12.dp, end = 16.dp)
+            ) {
+                IconButton(
+                    onClick = { rootNavController.navigate(Routes.NoteInbox.route) }
+                ) {
+                    BadgedBox(
+                        badge = {
+                            if (unreadNoteCount > 0) {
+                                Badge {
+                                    Text(
+                                        text = if (unreadNoteCount > 9) "9+" else "$unreadNoteCount",
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Notifications,
+                            contentDescription = "Notes Inbox",
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+
             // Goals overlay
             AnimatedVisibility(
                 visible = showGoals,
@@ -351,9 +327,87 @@ fun MainScreen(
 
             // Coach mark — shown on top of everything
             SwipeHint(
-                visible = showSwipeHint && pagerState.currentPage == PAGE_DISCOVER,
+                visible = showSwipeHint && pagerState.currentPage == PAGE_QUOTES,
                 onDismiss = { discoveryViewModel.dismissSwipeHint() }
             )
+
+            // Floating pill bottom navigation
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(horizontal = 24.dp, vertical = 12.dp),
+                shape = RoundedCornerShape(28.dp),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                shadowElevation = 8.dp,
+                tonalElevation = 2.dp
+            ) {
+                Row(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    bottomNavItems.forEachIndexed { index, item ->
+                        val selected = pagerState.currentPage == index
+                        val indicatorWidth by animateDpAsState(
+                            if (selected) 56.dp else 48.dp,
+                            spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            ),
+                            label = "navWidth"
+                        )
+                        Box(
+                            modifier = Modifier
+                                .width(indicatorWidth)
+                                .height(48.dp)
+                                .background(
+                                    color = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+                                    else androidx.compose.ui.graphics.Color.Transparent,
+                                    shape = RoundedCornerShape(20.dp)
+                                )
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) {
+                                    if (!selected) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        if (index == PAGE_WRITE && !subscriptionState.isActive) {
+                                            showPaywall = true
+                                            return@clickable
+                                        }
+                                        scope.launch {
+                                            pagerState.animateScrollToPage(index)
+                                        }
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Box {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = item.label,
+                                    modifier = Modifier.size(22.dp),
+                                    tint = if (selected) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                )
+                                if (index == PAGE_WRITE && !subscriptionState.isActive) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Lock,
+                                        contentDescription = "Pro",
+                                        modifier = Modifier
+                                            .size(10.dp)
+                                            .align(Alignment.TopEnd)
+                                            .offset(x = 4.dp, y = (-2).dp),
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

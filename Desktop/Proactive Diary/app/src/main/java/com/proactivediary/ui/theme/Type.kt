@@ -9,82 +9,76 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.proactivediary.R
 
-val CormorantGaramond = FontFamily(
-    Font(R.font.cormorant_garamond_regular, FontWeight.Normal),
-    Font(R.font.cormorant_garamond_italic, FontWeight.Normal, FontStyle.Italic)
+val PlusJakartaSans = FontFamily(
+    Font(R.font.plus_jakarta_sans_regular, FontWeight.Normal),
+    Font(R.font.plus_jakarta_sans_medium, FontWeight.Medium),
+    Font(R.font.plus_jakarta_sans_semibold, FontWeight.SemiBold),
+    Font(R.font.plus_jakarta_sans_bold, FontWeight.Bold)
 )
 
+// Keep alias for backward compat during migration
+val CormorantGaramond = PlusJakartaSans
+
 val DiaryTypography = Typography(
-    // Section titles: Cormorant Garamond 24sp
     headlineLarge = TextStyle(
-        fontFamily = CormorantGaramond,
-        fontSize = 24.sp,
-        fontWeight = FontWeight.Normal,
-        letterSpacing = 0.3.sp,
-        lineHeight = 31.2.sp
+        fontFamily = PlusJakartaSans,
+        fontSize = 28.sp,
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = (-0.5).sp,
+        lineHeight = 36.sp
     ),
-    // Typewriter quote: Cormorant Garamond italic 20sp
     headlineMedium = TextStyle(
-        fontFamily = CormorantGaramond,
-        fontSize = 20.sp,
-        fontWeight = FontWeight.Normal,
-        fontStyle = FontStyle.Italic,
+        fontFamily = PlusJakartaSans,
+        fontSize = 22.sp,
+        fontWeight = FontWeight.Medium,
         lineHeight = 30.sp
     ),
-    // Body text: Roboto 14sp
     bodyLarge = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = PlusJakartaSans,
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Normal,
+        lineHeight = 24.sp
+    ),
+    bodyMedium = TextStyle(
+        fontFamily = PlusJakartaSans,
         fontSize = 14.sp,
         fontWeight = FontWeight.Normal,
-        lineHeight = 22.4.sp
+        lineHeight = 21.sp
     ),
-    // Body medium
-    bodyMedium = TextStyle(
-        fontFamily = FontFamily.Default,
-        fontSize = 13.sp,
-        fontWeight = FontWeight.Normal,
-        lineHeight = 20.sp
-    ),
-    // Body small
     bodySmall = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = PlusJakartaSans,
         fontSize = 12.sp,
         fontWeight = FontWeight.Normal,
         lineHeight = 18.sp
     ),
-    // Section numbers: Roboto 11sp
     labelSmall = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = PlusJakartaSans,
         fontSize = 11.sp,
-        fontWeight = FontWeight.Normal,
-        letterSpacing = 1.1.sp
+        fontWeight = FontWeight.Medium,
+        letterSpacing = 0.8.sp
     ),
-    // Nav logo: Cormorant Garamond 16sp
     titleMedium = TextStyle(
-        fontFamily = CormorantGaramond,
+        fontFamily = PlusJakartaSans,
         fontSize = 16.sp,
-        fontWeight = FontWeight.Normal,
-        letterSpacing = 3.sp
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 1.sp
     ),
-    // Large title
     titleLarge = TextStyle(
-        fontFamily = CormorantGaramond,
+        fontFamily = PlusJakartaSans,
         fontSize = 20.sp,
-        fontWeight = FontWeight.Normal,
+        fontWeight = FontWeight.SemiBold,
         lineHeight = 28.sp
     ),
-    // Labels
     labelMedium = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = PlusJakartaSans,
         fontSize = 12.sp,
-        fontWeight = FontWeight.Normal,
+        fontWeight = FontWeight.Medium,
         letterSpacing = 0.5.sp
     ),
-    // Label large
     labelLarge = TextStyle(
-        fontFamily = FontFamily.Default,
+        fontFamily = PlusJakartaSans,
         fontSize = 14.sp,
-        fontWeight = FontWeight.Normal,
-        letterSpacing = 1.sp
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 0.5.sp
     )
 )

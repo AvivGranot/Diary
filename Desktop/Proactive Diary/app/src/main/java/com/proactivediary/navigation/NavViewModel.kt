@@ -45,12 +45,12 @@ class NavViewModel @Inject constructor(
                 }
             }
 
-            // First launch: show the typewriter onboarding experience
-            // Returning users: go straight to Main (Discover tab)
+            // First launch: show the new social onboarding (Nikita Bier style)
+            // Returning users: go straight to Main (Quotes tab)
             _startDestination.value = if (typewriterCompleted) {
                 Routes.Main.route
             } else {
-                Routes.Typewriter.route
+                Routes.SocialSplash.route
             }
         }
     }

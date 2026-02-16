@@ -292,7 +292,8 @@ class JournalViewModel @Inject constructor(
             tags = tagsList,
             wordCount = wordCount,
             createdAt = createdAt,
-            imageCount = imageCount
+            imageCount = imageCount,
+            mood = mood
         )
     }
 

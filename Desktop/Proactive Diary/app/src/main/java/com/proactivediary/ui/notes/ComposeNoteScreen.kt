@@ -1,0 +1,345 @@
+package com.proactivediary.ui.notes
+
+import android.content.Intent
+import android.net.Uri
+import android.provider.ContactsContract
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.proactivediary.ui.theme.DiaryColors
+import com.proactivediary.ui.write.resolveContact
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ComposeNoteScreen(
+    onBack: () -> Unit,
+    onNoteSent: () -> Unit,
+    viewModel: ComposeNoteViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
+
+    val contactPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickContact()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            val contact = resolveContact(context, uri)
+            viewModel.onContactSelected(
+                name = contact?.displayName,
+                phone = contact?.phone,
+                email = contact?.email
+            )
+        }
+    }
+
+    if (state.isSent) {
+        // Success state
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(DiaryColors.Paper),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(32.dp)
+            ) {
+                Text(
+                    text = "Your note is on its way!",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = DiaryColors.Ink,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "You just made someone's day.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontStyle = FontStyle.Italic,
+                    color = DiaryColors.Pencil,
+                    textAlign = TextAlign.Center
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                Button(
+                    onClick = onNoteSent,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = DiaryColors.ElectricIndigo
+                    )
+                ) {
+                    Text("Done")
+                }
+            }
+        }
+        return
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Send a Kind Note", color = DiaryColors.Ink) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = DiaryColors.Ink)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = DiaryColors.Paper
+                )
+            )
+        },
+        containerColor = DiaryColors.Paper
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Envelope body
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xFFFAF6EE))
+                    .padding(20.dp)
+            ) {
+                Column {
+                    Text(
+                        text = "Write something kind...",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = DiaryColors.Pencil,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+
+                    TextField(
+                        value = state.content,
+                        onValueChange = { viewModel.updateContent(it) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp),
+                        placeholder = {
+                            Text(
+                                "You inspire me because...",
+                                fontStyle = FontStyle.Italic,
+                                color = DiaryColors.Pencil.copy(alpha = 0.5f)
+                            )
+                        },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            focusedTextColor = DiaryColors.Ink,
+                            unfocusedTextColor = DiaryColors.Ink,
+                            cursorColor = DiaryColors.ElectricIndigo
+                        )
+                    )
+
+                    // Word counter
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        Text(
+                            text = "${state.wordCount}/${ComposeNoteViewModel.MAX_WORDS} words",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (state.wordCount >= ComposeNoteViewModel.MAX_WORDS)
+                                DiaryColors.CoralRed else DiaryColors.Pencil
+                        )
+                    }
+                }
+            }
+
+            // Moderation error
+            if (state.moderationError != null) {
+                Text(
+                    text = state.moderationError!!,
+                    color = DiaryColors.CoralRed,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 8.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Recipient selection
+            if (state.recipientName == null) {
+                OutlinedButton(
+                    onClick = { contactPicker.launch(null) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Person, "Pick contact", modifier = Modifier.size(20.dp))
+                    Text("  Choose Recipient", color = DiaryColors.Ink)
+                }
+            } else {
+                // Recipient selected
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(DiaryColors.ElectricIndigo.copy(alpha = 0.1f))
+                        .padding(16.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            text = "To: ${state.recipientName}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = DiaryColors.Ink
+                        )
+
+                        AnimatedVisibility(visible = !state.isResolving) {
+                            when (state.isRecipientOnApp) {
+                                true -> Text(
+                                    text = "Ready to send!",
+                                    color = DiaryColors.CyberTeal,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                                false -> Text(
+                                    text = "Not on Proactive Diary yet \u2014 send an invite!",
+                                    color = DiaryColors.SunsetOrange,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(top = 4.dp)
+                                )
+                                null -> {}
+                            }
+                        }
+
+                        if (state.isResolving) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp).padding(top = 4.dp),
+                                strokeWidth = 2.dp,
+                                color = DiaryColors.ElectricIndigo
+                            )
+                        }
+                    }
+                }
+
+                // Change recipient
+                Text(
+                    text = "Change recipient",
+                    color = DiaryColors.ElectricIndigo,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier
+                        .padding(top = 4.dp)
+                        .align(Alignment.CenterHorizontally)
+                        .let { mod ->
+                            mod
+                        }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Send / Invite button
+            if (state.isRecipientOnApp == true) {
+                Button(
+                    onClick = { viewModel.sendNote() },
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    enabled = state.content.isNotBlank() && !state.isSending,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = DiaryColors.ElectricIndigo
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    if (state.isSending) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(Icons.Default.Send, "Send", modifier = Modifier.size(20.dp))
+                        Text("  Seal & Send", fontSize = 16.sp)
+                    }
+                }
+            } else if (state.isRecipientOnApp == false) {
+                Button(
+                    onClick = {
+                        val shareText = "Someone wants to send you a kind note on Proactive Diary! Download it to read: https://play.google.com/store/apps/details?id=com.proactivediary"
+                        val sendIntent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, shareText)
+                            type = "text/plain"
+                        }
+                        context.startActivity(Intent.createChooser(sendIntent, "Invite via"))
+                    },
+                    modifier = Modifier.fillMaxWidth().height(52.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = DiaryColors.SunsetOrange
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.Share, "Invite", modifier = Modifier.size(20.dp))
+                    Text("  Send Invite", fontSize = 16.sp)
+                }
+            }
+
+            // Error display
+            if (state.error != null) {
+                Text(
+                    text = state.error!!,
+                    color = DiaryColors.CoralRed,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(top = 8.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}

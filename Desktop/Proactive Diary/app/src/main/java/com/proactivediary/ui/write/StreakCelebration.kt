@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,18 +16,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.components.ConfettiEffect
+import com.proactivediary.ui.theme.DiaryColors
+import com.proactivediary.ui.theme.PlusJakartaSans
 import kotlinx.coroutines.delay
 
 @Composable
@@ -36,115 +41,164 @@ fun StreakCelebration(
     onShare: ((Int) -> Unit)? = null
 ) {
     val milestone = when {
-        streakCount == 7 -> "One week"
-        streakCount == 14 -> "Two weeks"
-        streakCount == 21 -> "Three weeks"
-        streakCount == 30 -> "One month"
-        streakCount == 50 -> "Fifty days"
-        streakCount == 100 -> "One hundred days"
-        streakCount == 365 -> "One year"
-        else -> "Day $streakCount"
+        streakCount == 7 -> "one week"
+        streakCount == 14 -> "two weeks"
+        streakCount == 21 -> "three weeks"
+        streakCount == 30 -> "one month"
+        streakCount == 50 -> "fifty days"
+        streakCount == 100 -> "one hundred days"
+        streakCount == 365 -> "one year"
+        else -> "day $streakCount"
     }
 
     val message = when {
-        streakCount == 7 -> "A week of writing.\nYour practice is taking root."
-        streakCount == 14 -> "Two weeks in.\nYou\u2019re building something."
-        streakCount == 21 -> "Three weeks.\nThe practice is becoming part of you."
-        streakCount == 30 -> "A month of writing.\nThis is who you are now."
-        streakCount == 50 -> "Fifty days.\nMost people never get here."
-        streakCount == 100 -> "One hundred days of practice.\nYour words are a treasure."
-        streakCount == 365 -> "A full year of writing.\nExtraordinary."
-        else -> "Keep writing."
+        streakCount == 7 -> "a week of writing.\nyour practice is taking root."
+        streakCount == 14 -> "two weeks in.\nyou\u2019re building something real."
+        streakCount == 21 -> "three weeks.\nit\u2019s becoming part of you."
+        streakCount == 30 -> "a month of writing.\nthis is who you are now."
+        streakCount == 50 -> "fifty days.\nmost people never get here."
+        streakCount == 100 -> "one hundred days.\nyour words are a treasure."
+        streakCount == 365 -> "a full year.\nextraordinary."
+        else -> "keep writing."
     }
 
     var alpha by remember { mutableFloatStateOf(0f) }
+    var showConfetti by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        // Fade in
         val steps = 20
         for (i in 1..steps) {
             alpha = i.toFloat() / steps
             delay(20)
         }
-        // Hold for 3 seconds
-        delay(3000)
-        // Fade out
-        for (i in steps downTo 0) {
-            alpha = i.toFloat() / steps
-            delay(20)
+        showConfetti = true
+        // Hold — don't auto-dismiss when share is available
+        if (onShare == null) {
+            delay(4000)
+            for (i in steps downTo 0) {
+                alpha = i.toFloat() / steps
+                delay(20)
+            }
+            onDismiss()
         }
-        onDismiss()
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .alpha(alpha)
-            .background(Color(0xFFF3EEE7))
+            .background(
+                Brush.verticalGradient(
+                    listOf(DiaryColors.ElectricIndigo, DiaryColors.NeonPink, DiaryColors.VividPurple)
+                )
+            )
             .clickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
-            ) { onDismiss() },
+            ) { if (onShare == null) onDismiss() },
         contentAlignment = Alignment.Center
     ) {
+        // Confetti overlay
+        ConfettiEffect(
+            trigger = showConfetti,
+            modifier = Modifier.fillMaxSize()
+        )
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(48.dp)
         ) {
+            // Fire emoji
             Text(
-                text = "$streakCount.",
+                text = "\uD83D\uDD25",
+                fontSize = 48.sp
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            // Streak count — big, bold
+            Text(
+                text = "$streakCount",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
-                    fontSize = 56.sp,
-                    color = Color(0xFF313131)
+                    fontFamily = PlusJakartaSans,
+                    fontSize = 72.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 )
             )
-            Spacer(Modifier.height(16.dp))
+
             Text(
                 text = milestone,
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
-                    fontSize = 32.sp,
-                    color = Color(0xFF313131)
+                    fontFamily = PlusJakartaSans,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White.copy(alpha = 0.9f)
                 ),
                 textAlign = TextAlign.Center
             )
+
             Spacer(Modifier.height(12.dp))
+
             Text(
                 text = message,
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
-                    fontSize = 18.sp,
-                    fontStyle = FontStyle.Italic,
-                    color = Color(0xFF585858)
+                    fontFamily = PlusJakartaSans,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = Color.White.copy(alpha = 0.7f),
+                    lineHeight = 22.sp
                 ),
                 textAlign = TextAlign.Center
             )
 
             if (onShare != null) {
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(32.dp))
+
+                // Share button — primary CTA (Nikita Bier: make sharing the default)
                 Box(
                     modifier = Modifier
+                        .fillMaxWidth()
                         .background(
-                            color = Color(0xFF313131),
-                            shape = RoundedCornerShape(4.dp)
+                            color = Color.White,
+                            shape = RoundedCornerShape(14.dp)
                         )
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() }
                         ) { onShare(streakCount) }
-                        .padding(horizontal = 32.dp, vertical = 12.dp),
+                        .padding(vertical = 14.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "SHARE",
+                        text = "Share to Stories",
                         style = TextStyle(
-                            fontSize = 13.sp,
-                            letterSpacing = 1.sp,
-                            color = Color(0xFFF3EEE7)
+                            fontFamily = PlusJakartaSans,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = DiaryColors.ElectricIndigo,
+                            letterSpacing = 0.3.sp
                         )
                     )
                 }
+
+                Spacer(Modifier.height(12.dp))
+
+                // Continue — secondary
+                Text(
+                    text = "continue writing",
+                    style = TextStyle(
+                        fontFamily = PlusJakartaSans,
+                        fontSize = 13.sp,
+                        color = Color.White.copy(alpha = 0.6f)
+                    ),
+                    modifier = Modifier
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) { onDismiss() }
+                        .padding(8.dp)
+                )
             }
         }
     }
@@ -159,17 +213,16 @@ fun FirstEntryCelebration(
     onDismiss: () -> Unit
 ) {
     var alpha by remember { mutableFloatStateOf(0f) }
+    var showConfetti by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        // Fade in
         val steps = 20
         for (i in 1..steps) {
             alpha = i.toFloat() / steps
             delay(20)
         }
-        // Hold for 3 seconds
-        delay(3000)
-        // Fade out
+        showConfetti = true
+        delay(4000)
         for (i in steps downTo 0) {
             alpha = i.toFloat() / steps
             delay(20)
@@ -181,43 +234,48 @@ fun FirstEntryCelebration(
         modifier = Modifier
             .fillMaxSize()
             .alpha(alpha)
-            .background(Color(0xFFF3EEE7))
+            .background(
+                Brush.verticalGradient(
+                    listOf(DiaryColors.CyberTeal, DiaryColors.ElectricBlue)
+                )
+            )
             .clickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
             ) { onDismiss() },
         contentAlignment = Alignment.Center
     ) {
+        ConfettiEffect(
+            trigger = showConfetti,
+            modifier = Modifier.fillMaxSize()
+        )
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(48.dp)
         ) {
             Text(
-                text = "1.",
-                style = TextStyle(
-                    fontFamily = CormorantGaramond,
-                    fontSize = 56.sp,
-                    color = Color(0xFF313131)
-                )
+                text = "\u2728",
+                fontSize = 48.sp
             )
             Spacer(Modifier.height(16.dp))
             Text(
-                text = "Day one",
+                text = "day one",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
-                    fontSize = 32.sp,
-                    color = Color(0xFF313131)
+                    fontFamily = PlusJakartaSans,
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
                 ),
                 textAlign = TextAlign.Center
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                text = "Your writing practice has begun.",
+                text = "your writing practice has begun",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
-                    fontSize = 18.sp,
-                    fontStyle = FontStyle.Italic,
-                    color = Color(0xFF585858)
+                    fontFamily = PlusJakartaSans,
+                    fontSize = 16.sp,
+                    color = Color.White.copy(alpha = 0.75f)
                 ),
                 textAlign = TextAlign.Center
             )

@@ -8,6 +8,7 @@ import com.proactivediary.data.db.dao.PreferenceDao
 import com.proactivediary.data.db.entities.PreferenceEntity
 import com.proactivediary.domain.model.DiaryThemeConfig
 import com.proactivediary.ui.theme.DiaryColors
+import com.proactivediary.ui.theme.classicColorOptions
 import com.proactivediary.ui.theme.diaryColorOptions
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,7 +19,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class DesignStudioState(
-    val selectedColor: String = "cream",
+    val selectedColor: String = "indigo",
     val selectedForm: String = "focused",
     val selectedTexture: String = "paper",
     val selectedCanvas: String = "lined",
@@ -35,7 +36,7 @@ data class DesignStudioState(
     val isSaving: Boolean = false
 ) {
     val colorDisplayName: String
-        get() = diaryColorOptions.find { it.key == selectedColor }?.name ?: "Cream"
+        get() = (diaryColorOptions + classicColorOptions).find { it.key == selectedColor }?.name ?: "Indigo"
 
     val formDisplayName: String
         get() = selectedForm.replaceFirstChar { it.uppercase() }

@@ -9,16 +9,15 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,21 +33,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.proactivediary.ui.theme.CormorantGaramond
 import com.proactivediary.ui.theme.DiaryColors
+import com.proactivediary.ui.theme.PlusJakartaSans
 
 @Composable
 fun TypewriterScreen(
@@ -59,7 +58,7 @@ fun TypewriterScreen(
     val uiState by viewModel.uiState.collectAsState()
     val view = LocalView.current
 
-    // Immersive mode: hide system bars
+    // Immersive mode
     DisposableEffect(Unit) {
         val activity = view.context as? Activity
         val window = activity?.window
@@ -79,7 +78,7 @@ fun TypewriterScreen(
         }
     }
 
-    // Navigate when fade-out completes — guard against double-fire during transition
+    // Navigate when fade-out completes
     var hasNavigated by remember { mutableStateOf(false) }
     LaunchedEffect(uiState.screenAlpha, uiState.isNavigating) {
         if (!hasNavigated && viewModel.isNavigationComplete()) {
@@ -92,51 +91,58 @@ fun TypewriterScreen(
         }
     }
 
-    // Suppress back button
     BackHandler { }
 
     if (!uiState.isLoaded) return
 
-    // Start animation only after the screen is actually visible and composing
     LaunchedEffect(Unit) {
         viewModel.onScreenVisible()
     }
 
-    // Cursor blink: step function, 530ms — only active during TYPING state
+    // Cursor blink
     val cursorBlinkOn by rememberCursorBlinkState(
         intervalMs = 530L,
         enabled = uiState.cursorVisible && uiState.state == TypewriterState.TYPING
     )
 
-    val pencilColor = Color(0xFF585858)
-    val inkColor = Color(0xFF313131)
-
-    // Begin button pulse animation
-    val infiniteTransition = rememberInfiniteTransition(label = "beginPulse")
-    val beginPulse by infiniteTransition.animateFloat(
-        initialValue = 0.7f,
-        targetValue = 1.0f,
+    // Breathing gradient animation
+    val infiniteTransition = rememberInfiniteTransition(label = "gradient")
+    val gradientShift by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1000, easing = EaseInOut),
+            animation = tween(durationMillis = 4000, easing = EaseInOut),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "gradientShift"
+    )
+
+    // Button pulse
+    val beginPulse by infiniteTransition.animateFloat(
+        initialValue = 0.85f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 800, easing = EaseInOut),
             repeatMode = RepeatMode.Reverse
         ),
         label = "beginPulseAlpha"
     )
 
+    // Dynamic gradient background
+    val gradientColors = listOf(
+        Color.lerp(DiaryColors.ElectricIndigo, DiaryColors.VividPurple, gradientShift)
+            ?: DiaryColors.ElectricIndigo,
+        Color.lerp(DiaryColors.NeonPink, DiaryColors.ElectricBlue, gradientShift)
+            ?: DiaryColors.NeonPink,
+        Color.lerp(DiaryColors.VividPurple, DiaryColors.CyberTeal, gradientShift)
+            ?: DiaryColors.VividPurple
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DiaryColors.Paper)
+            .background(Brush.verticalGradient(gradientColors))
             .graphicsLayer { alpha = uiState.screenAlpha }
-            .pointerInput(uiState.state) {
-                if (uiState.state == TypewriterState.READY) {
-                    detectVerticalDragGestures { _, dragAmount ->
-                        if (dragAmount < -10f) {
-                            viewModel.onUserInteraction()
-                        }
-                    }
-                }
-            }
             .clickable(
                 indication = null,
                 interactionSource = remember { MutableInteractionSource() }
@@ -146,16 +152,22 @@ fun TypewriterScreen(
                 }
             }
     ) {
-        // Main content — top-aligned, centered horizontally
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 32.dp)
-                .padding(top = 80.dp),
-            verticalArrangement = Arrangement.Top,
+                .padding(horizontal = 32.dp),
+            verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Typewriter quote canvas
+            // App icon/emoji
+            Text(
+                text = "\u270F\uFE0F",
+                fontSize = 48.sp
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Typewriter quote — still shows the animated text
             TypewriterCanvas(
                 quote = TypewriterViewModel.QUOTE,
                 visibleCharCount = uiState.visibleCharCount,
@@ -164,32 +176,34 @@ fun TypewriterScreen(
                 cursorBlinkOn = cursorBlinkOn
             )
 
-            // Attribution: "Benjamin Franklin"
+            // Attribution
             if (uiState.attributionAlpha > 0f) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = TypewriterViewModel.ATTRIBUTION,
                     style = TextStyle(
-                        fontFamily = FontFamily.Default,
+                        fontFamily = PlusJakartaSans,
                         fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
                         letterSpacing = 0.7.sp,
-                        color = pencilColor
+                        color = Color.White.copy(alpha = 0.6f)
                     ),
                     modifier = Modifier.alpha(uiState.attributionAlpha)
                 )
             }
 
-            // CTA: "Now write yours."
+            // CTA
             if (uiState.ctaAlpha > 0f) {
                 Spacer(modifier = Modifier.height(48.dp))
                 Text(
                     text = TypewriterViewModel.CTA,
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
-                        fontSize = 32.sp,
-                        fontStyle = FontStyle.Normal,
-                        color = inkColor
+                        fontFamily = PlusJakartaSans,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
                     ),
+                    textAlign = TextAlign.Center,
                     modifier = Modifier
                         .alpha(uiState.ctaAlpha)
                         .graphicsLayer {
@@ -198,16 +212,16 @@ fun TypewriterScreen(
                 )
             }
 
-            // "Begin" pill button — appears after the CTA settles
+            // Begin button — gradient filled instead of outlined
             if (uiState.beginButtonAlpha > 0f) {
                 Spacer(modifier = Modifier.height(40.dp))
                 Box(
                     modifier = Modifier
                         .alpha(uiState.beginButtonAlpha * beginPulse)
-                        .border(
-                            width = 1.dp,
-                            color = inkColor,
-                            shape = RoundedCornerShape(24.dp)
+                        .fillMaxWidth(0.6f)
+                        .background(
+                            color = Color.White,
+                            shape = RoundedCornerShape(28.dp)
                         )
                         .clickable(
                             indication = null,
@@ -215,18 +229,30 @@ fun TypewriterScreen(
                         ) {
                             viewModel.onUserInteraction()
                         }
-                        .padding(horizontal = 32.dp, vertical = 10.dp)
+                        .padding(vertical = 14.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Begin",
+                        text = "Start Writing",
                         style = TextStyle(
-                            fontFamily = CormorantGaramond,
+                            fontFamily = PlusJakartaSans,
                             fontSize = 16.sp,
-                            color = inkColor
+                            fontWeight = FontWeight.SemiBold,
+                            color = DiaryColors.ElectricIndigo
                         )
                     )
                 }
             }
         }
     }
+}
+
+/** Helper to lerp between colors for gradient animation */
+private fun Color.Companion.lerp(start: Color, end: Color, fraction: Float): Color {
+    return Color(
+        red = start.red + (end.red - start.red) * fraction,
+        green = start.green + (end.green - start.green) * fraction,
+        blue = start.blue + (end.blue - start.blue) * fraction,
+        alpha = start.alpha + (end.alpha - start.alpha) * fraction
+    )
 }

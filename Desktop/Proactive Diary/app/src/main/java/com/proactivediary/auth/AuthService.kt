@@ -10,17 +10,22 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import com.proactivediary.data.social.UserProfileRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class AuthService @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val userProfileRepository: UserProfileRepository
 ) {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val credentialManager = CredentialManager.create(context)
@@ -75,6 +80,7 @@ class AuthService @Inject constructor(
                 val user = authResult.user
                     ?: return Result.failure(Exception("Sign-in succeeded but user is null"))
                 _currentUser.value = user
+                syncUserProfile(user)
                 Result.success(user)
             } else {
                 Result.failure(Exception("Unexpected credential type"))
@@ -112,6 +118,22 @@ class AuthService @Inject constructor(
             Result.success(user)
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    /**
+     * Sync user profile to Firestore after sign-in (creates if new, updates FCM token if existing).
+     */
+    private fun syncUserProfile(user: FirebaseUser) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                userProfileRepository.createOrUpdateProfile(
+                    displayName = user.displayName,
+                    email = user.email
+                )
+            } catch (e: Exception) {
+                // Non-fatal: profile sync failure shouldn't block sign-in
+            }
         }
     }
 
