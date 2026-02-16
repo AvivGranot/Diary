@@ -76,6 +76,7 @@ fun SettingsScreen(
     onNavigateToSupport: () -> Unit = {},
     onNavigateToDiaryWrapped: () -> Unit = {},
     onNavigateToThemeEvolution: () -> Unit = {},
+    onNavigateToJournal: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
     billingViewModel: BillingViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel()
@@ -158,6 +159,19 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.onBackground
                 )
             )
+
+            Spacer(Modifier.height(24.dp))
+
+            // YOUR JOURNAL section
+            SectionHeader("YOUR JOURNAL")
+            Spacer(Modifier.height(8.dp))
+            SettingsCard {
+                SettingsRow(
+                    label = "Your Journal",
+                    value = "Past entries",
+                    onClick = onNavigateToJournal
+                )
+            }
 
             Spacer(Modifier.height(24.dp))
 

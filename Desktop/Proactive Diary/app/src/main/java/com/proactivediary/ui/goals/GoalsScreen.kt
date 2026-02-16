@@ -48,6 +48,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.components.formatTime
 import com.proactivediary.ui.components.parseStoredTime
 import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.DiaryColors
 
 @Composable
 fun GoalsScreen(
@@ -56,8 +57,8 @@ fun GoalsScreen(
 ) {
     val goals by viewModel.goals.collectAsState()
 
-    val inkColor = MaterialTheme.colorScheme.onBackground
-    val pencilColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val inkColor = DiaryColors.Ink
+    val pencilColor = DiaryColors.Pencil
 
     var showAddDialog by remember { mutableStateOf(false) }
     var editingGoal by remember { mutableStateOf<GoalUiState?>(null) }
@@ -66,7 +67,7 @@ fun GoalsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(DiaryColors.Paper)
     ) {
         // Header: back + title + add
         Row(
@@ -240,8 +241,8 @@ private fun GoalRow(
     goal: GoalUiState,
     onClick: () -> Unit
 ) {
-    val inkColor = MaterialTheme.colorScheme.onBackground
-    val pencilColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val inkColor = DiaryColors.Ink
+    val pencilColor = DiaryColors.Pencil
     val (hour, minute) = parseStoredTime(goal.reminderTime)
     val timeDisplay = formatTime(hour, minute)
 
@@ -250,7 +251,7 @@ private fun GoalRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.background)
+            .background(DiaryColors.Paper)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically

@@ -32,7 +32,6 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.FormatQuote
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -64,7 +63,6 @@ import androidx.navigation.NavHostController
 import com.proactivediary.ui.components.FeatureDiscoveryViewModel
 import com.proactivediary.ui.components.SwipeHint
 import com.proactivediary.ui.goals.GoalsScreen
-import com.proactivediary.ui.journal.JournalScreen
 import com.proactivediary.ui.settings.ReminderManagementScreen
 import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
@@ -86,13 +84,11 @@ data class BottomNavItem(
 private const val WRITE_TAB = "write_tab"
 private const val PAGE_QUOTES = 0
 private const val PAGE_WRITE = 1
-private const val PAGE_JOURNAL = 2
-private const val PAGE_SETTINGS = 3
+private const val PAGE_SETTINGS = 2
 
 val bottomNavItems = listOf(
     BottomNavItem(Routes.Quotes.route, "Quotes", Icons.Outlined.FormatQuote),
     BottomNavItem(WRITE_TAB, "Write", Icons.Outlined.Edit, iconSize = 24),
-    BottomNavItem(Routes.Journal.route, "Journal", Icons.AutoMirrored.Outlined.MenuBook),
     BottomNavItem(Routes.Settings.route, "Settings", Icons.Outlined.Settings),
 )
 
@@ -133,7 +129,7 @@ fun MainScreen(
     // Pager state — starts on Write tab (page 0)
     val pagerState = rememberPagerState(
         initialPage = PAGE_QUOTES,
-        pageCount = { 4 }
+        pageCount = { 3 }
     )
 
     // Track the last valid page the user was on before a paywall bounce
@@ -201,6 +197,9 @@ fun MainScreen(
                         QuotesScreen(
                             onQuoteClick = { quoteId ->
                                 rootNavController.navigate(Routes.QuoteDetail.createRoute(quoteId))
+                            },
+                            onSendNote = {
+                                rootNavController.navigate(Routes.ComposeNote.route)
                             }
                         )
                     }
@@ -217,23 +216,6 @@ fun MainScreen(
                             notificationPrompt = activeNotificationPrompt,
                             notificationStreak = currentStreak,
                             onNotificationPromptConsumed = { activeNotificationPrompt = null }
-                        )
-                    }
-                    PAGE_JOURNAL -> {
-                        JournalScreen(
-                            onEntryClick = { entryId ->
-                                rootNavController.navigate(Routes.EntryDetail.createRoute(entryId))
-                            },
-                            onNavigateToWrite = {
-                                if (subscriptionState.isActive) {
-                                    scope.launch { pagerState.animateScrollToPage(PAGE_WRITE) }
-                                } else {
-                                    showPaywall = true
-                                }
-                            },
-                            onNavigateToOnThisDay = {
-                                rootNavController.navigate(Routes.OnThisDay.route)
-                            },
                         )
                     }
                     PAGE_SETTINGS -> {
@@ -266,6 +248,9 @@ fun MainScreen(
                             },
                             onNavigateToThemeEvolution = {
                                 rootNavController.navigate(Routes.ThemeEvolution.route)
+                            },
+                            onNavigateToJournal = {
+                                rootNavController.navigate(Routes.Journal.route)
                             }
                         )
                     }

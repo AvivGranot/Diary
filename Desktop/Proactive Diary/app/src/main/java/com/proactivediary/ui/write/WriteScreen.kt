@@ -525,13 +525,12 @@ fun WriteScreen(
                 }
             }
 
-            // Bottom toolbar — formatting appears once user starts writing
+            // Bottom toolbar — always visible
             WriteToolbar(
                 wordCount = state.wordCount,
                 showWordCount = showWordCount,
                 colorKey = state.colorKey,
                 richTextState = richTextState,
-                hasStartedWriting = state.wordCount > 0 || state.title.isNotEmpty(),
                 onAttachmentClick = { showAttachmentTray = true },
                 isDictating = state.isDictating,
                 dictationSeconds = dictationSeconds,
@@ -841,6 +840,7 @@ private fun WriteArea(
     val lineHeightSp = fontSize * lineHeightMultiplier
     val density = LocalDensity.current
     val lineHeightPx = with(density) { lineHeightSp.toPx() }
+    val lineOffset = lineHeightPx * 0.15f  // push lines below text baseline
     val leftMarginDpForNumbered = 36.dp
     val canvasLineColor = secondaryTextColor.copy(alpha = 0.1f)
     val dotColor = secondaryTextColor.copy(alpha = 0.15f)
@@ -861,7 +861,7 @@ private fun WriteArea(
             when (canvas) {
                 "lined" -> {
                     for (i in 0 until lineCount) {
-                        val y = (i + 1) * lineHeightPx
+                        val y = (i + 1) * lineHeightPx + lineOffset
                         drawLine(
                             color = canvasLineColor,
                             start = Offset(0f, y),
@@ -874,7 +874,7 @@ private fun WriteArea(
                     val horizontalSpacingPx = with(density) { 24.dp.toPx() }
                     val dotRadius = with(density) { 2.dp.toPx() }
                     for (row in 0 until lineCount) {
-                        val y = (row + 1) * lineHeightPx
+                        val y = (row + 1) * lineHeightPx + lineOffset
                         var x = 0f
                         while (x <= width) {
                             drawCircle(
@@ -889,7 +889,7 @@ private fun WriteArea(
                 "grid" -> {
                     val horizontalSpacingPx = with(density) { 24.dp.toPx() }
                     for (i in 0 until lineCount) {
-                        val y = (i + 1) * lineHeightPx
+                        val y = (i + 1) * lineHeightPx + lineOffset
                         drawLine(
                             color = gridColor,
                             start = Offset(0f, y),
@@ -910,7 +910,7 @@ private fun WriteArea(
                 }
                 "numbered" -> {
                     for (i in 0 until lineCount) {
-                        val y = (i + 1) * lineHeightPx
+                        val y = (i + 1) * lineHeightPx + lineOffset
                         drawLine(
                             color = canvasLineColor,
                             start = Offset(0f, y),

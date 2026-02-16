@@ -1,6 +1,5 @@
 package com.proactivediary.ui.write
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -9,10 +8,6 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -73,7 +68,6 @@ fun WriteToolbar(
     showWordCount: Boolean,
     colorKey: String,
     richTextState: RichTextState? = null,
-    hasStartedWriting: Boolean = false,
     onAttachmentClick: (() -> Unit)? = null,
     isDictating: Boolean = false,
     dictationSeconds: Int = 0,
@@ -93,12 +87,8 @@ fun WriteToolbar(
                 .background(secondaryColor.copy(alpha = 0.15f))
         )
 
-        // Formatting toolbar — only visible once user starts writing
-        AnimatedVisibility(
-            visible = hasStartedWriting || isDictating,
-            enter = expandVertically(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)),
-            exit = shrinkVertically(animationSpec = tween(200)) + fadeOut(animationSpec = tween(200))
-        ) {
+        // Formatting toolbar — always visible
+        Box {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -253,31 +243,6 @@ fun WriteToolbar(
             }
         }
 
-        // "+" button row — only visible when user hasn't started writing yet
-        AnimatedVisibility(
-            visible = !hasStartedWriting && !isDictating,
-            enter = expandVertically(animationSpec = tween(200)) + fadeIn(animationSpec = tween(200)),
-            exit = shrinkVertically(animationSpec = tween(300)) + fadeOut(animationSpec = tween(200))
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .background(bgColor),
-                contentAlignment = Alignment.Center
-            ) {
-                if (onAttachmentClick != null) {
-                    FormatButton(
-                        icon = Icons.Outlined.Add,
-                        contentDescription = "Add attachment",
-                        isActive = false,
-                        activeColor = textColor,
-                        inactiveColor = secondaryColor.copy(alpha = 0.5f),
-                        onClick = onAttachmentClick
-                    )
-                }
-            }
-        }
     }
 }
 

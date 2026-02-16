@@ -64,7 +64,7 @@ fun QuickAuthScreen(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Sign in to send\n& receive notes",
+                text = "Send an anonymous note",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = DiaryColors.Ink,
@@ -75,7 +75,7 @@ fun QuickAuthScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Your identity stays anonymous to recipients",
+                text = "That was from us. Now it\u2019s your turn\nto start a chain of kindness.",
                 style = MaterialTheme.typography.bodyMedium,
                 fontStyle = FontStyle.Italic,
                 color = DiaryColors.Pencil,
@@ -91,7 +91,7 @@ fun QuickAuthScreen(
                     .height(56.dp),
                 enabled = !state.isSigningIn,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = DiaryColors.Ink
+                    containerColor = Color(0xFFC0392B)
                 ),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -123,7 +123,7 @@ fun QuickAuthScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Your notes are always anonymous.\nNo one will know who sent them.",
+                text = "Sign in to send & receive notes.\nYour identity stays anonymous.",
                 style = MaterialTheme.typography.bodySmall,
                 color = DiaryColors.Pencil.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center,

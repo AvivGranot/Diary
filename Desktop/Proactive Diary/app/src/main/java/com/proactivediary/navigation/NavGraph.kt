@@ -160,6 +160,22 @@ fun ProactiveDiaryNavHost(
             )
         }
 
+        // Standalone Journal screen (accessed from Settings)
+        composable(Routes.Journal.route) {
+            com.proactivediary.ui.journal.JournalScreen(
+                onEntryClick = { entryId ->
+                    navController.navigate(Routes.EntryDetail.createRoute(entryId))
+                },
+                onNavigateToWrite = {
+                    navController.popBackStack()
+                },
+                onNavigateToOnThisDay = {
+                    navController.navigate(Routes.OnThisDay.route)
+                },
+                onBack = { navController.popBackStack() }
+            )
+        }
+
         composable(
             route = Routes.EntryDetail.route,
             arguments = listOf(

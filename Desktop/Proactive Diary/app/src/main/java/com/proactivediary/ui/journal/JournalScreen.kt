@@ -18,10 +18,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
@@ -61,6 +63,7 @@ fun JournalScreen(
     onEntryClick: (String) -> Unit = {},
     onNavigateToWrite: (() -> Unit)? = null,
     onNavigateToOnThisDay: (() -> Unit)? = null,
+    onBack: (() -> Unit)? = null,
     viewModel: JournalViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
@@ -73,6 +76,32 @@ fun JournalScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
+        // Back button header when shown as standalone screen
+        if (onBack != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+                Text(
+                    text = "Your Journal",
+                    style = TextStyle(
+                        fontFamily = CormorantGaramond,
+                        fontSize = 24.sp,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                )
+            }
+        }
+
         // Pinned search bar
         SearchBar(
             query = state.searchQuery,

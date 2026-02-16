@@ -153,13 +153,17 @@ fun OnboardingGoalsScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = paperColor
     ) { padding ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 32.dp)
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = 32.dp)
+            ) {
             // --- Section 01: Writing Reminders ---
             Text(
                 text = "01",
@@ -333,7 +337,27 @@ fun OnboardingGoalsScreen(
                     }
             )
 
-            Spacer(Modifier.height(32.dp))
+                Spacer(Modifier.height(32.dp))
+            }
+
+            // X close button — top right
+            IconButton(
+                onClick = {
+                    scope.launch {
+                        viewModel.skipOnboarding()
+                        onSkip()
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 8.dp, end = 8.dp)
+            ) {
+                Icon(
+                    Icons.Default.Close,
+                    contentDescription = "Close",
+                    tint = pencilColor
+                )
+            }
         }
     }
 }

@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -35,7 +34,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -54,9 +52,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.theme.DiaryColors
 import kotlinx.coroutines.launch
 
-// Red envelope palette
+// Red envelope color — unified body + flap
 private val EnvelopeRed = Color(0xFFC0392B)
-private val EnvelopeFlapDark = Color(0xFFAD3228)
 
 @Composable
 fun SocialSplashScreen(
@@ -89,17 +86,17 @@ fun SocialSplashScreen(
     // Envelope dimensions
     val envelopeWidth = 240.dp
     val envelopeHeight = 170.dp
-    val sealSize = 32.dp
-
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(DiaryColors.Paper),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.TopCenter
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 120.dp)
         ) {
             // ── Envelope + letter container ──
             Box(
@@ -240,7 +237,7 @@ fun SocialSplashScreen(
 
                             // Draw flap: darker red V-triangle with rounded top
                             drawRoundRect(
-                                color = EnvelopeFlapDark,
+                                color = EnvelopeRed,
                                 topLeft = Offset(0f, 0f),
                                 size = Size(w, cornerPx * 2),
                                 cornerRadius = CornerRadius(cornerPx, cornerPx)
@@ -252,29 +249,10 @@ fun SocialSplashScreen(
                                 lineTo(w, cornerPx * 0.5f)
                                 close()
                             }
-                            drawPath(flapPath, color = EnvelopeFlapDark)
+                            drawPath(flapPath, color = EnvelopeRed)
                         }
                     }
 
-                    // Wax seal at V-flap tip (visible only when closed)
-                    if (!isOpened) {
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .offset(
-                                    y = with(density) { (flapTipY / density.density).dp } - sealSize / 2
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(sealSize)
-                                    .shadow(3.dp, CircleShape)
-                                    .clip(CircleShape)
-                                    .background(DiaryColors.WineRed)
-                            )
-                        }
-                    }
                 }
             }
 

@@ -2,6 +2,7 @@ package com.proactivediary.ui.quotes
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,11 +13,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Mail
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -42,17 +46,20 @@ import com.proactivediary.ui.theme.DiaryColors
 @Composable
 fun QuotesScreen(
     onQuoteClick: (String) -> Unit,
+    onSendNote: () -> Unit = {},
     viewModel: QuotesViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { viewModel.showComposeSheet() },
-                containerColor = DiaryColors.WineRed
-            ) {
-                Icon(Icons.Default.Add, "Write a quote", tint = Color.White)
+            Box(modifier = Modifier.padding(bottom = 56.dp)) {
+                FloatingActionButton(
+                    onClick = { viewModel.showComposeSheet() },
+                    containerColor = DiaryColors.WineRed
+                ) {
+                    Icon(Icons.Default.Add, "Write a quote", tint = Color.White)
+                }
             }
         },
         containerColor = DiaryColors.Paper
@@ -70,6 +77,35 @@ fun QuotesScreen(
                 color = DiaryColors.Ink,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
             )
+
+            // Send a note CTA
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 4.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .border(0.5.dp, DiaryColors.Pencil.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                    .background(DiaryColors.Parchment)
+                    .clickable(onClick = onSendNote)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Mail,
+                    contentDescription = "Send a note",
+                    tint = DiaryColors.WineRed,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Send an anonymous note to a friend",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontStyle = FontStyle.Italic,
+                    color = DiaryColors.Ink
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Tab pills
             Row(
@@ -128,16 +164,19 @@ fun QuotesScreen(
             if (currentQuotes.isEmpty() && !state.isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.TopCenter
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(top = 120.dp)
+                    ) {
                         Text(
                             text = "The stage is yours",
                             style = MaterialTheme.typography.titleMedium,
                             color = DiaryColors.Ink
                         )
                         Text(
-                            text = "Drop the first quote.\n25 words that could inspire thousands.",
+                            text = "Drop your first quote.\n25 words that could inspire thousands.",
                             style = MaterialTheme.typography.bodyMedium,
                             fontStyle = FontStyle.Italic,
                             color = DiaryColors.Pencil,
