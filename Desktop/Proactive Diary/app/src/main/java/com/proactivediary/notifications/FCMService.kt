@@ -27,8 +27,8 @@ class FCMService : FirebaseMessagingService() {
     }
 
     private fun showNoteNotification(message: RemoteMessage, destination: String) {
-        val title = message.notification?.title ?: "Someone sent you a kind note"
-        val body = message.notification?.body ?: "Open to read your anonymous message"
+        val title = message.notification?.title ?: "\uD83D\uDC8C Someone thinks you\u2019re amazing"
+        val body = message.notification?.body ?: "Tap to open your anonymous note"
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -55,8 +55,8 @@ class FCMService : FirebaseMessagingService() {
     }
 
     private fun showQuoteWinnerNotification(message: RemoteMessage) {
-        val title = message.notification?.title ?: "Your quote was #1 this week!"
-        val body = message.notification?.body ?: "Congratulations, your wisdom inspired the community"
+        val title = message.notification?.title ?: "\uD83C\uDFC6 You\u2019re #1 this week!"
+        val body = message.notification?.body ?: "Your quote topped the leaderboard. See who\u2019s catching up."
 
         val intent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP

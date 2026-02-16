@@ -93,14 +93,14 @@ fun ComposeNoteScreen(
                 modifier = Modifier.padding(32.dp)
             ) {
                 Text(
-                    text = "Your note is on its way!",
+                    text = "Sealed & sent \u2728",
                     style = MaterialTheme.typography.headlineMedium,
                     color = DiaryColors.Ink,
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "You just made someone's day.",
+                    text = "They\u2019ll never know it was you.\nBut they\u2019ll never forget how it felt.",
                     style = MaterialTheme.typography.bodyLarge,
                     fontStyle = FontStyle.Italic,
                     color = DiaryColors.Pencil,

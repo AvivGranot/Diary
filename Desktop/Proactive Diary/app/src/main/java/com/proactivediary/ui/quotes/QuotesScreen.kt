@@ -118,15 +118,16 @@ fun QuotesScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "No quotes yet",
+                            text = "The stage is yours",
                             style = MaterialTheme.typography.titleMedium,
                             color = DiaryColors.Ink
                         )
                         Text(
-                            text = "Be the first to share your wisdom",
+                            text = "Drop the first quote.\n25 words that could inspire thousands.",
                             style = MaterialTheme.typography.bodyMedium,
                             fontStyle = FontStyle.Italic,
                             color = DiaryColors.Pencil,
+                            textAlign = TextAlign.Center,
                             modifier = Modifier.padding(top = 4.dp)
                         )
                     }

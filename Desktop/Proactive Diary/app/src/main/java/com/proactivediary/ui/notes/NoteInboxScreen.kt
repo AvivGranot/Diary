@@ -78,13 +78,13 @@ fun NoteInboxScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "No notes yet",
+                        text = "Your inbox is waiting",
                         style = MaterialTheme.typography.headlineSmall,
                         color = DiaryColors.Ink
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "When someone sends you a kind note,\nit will appear here.",
+                        text = "Send a note first \u2014 kindness comes back.",
                         style = MaterialTheme.typography.bodyMedium,
                         fontStyle = FontStyle.Italic,
                         color = DiaryColors.Pencil,

@@ -79,7 +79,7 @@ fun QuotesPreviewScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Ready to share yours?",
+                text = "Can you beat them?",
                 style = MaterialTheme.typography.bodyMedium,
                 fontStyle = FontStyle.Italic,
                 color = DiaryColors.Pencil
@@ -124,7 +124,7 @@ fun QuotesPreviewScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = "Be the first to share\nyour wisdom!",
+                            text = "No quotes yet.\nBe the one everyone quotes.",
                             style = MaterialTheme.typography.bodyLarge,
                             fontStyle = FontStyle.Italic,
                             color = DiaryColors.Pencil,
@@ -154,7 +154,7 @@ fun QuotesPreviewScreen(
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Text(
-                    text = "Join the Conversation",
+                    text = "I\u2019m In",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold
                 )

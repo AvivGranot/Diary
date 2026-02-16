@@ -30,16 +30,20 @@ class EnvelopeRevealViewModel @Inject constructor(
     val state: StateFlow<EnvelopeRevealState> = _state.asStateFlow()
 
     init {
-        viewModelScope.launch {
-            // Find the note from the real-time stream
-            val notes = notesRepository.observeReceivedNotes().first()
-            val note = notes.find { it.id == noteId }
-            _state.value = EnvelopeRevealState(note = note, isLoading = false)
+        if (noteId.isNotBlank()) {
+            viewModelScope.launch {
+                // Find the note from the real-time stream
+                val notes = notesRepository.observeReceivedNotes().first()
+                val note = notes.find { it.id == noteId }
+                _state.value = EnvelopeRevealState(note = note, isLoading = false)
 
-            // Mark as read
-            if (note != null && note.status != "read") {
-                notesRepository.markAsRead(noteId)
+                // Mark as read
+                if (note != null && note.status != "read") {
+                    notesRepository.markAsRead(noteId)
+                }
             }
+        } else {
+            _state.value = EnvelopeRevealState(note = null, isLoading = false)
         }
     }
 }

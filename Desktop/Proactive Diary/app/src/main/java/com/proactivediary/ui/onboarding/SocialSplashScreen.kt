@@ -164,7 +164,7 @@ fun SocialSplashScreen(
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Text(
-                        text = "Start Spreading Positivity",
+                        text = "See Who Sent This",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold
                     )
