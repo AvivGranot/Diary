@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.proactivediary.data.sync.SyncStatus
 
 @Entity(
     tableName = "goal_checkins",
@@ -26,5 +27,6 @@ data class GoalCheckInEntity(
     val date: String,
     val completed: Boolean = false,
     val note: String? = null,
-    @ColumnInfo(name = "created_at") val createdAt: Long
+    @ColumnInfo(name = "created_at") val createdAt: Long,
+    @ColumnInfo(name = "sync_status") val syncStatus: Int = SyncStatus.PENDING_UPLOAD
 )

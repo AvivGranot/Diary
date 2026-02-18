@@ -5,9 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -19,12 +17,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.proactivediary.data.social.Quote
 import com.proactivediary.ui.theme.DiaryColors
 
@@ -84,6 +84,13 @@ fun LeaderboardHeader(
                     )
                 }
 
+                // Author avatar
+                AuthorAvatar(
+                    photoUrl = quote.authorPhotoUrl,
+                    authorName = quote.authorName,
+                    size = 28
+                )
+
                 // Quote content
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -109,6 +116,41 @@ fun LeaderboardHeader(
                     color = DiaryColors.Pencil
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun AuthorAvatar(
+    photoUrl: String?,
+    authorName: String,
+    size: Int,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .size(size.dp)
+            .clip(CircleShape)
+            .background(DiaryColors.Parchment),
+        contentAlignment = Alignment.Center
+    ) {
+        if (!photoUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = photoUrl,
+                contentDescription = "$authorName avatar",
+                modifier = Modifier.size(size.dp).clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+        } else {
+            // Fallback: first letter
+            val initial = authorName.firstOrNull()?.uppercaseChar()?.toString() ?: "?"
+            Text(
+                text = initial,
+                fontSize = (size / 2).sp,
+                fontWeight = FontWeight.SemiBold,
+                color = DiaryColors.Pencil,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

@@ -33,7 +33,7 @@ import com.proactivediary.data.db.entities.WritingReminderEntity
         TemplateEntity::class,
         InsightEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -175,6 +175,19 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Add sync_status to all syncable entities (default 1 = PENDING_UPLOAD)
+                db.execSQL("ALTER TABLE entries ADD COLUMN sync_status INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE goals ADD COLUMN sync_status INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE goal_checkins ADD COLUMN sync_status INTEGER NOT NULL DEFAULT 1")
+                db.execSQL("ALTER TABLE writing_reminders ADD COLUMN sync_status INTEGER NOT NULL DEFAULT 1")
+                // WritingReminderEntity was missing updatedAt — add it
+                db.execSQL("ALTER TABLE writing_reminders ADD COLUMN updated_at INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("UPDATE writing_reminders SET updated_at = ${System.currentTimeMillis()}")
+            }
+        }
+
         val MIGRATIONS: Array<Migration> = arrayOf(
             MIGRATION_1_2,
             MIGRATION_2_3,
@@ -183,6 +196,7 @@ abstract class AppDatabase : RoomDatabase() {
             MIGRATION_5_6,
             MIGRATION_6_7,
             MIGRATION_7_8,
+            MIGRATION_8_9,
         )
 
         fun createCallback(): Callback {

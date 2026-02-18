@@ -30,14 +30,15 @@ import com.proactivediary.ui.notes.EnvelopeRevealScreen
 import com.proactivediary.ui.notes.NoteInboxScreen
 import com.proactivediary.ui.onboarding.NotificationPermissionScreen
 import com.proactivediary.ui.onboarding.OnboardingGoalsScreen
+import com.proactivediary.ui.onboarding.ProfilePictureScreen
 import com.proactivediary.ui.onboarding.QuickAuthScreen
 import com.proactivediary.ui.onboarding.QuotesPreviewScreen
 import com.proactivediary.ui.onboarding.QuotesPreviewViewModel
-import com.proactivediary.ui.onboarding.SocialSplashScreen
 import com.proactivediary.ui.onboarding.WriteFirstNoteScreen
 import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.quotes.QuoteDetailScreen
+import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.ui.typewriter.TypewriterScreen
 import com.proactivediary.ui.export.YearInReviewScreen
 import com.proactivediary.ui.onthisday.OnThisDayScreen
@@ -48,6 +49,7 @@ import com.proactivediary.ui.write.WriteScreen
 
 @Composable
 fun ProactiveDiaryNavHost(
+    analyticsService: AnalyticsService,
     navController: NavHostController = rememberNavController(),
     viewModel: NavViewModel = hiltViewModel(),
     billingViewModel: BillingViewModel = hiltViewModel(),
@@ -135,23 +137,27 @@ fun ProactiveDiaryNavHost(
         composable(Routes.NotificationPermission.route) {
             NotificationPermissionScreen(
                 onContinue = {
+                    analyticsService.logOnboardingCompleted(designCustomized = true, goalsSet = 0)
                     viewModel.markOnboardingComplete()
                     navController.navigate(Routes.Main.route) {
                         popUpTo(Routes.NotificationPermission.route) { inclusive = true }
                     }
                 },
                 onSkip = {
+                    analyticsService.logOnboardingCompleted(designCustomized = true, goalsSet = 0)
                     viewModel.markOnboardingComplete()
                     navController.navigate(Routes.Main.route) {
                         popUpTo(Routes.NotificationPermission.route) { inclusive = true }
                     }
-                }
+                },
+                analyticsService = analyticsService
             )
         }
 
         composable(Routes.Main.route) {
             MainScreen(
                 rootNavController = navController,
+                analyticsService = analyticsService,
                 deepLinkDestination = deepLinkDestination,
                 deepLinkPrompt = deepLinkPrompt,
                 deepLinkGoalId = deepLinkGoalId,
@@ -167,6 +173,8 @@ fun ProactiveDiaryNavHost(
                     navController.navigate(Routes.EntryDetail.createRoute(entryId))
                 },
                 onNavigateToWrite = {
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle?.set("navigateToTab", 1)
                     navController.popBackStack()
                 },
                 onNavigateToOnThisDay = {
@@ -219,7 +227,7 @@ fun ProactiveDiaryNavHost(
                 PaywallDialog(
                     onDismiss = { showYearPaywall = false },
                     monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$5/month",
-                    annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$30/year",
+                    annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$40/year",
                     onSelectPlan = { sku ->
                         yearActivity?.let { billingViewModel.launchPurchase(it, sku) }
                         showYearPaywall = false
@@ -265,20 +273,10 @@ fun ProactiveDiaryNavHost(
 
         // ── New Social Onboarding ──
 
-        composable(Routes.SocialSplash.route) {
-            SocialSplashScreen(
-                onContinue = {
-                    navController.navigate(Routes.QuickAuth.route) {
-                        popUpTo(Routes.SocialSplash.route) { inclusive = true }
-                    }
-                }
-            )
-        }
-
         composable(Routes.QuickAuth.route) {
             QuickAuthScreen(
                 onAuthenticated = {
-                    navController.navigate(Routes.WriteFirstNote.route) {
+                    navController.navigate(Routes.ProfilePicture.route) {
                         popUpTo(Routes.QuickAuth.route) { inclusive = true }
                     }
                 },
@@ -287,7 +285,24 @@ fun ProactiveDiaryNavHost(
                     navController.navigate(Routes.Main.route) {
                         popUpTo(Routes.QuickAuth.route) { inclusive = true }
                     }
-                }
+                },
+                analyticsService = analyticsService
+            )
+        }
+
+        composable(Routes.ProfilePicture.route) {
+            ProfilePictureScreen(
+                onContinue = {
+                    navController.navigate(Routes.WriteFirstNote.route) {
+                        popUpTo(Routes.ProfilePicture.route) { inclusive = true }
+                    }
+                },
+                onSkip = {
+                    navController.navigate(Routes.WriteFirstNote.route) {
+                        popUpTo(Routes.ProfilePicture.route) { inclusive = true }
+                    }
+                },
+                analyticsService = analyticsService
             )
         }
 
@@ -297,21 +312,22 @@ fun ProactiveDiaryNavHost(
                     navController.navigate(Routes.QuotesPreview.route) {
                         popUpTo(Routes.WriteFirstNote.route) { inclusive = true }
                     }
-                }
+                },
+                analyticsService = analyticsService
             )
         }
 
         composable(Routes.QuotesPreview.route) {
-            // QuotesPreviewScreen needs repos passed directly since it's not a ViewModel-based screen
-            // We'll use hiltViewModel in QuotesPreviewScreen instead
+            val quotesPreviewVM = hiltViewModel<QuotesPreviewViewModel>()
             QuotesPreviewScreen(
                 onContinue = {
                     navController.navigate(Routes.NotificationPermission.route) {
                         popUpTo(Routes.QuotesPreview.route) { inclusive = true }
                     }
                 },
-                quotesRepository = hiltViewModel<QuotesPreviewViewModel>().quotesRepository,
-                userProfileRepository = hiltViewModel<QuotesPreviewViewModel>().userProfileRepository
+                analyticsService = analyticsService,
+                quotesRepository = quotesPreviewVM.quotesRepository,
+                userProfileRepository = quotesPreviewVM.userProfileRepository
             )
         }
 
@@ -362,7 +378,7 @@ fun ProactiveDiaryNavHost(
         PaywallDialog(
             onDismiss = { showPaywall = false },
             monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$5/month",
-            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$30/year",
+            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$40/year",
             onSelectPlan = { sku ->
                 activity?.let { billingViewModel.launchPurchase(it, sku) }
                 showPaywall = false

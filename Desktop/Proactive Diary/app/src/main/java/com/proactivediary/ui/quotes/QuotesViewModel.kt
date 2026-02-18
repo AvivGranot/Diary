@@ -2,6 +2,7 @@ package com.proactivediary.ui.quotes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.social.ContentModerator
 import com.proactivediary.data.social.Quote
 import com.proactivediary.data.social.QuotesRepository
@@ -32,7 +33,8 @@ data class QuotesState(
 @HiltViewModel
 class QuotesViewModel @Inject constructor(
     private val quotesRepository: QuotesRepository,
-    private val contentModerator: ContentModerator
+    private val contentModerator: ContentModerator,
+    private val analyticsService: AnalyticsService
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(QuotesState())
@@ -46,6 +48,7 @@ class QuotesViewModel @Inject constructor(
 
     fun selectTab(tab: QuotesTab) {
         _state.value = _state.value.copy(selectedTab = tab)
+        analyticsService.logLeaderboardPeriodChanged(tab.name.lowercase())
     }
 
     private fun loadTrending() {
@@ -103,6 +106,10 @@ class QuotesViewModel @Inject constructor(
         viewModelScope.launch {
             val currentLiked = _state.value.likedQuoteIds.contains(quoteId)
 
+            // Track like/unlike
+            if (currentLiked) analyticsService.logQuoteUnliked(quoteId)
+            else analyticsService.logQuoteLiked(quoteId)
+
             // Optimistic UI update
             val updatedIds = _state.value.likedQuoteIds.toMutableSet()
             if (currentLiked) updatedIds.remove(quoteId) else updatedIds.add(quoteId)
@@ -128,6 +135,7 @@ class QuotesViewModel @Inject constructor(
     }
 
     fun showComposeSheet() {
+        analyticsService.logQuoteComposeStart()
         _state.value = _state.value.copy(
             composeSheetVisible = true,
             composeContent = "",
@@ -167,6 +175,7 @@ class QuotesViewModel @Inject constructor(
             val result = quotesRepository.submitQuote(content)
             result.fold(
                 onSuccess = {
+                    analyticsService.logQuoteSubmitted(content.trim().split("\\s+".toRegex()).size)
                     _state.value = _state.value.copy(
                         isSubmitting = false,
                         composeSheetVisible = false,

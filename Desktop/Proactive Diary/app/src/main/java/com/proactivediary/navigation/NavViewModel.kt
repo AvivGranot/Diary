@@ -50,7 +50,7 @@ class NavViewModel @Inject constructor(
             _startDestination.value = if (typewriterCompleted) {
                 Routes.Main.route
             } else {
-                Routes.SocialSplash.route
+                Routes.QuickAuth.route
             }
         }
     }

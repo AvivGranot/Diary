@@ -19,7 +19,8 @@ class UserProfileRepository @Inject constructor(
     suspend fun createOrUpdateProfile(
         displayName: String?,
         phone: String? = null,
-        email: String? = null
+        email: String? = null,
+        photoUrl: String? = null
     ): Result<Boolean> {
         return try {
             val fcmToken = try {
@@ -32,7 +33,8 @@ class UserProfileRepository @Inject constructor(
                 "displayName" to (displayName ?: "Anonymous"),
                 "phoneHash" to phone?.let { hashValue(normalizePhone(it)) },
                 "emailHash" to email?.let { hashValue(it.lowercase().trim()) },
-                "fcmToken" to fcmToken
+                "fcmToken" to fcmToken,
+                "photoUrl" to photoUrl
             )
 
             val result = functions.getHttpsCallable("createUserProfile")

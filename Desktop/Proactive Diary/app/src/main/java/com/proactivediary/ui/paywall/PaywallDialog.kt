@@ -43,7 +43,7 @@ fun PaywallDialog(
     totalWords: Int = 0,
     isFirstPaywallView: Boolean = true,
     monthlyPrice: String = "$5/month",
-    annualPrice: String = "$30/year"
+    annualPrice: String = "$40/year"
 ) {
     // Remove auth gate: always go directly to purchase
     val handlePlanSelect: (String) -> Unit = { sku -> onSelectPlan(sku) }
@@ -175,7 +175,7 @@ fun PaywallDialog(
                 PlanCard(
                     title = "Annual",
                     price = annualPrice,
-                    badge = "Save 50%",
+                    badge = "Save 33%",
                     bestValue = true,
                     onClick = { handlePlanSelect(BillingService.ANNUAL_SKU) }
                 )

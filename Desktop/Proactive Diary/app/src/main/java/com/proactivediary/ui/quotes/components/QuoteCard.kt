@@ -26,7 +26,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -72,17 +71,25 @@ fun QuoteCard(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Author + timestamp
+        // Author + avatar + timestamp
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "\u2014 ${quote.authorName}",
-                style = MaterialTheme.typography.bodySmall,
-                color = DiaryColors.Pencil
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                AuthorAvatar(
+                    photoUrl = quote.authorPhotoUrl,
+                    authorName = quote.authorName,
+                    size = 24
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "\u2014 ${quote.authorName}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = DiaryColors.Pencil
+                )
+            }
 
             val dateFormat = SimpleDateFormat("MMM d", Locale.getDefault())
             Text(

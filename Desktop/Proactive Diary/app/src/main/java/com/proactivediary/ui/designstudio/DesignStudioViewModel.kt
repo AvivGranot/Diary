@@ -32,6 +32,7 @@ data class DesignStudioState(
     val markText: String = "",
     val markPosition: String = "header",
     val markFont: String = "serif",
+    val fontSize: String = "medium",
     val isLoading: Boolean = true,
     val isSaving: Boolean = false
 ) {
@@ -96,6 +97,7 @@ class DesignStudioViewModel @Inject constructor(
                 val markText = preferenceDao.get("diary_mark_text")?.value
                 val markPosition = preferenceDao.get("diary_mark_position")?.value
                 val markFont = preferenceDao.get("diary_mark_font")?.value
+                val fontSize = preferenceDao.get("font_size")?.value
 
                 val features = if (detailsJson != null) {
                     try {
@@ -121,6 +123,7 @@ class DesignStudioViewModel @Inject constructor(
                         markText = markText ?: current.markText,
                         markPosition = markPosition ?: current.markPosition,
                         markFont = markFont ?: current.markFont,
+                        fontSize = fontSize ?: current.fontSize,
                         isLoading = false
                     )
                 }
@@ -168,6 +171,10 @@ class DesignStudioViewModel @Inject constructor(
         _state.update { it.copy(markFont = font) }
     }
 
+    fun selectFontSize(size: String) {
+        _state.update { it.copy(fontSize = size) }
+    }
+
     fun saveAndNavigate(onComplete: () -> Unit) {
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true) }
@@ -186,6 +193,8 @@ class DesignStudioViewModel @Inject constructor(
                 preferenceDao.insert(PreferenceEntity("diary_mark_text", current.markText))
                 preferenceDao.insert(PreferenceEntity("diary_mark_position", current.markPosition))
                 preferenceDao.insert(PreferenceEntity("diary_mark_font", current.markFont))
+
+                preferenceDao.insert(PreferenceEntity("font_size", current.fontSize))
 
                 preferenceDao.insert(PreferenceEntity("design_completed", "true"))
                 preferenceDao.insert(PreferenceEntity("design_studio_completed", "true"))

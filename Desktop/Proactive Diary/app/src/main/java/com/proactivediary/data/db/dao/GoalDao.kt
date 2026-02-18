@@ -29,12 +29,26 @@ interface GoalDao {
     @Query("SELECT * FROM goals WHERE id = :id")
     suspend fun getByIdSync(id: String): GoalEntity?
 
-    @Query("SELECT * FROM goals WHERE is_active = 1 ORDER BY created_at DESC")
+    @Query("SELECT * FROM goals WHERE sync_status != 2 AND is_active = 1 ORDER BY created_at DESC")
     fun getActiveGoals(): Flow<List<GoalEntity>>
 
-    @Query("SELECT * FROM goals ORDER BY created_at DESC")
+    @Query("SELECT * FROM goals WHERE sync_status != 2 ORDER BY created_at DESC")
     fun getAllGoals(): Flow<List<GoalEntity>>
 
-    @Query("SELECT * FROM goals WHERE is_active = 1")
+    @Query("SELECT * FROM goals WHERE sync_status != 2 AND is_active = 1")
     suspend fun getActiveGoalsSync(): List<GoalEntity>
+
+    // ── Sync methods ──
+
+    @Query("SELECT * FROM goals WHERE sync_status != 0")
+    suspend fun getPendingSyncGoals(): List<GoalEntity>
+
+    @Query("UPDATE goals SET sync_status = :status WHERE id = :id")
+    suspend fun updateSyncStatus(id: String, status: Int)
+
+    @Query("UPDATE goals SET sync_status = 0")
+    suspend fun markAllSynced()
+
+    @Query("DELETE FROM goals WHERE sync_status = 2 AND id = :id")
+    suspend fun hardDelete(id: String)
 }

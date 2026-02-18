@@ -4,15 +4,20 @@ import android.app.Application
 import android.util.Log
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import androidx.work.BackoffPolicy
+import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.google.android.libraries.places.api.Places
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.proactivediary.data.ai.AIInsightWorker
 import com.proactivediary.notifications.LapsedUserWorker
 import com.proactivediary.notifications.WeeklyDigestWorker
 import com.proactivediary.notifications.NotificationChannels
 import com.proactivediary.data.repository.TemplateRepository
+import com.proactivediary.data.sync.SyncWorker
 import com.proactivediary.notifications.NotificationService
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -49,6 +54,7 @@ class ProactiveDiaryApp : Application(), Configuration.Provider {
             scheduleLapsedUserCheck()
             scheduleAIInsightGeneration()
             scheduleWeeklyDigest()
+            scheduleCloudSync()
         } catch (e: Exception) {
             Log.e("ProactiveDiaryApp", "Failed to schedule workers", e)
         }
@@ -59,6 +65,7 @@ class ProactiveDiaryApp : Application(), Configuration.Provider {
             Log.e("ProactiveDiaryApp", "Failed to initialize Crashlytics", e)
         }
         initializeTemplates()
+        initializePlaces()
     }
 
     private fun rescheduleAlarms() {
@@ -109,6 +116,25 @@ class ProactiveDiaryApp : Application(), Configuration.Provider {
         )
     }
 
+    private fun scheduleCloudSync() {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val request = PeriodicWorkRequestBuilder<SyncWorker>(
+            15, TimeUnit.MINUTES
+        )
+            .setConstraints(constraints)
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 1, TimeUnit.MINUTES)
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            SyncWorker.WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
+    }
+
     private fun initializeTemplates() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -116,6 +142,17 @@ class ProactiveDiaryApp : Application(), Configuration.Provider {
             } catch (e: Exception) {
                 Log.e("ProactiveDiaryApp", "initializeTemplates: failed", e)
             }
+        }
+    }
+
+    private fun initializePlaces() {
+        try {
+            val apiKey = BuildConfig.PLACES_API_KEY
+            if (apiKey.isNotBlank()) {
+                Places.initializeWithNewPlacesApiEnabled(applicationContext, apiKey)
+            }
+        } catch (e: Exception) {
+            Log.e("ProactiveDiaryApp", "Failed to initialize Places SDK", e)
         }
     }
 

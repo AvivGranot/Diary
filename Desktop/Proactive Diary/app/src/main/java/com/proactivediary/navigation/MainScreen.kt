@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -35,6 +36,7 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -68,6 +70,7 @@ import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.paywall.PurchaseResult
 import com.proactivediary.ui.settings.SettingsScreen
+import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.ui.notes.NoteInboxViewModel
 import com.proactivediary.ui.quotes.QuotesScreen
 import com.proactivediary.ui.write.WriteScreen
@@ -92,9 +95,11 @@ val bottomNavItems = listOf(
     BottomNavItem(Routes.Settings.route, "Settings", Icons.Outlined.Settings),
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     rootNavController: NavHostController,
+    analyticsService: AnalyticsService,
     deepLinkDestination: String? = null,
     deepLinkPrompt: String? = null,
     deepLinkGoalId: String? = null,
@@ -135,6 +140,17 @@ fun MainScreen(
     // Track the last valid page the user was on before a paywall bounce
     var lastValidPage by remember { mutableStateOf(PAGE_QUOTES) }
 
+    // Observe savedStateHandle for tab navigation requests (e.g., from Journal "Begin" button)
+    LaunchedEffect(Unit) {
+        val handle = rootNavController.currentBackStackEntry?.savedStateHandle ?: return@LaunchedEffect
+        handle.getStateFlow("navigateToTab", -1).collect { tab ->
+            if (tab >= 0) {
+                pagerState.animateScrollToPage(tab)
+                handle["navigateToTab"] = -1
+            }
+        }
+    }
+
     // Sync pager → bottom nav: when user swipes, update selection
     // Also handle paywall gate: if user swipes to Write while expired, bounce back
     LaunchedEffect(pagerState) {
@@ -142,11 +158,18 @@ fun MainScreen(
             .distinctUntilChanged()
             .collect { page ->
                 if (page == PAGE_WRITE && !subscriptionState.isActive) {
-                    // User swiped to Write tab but subscription is expired → gentle bounce back
+                    analyticsService.logPaywallShownWithTrigger("swipe_to_write")
                     showPaywall = true
                     pagerState.animateScrollToPage(lastValidPage)
                 } else {
                     lastValidPage = page
+                    val tabName = when (page) {
+                        PAGE_QUOTES -> "quotes"
+                        PAGE_WRITE -> "write"
+                        PAGE_SETTINGS -> "settings"
+                        else -> "unknown"
+                    }
+                    analyticsService.logTabSwitched(tabName)
                 }
             }
     }
@@ -200,6 +223,11 @@ fun MainScreen(
                             },
                             onSendNote = {
                                 rootNavController.navigate(Routes.ComposeNote.route)
+                            },
+                            unreadNoteCount = unreadNoteCount,
+                            onNotificationBellClick = {
+                                analyticsService.logNoteInboxOpened(unreadNoteCount)
+                                rootNavController.navigate(Routes.NoteInbox.route)
                             }
                         )
                     }
@@ -212,6 +240,9 @@ fun MainScreen(
                                 scope.launch {
                                     billingViewModel.refreshSubscriptionState()
                                 }
+                            },
+                            onNavigateToEntry = { entryId ->
+                                rootNavController.navigate("write?entryId=$entryId")
                             },
                             notificationPrompt = activeNotificationPrompt,
                             notificationStreak = currentStreak,
@@ -234,12 +265,6 @@ fun MainScreen(
                                     popUpTo(Routes.Main.route) { inclusive = true }
                                 }
                             },
-                            onNavigateToYearInReview = {
-                                rootNavController.navigate(Routes.YearInReview.route)
-                            },
-                            onNavigateToBugReport = {
-                                rootNavController.navigate(Routes.ContactSupport.createRoute("bug"))
-                            },
                             onNavigateToSupport = {
                                 rootNavController.navigate(Routes.ContactSupport.createRoute("support"))
                             },
@@ -252,37 +277,6 @@ fun MainScreen(
                             onNavigateToJournal = {
                                 rootNavController.navigate(Routes.Journal.route)
                             }
-                        )
-                    }
-                }
-            }
-
-            // Notification bell — top right
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 12.dp, end = 16.dp)
-            ) {
-                IconButton(
-                    onClick = { rootNavController.navigate(Routes.NoteInbox.route) }
-                ) {
-                    BadgedBox(
-                        badge = {
-                            if (unreadNoteCount > 0) {
-                                Badge {
-                                    Text(
-                                        text = if (unreadNoteCount > 9) "9+" else "$unreadNoteCount",
-                                        fontSize = 10.sp
-                                    )
-                                }
-                            }
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Notifications,
-                            contentDescription = "Notes Inbox",
-                            modifier = Modifier.size(24.dp),
-                            tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
                 }
@@ -315,6 +309,42 @@ fun MainScreen(
                 visible = showSwipeHint && pagerState.currentPage == PAGE_QUOTES,
                 onDismiss = { discoveryViewModel.dismissSwipeHint() }
             )
+
+            // Bell icon — notification inbox (top-right, below status bar)
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(top = 8.dp, end = 12.dp)
+            ) {
+                IconButton(
+                    onClick = {
+                        analyticsService.logNoteInboxOpened(unreadNoteCount)
+                        rootNavController.navigate(Routes.NoteInbox.route)
+                    },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    BadgedBox(
+                        badge = {
+                            if (unreadNoteCount > 0) {
+                                Badge {
+                                    Text(
+                                        text = "$unreadNoteCount",
+                                        style = androidx.compose.ui.text.TextStyle(fontSize = 10.sp)
+                                    )
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Notifications,
+                            contentDescription = "Notifications",
+                            modifier = Modifier.size(22.dp),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                    }
+                }
+            }
 
             // Bottom navigation — flat, flush, Instagram style
             Column(
@@ -400,7 +430,7 @@ fun MainScreen(
             totalWords = subscriptionState.totalWords,
             isFirstPaywallView = isFirstPaywallView,
             monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$5/month",
-            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$30/year",
+            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$40/year",
             onSelectPlan = { sku ->
                 billingViewModel.markPaywallViewed()
                 activity?.let { billingViewModel.launchPurchase(it, sku) }

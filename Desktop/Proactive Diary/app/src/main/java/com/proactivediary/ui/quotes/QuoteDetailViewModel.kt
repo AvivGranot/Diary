@@ -3,6 +3,7 @@ package com.proactivediary.ui.quotes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.social.ContentModerator
 import com.proactivediary.data.social.Quote
 import com.proactivediary.data.social.QuoteComment
@@ -28,7 +29,8 @@ data class QuoteDetailState(
 class QuoteDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val quotesRepository: QuotesRepository,
-    private val contentModerator: ContentModerator
+    private val contentModerator: ContentModerator,
+    private val analyticsService: AnalyticsService
 ) : ViewModel() {
 
     private val quoteId: String = savedStateHandle["quoteId"] ?: ""
@@ -72,6 +74,9 @@ class QuoteDetailViewModel @Inject constructor(
         val currentLiked = _state.value.isLiked
         val currentQuote = _state.value.quote ?: return
 
+        if (currentLiked) analyticsService.logQuoteUnliked(quoteId)
+        else analyticsService.logQuoteLiked(quoteId)
+
         // Optimistic update
         _state.value = _state.value.copy(
             isLiked = !currentLiked,
@@ -107,6 +112,7 @@ class QuoteDetailViewModel @Inject constructor(
             val result = quotesRepository.addComment(quoteId, text)
             result.fold(
                 onSuccess = {
+                    analyticsService.logCommentSubmitted(quoteId)
                     _state.value = _state.value.copy(
                         isSendingComment = false,
                         commentText = "",

@@ -26,6 +26,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import com.proactivediary.ui.designstudio.components.SectionDivider
 import com.proactivediary.ui.designstudio.components.SectionHeader
 import com.proactivediary.ui.theme.DiaryColors
@@ -47,6 +49,8 @@ private val detailOptions = listOf(
 fun DetailsSection(
     features: Map<String, Boolean>,
     onToggleFeature: (String) -> Unit,
+    selectedFontSize: String = "medium",
+    onFontSizeSelected: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
@@ -61,6 +65,46 @@ fun DetailsSection(
                 .fillMaxWidth()
                 .padding(horizontal = 24.dp)
         ) {
+            // Font Size selector
+            Text(
+                text = "Font Size",
+                fontSize = 14.sp,
+                color = DiaryColors.Ink
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                listOf("small" to "Small", "medium" to "Medium", "large" to "Large").forEach { (key, label) ->
+                    val isSelected = selectedFontSize == key
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .then(
+                                if (isSelected) Modifier.background(DiaryColors.Ink.copy(alpha = 0.04f))
+                                    .border(1.dp, DiaryColors.Ink, RoundedCornerShape(8.dp))
+                                else Modifier.background(DiaryColors.Pencil.copy(alpha = 0.06f))
+                                    .border(1.dp, DiaryColors.Pencil.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+                            )
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = { onFontSizeSelected(key) }
+                            )
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
+                    ) {
+                        Text(
+                            text = label,
+                            fontSize = 13.sp,
+                            color = if (isSelected) DiaryColors.Ink else DiaryColors.Pencil
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Feature toggles
             detailOptions.forEach { option ->
                 val isEnabled = features[option.key] ?: false
 
@@ -119,7 +163,7 @@ private fun DiaryToggle(
         label = "toggleThumb"
     )
 
-    val trackColor = if (checked) DiaryColors.Ink else DiaryColors.Pencil.copy(alpha = 0.2f)
+    val trackColor = if (checked) Color(0xFF007AFF) else DiaryColors.Pencil.copy(alpha = 0.2f)
 
     Box(
         modifier = modifier

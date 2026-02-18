@@ -21,8 +21,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Mail
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -47,6 +51,8 @@ import com.proactivediary.ui.theme.DiaryColors
 fun QuotesScreen(
     onQuoteClick: (String) -> Unit,
     onSendNote: () -> Unit = {},
+    unreadNoteCount: Int = 0,
+    onNotificationBellClick: () -> Unit = {},
     viewModel: QuotesViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -69,43 +75,72 @@ fun QuotesScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Header
-            Text(
-                text = "Quotes",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = DiaryColors.Ink,
-                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
-            )
-
-            // Send a note CTA
+            // Header row: title + notification bell
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 4.dp)
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Quotes",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = DiaryColors.Ink
+                )
+
+                IconButton(onClick = onNotificationBellClick) {
+                    BadgedBox(
+                        badge = {
+                            if (unreadNoteCount > 0) {
+                                Badge {
+                                    Text(
+                                        text = if (unreadNoteCount > 9) "9+" else "$unreadNoteCount",
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Notifications,
+                            contentDescription = "Notes Inbox",
+                            modifier = Modifier.size(24.dp),
+                            tint = DiaryColors.Ink
+                        )
+                    }
+                }
+            }
+
+            // Send a note CTA — enlarged
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
                     .clip(RoundedCornerShape(12.dp))
                     .border(0.5.dp, DiaryColors.Pencil.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
                     .background(DiaryColors.Parchment)
                     .clickable(onClick = onSendNote)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Mail,
                     contentDescription = "Send a note",
                     tint = DiaryColors.WineRed,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(24.dp)
                 )
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(14.dp))
                 Text(
                     text = "Send an anonymous note to a friend",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontStyle = FontStyle.Italic,
                     color = DiaryColors.Ink
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Tab pills
             Row(
@@ -141,19 +176,19 @@ fun QuotesScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // CTA prompt
+            // CTA prompt — enlarged
             Text(
                 text = "Share your wisdom \u2014 inspire someone today",
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 fontStyle = FontStyle.Italic,
                 color = DiaryColors.Pencil,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 4.dp)
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             val currentQuotes = when (state.selectedTab) {
                 QuotesTab.TRENDING -> state.trendingQuotes
@@ -168,20 +203,29 @@ fun QuotesScreen(
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(top = 120.dp)
+                        modifier = Modifier.padding(top = 80.dp)
                     ) {
                         Text(
                             text = "The stage is yours",
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.SemiBold,
                             color = DiaryColors.Ink
                         )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Write a quote",
+                            modifier = Modifier.size(48.dp),
+                            tint = DiaryColors.WineRed
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
                         Text(
-                            text = "Drop your first quote.\n25 words that could inspire thousands.",
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = "Write up to 25 words and inspire thousands",
+                            style = MaterialTheme.typography.bodyLarge,
                             fontStyle = FontStyle.Italic,
                             color = DiaryColors.Pencil,
                             textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(top = 4.dp)
+                            modifier = Modifier.padding(horizontal = 32.dp)
                         )
                     }
                 }

@@ -5,7 +5,12 @@ import androidx.sqlite.db.SimpleSQLiteQuery
 import com.proactivediary.data.db.dao.EntryDao
 import com.proactivediary.data.db.entities.EntryEntity
 import com.proactivediary.data.media.ImageStorageManager
+import com.proactivediary.data.sync.SyncService
+import com.proactivediary.data.sync.SyncStatus
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -13,7 +18,8 @@ import javax.inject.Inject
 
 class EntryRepositoryImpl @Inject constructor(
     private val entryDao: EntryDao,
-    private val imageStorageManager: ImageStorageManager
+    private val imageStorageManager: ImageStorageManager,
+    private val syncService: SyncService
 ) : EntryRepository {
 
     override fun getAllEntries(): Flow<List<EntryEntity>> =
@@ -32,7 +38,7 @@ class EntryRepositoryImpl @Inject constructor(
 
     override fun searchContent(ftsQuery: String): Flow<List<EntryEntity>> {
         val query = SimpleSQLiteQuery(
-            "SELECT entries.* FROM entries JOIN entries_fts ON entries.rowid = entries_fts.docid WHERE entries_fts MATCH ? ORDER BY entries.created_at DESC LIMIT 50",
+            "SELECT entries.* FROM entries JOIN entries_fts ON entries.rowid = entries_fts.docid WHERE entries_fts MATCH ? AND entries.sync_status != 2 ORDER BY entries.created_at DESC LIMIT 50",
             arrayOf(ftsQuery)
         )
         return entryDao.searchFts(query)
@@ -46,18 +52,32 @@ class EntryRepositoryImpl @Inject constructor(
         return entryDao.getByDateRangeSync(start, end)
     }
 
-    override suspend fun insert(entry: EntryEntity) =
+    override suspend fun insert(entry: EntryEntity) {
         entryDao.insert(entry)
+        // Fire-and-forget cloud push
+        CoroutineScope(Dispatchers.IO).launch {
+            try { syncService.pushEntry(entry) } catch (_: Exception) { }
+        }
+    }
 
-    override suspend fun update(entry: EntryEntity) =
+    override suspend fun update(entry: EntryEntity) {
         entryDao.update(entry)
+        // Fire-and-forget cloud push
+        CoroutineScope(Dispatchers.IO).launch {
+            try { syncService.pushEntry(entry) } catch (_: Exception) { }
+        }
+    }
 
     override suspend fun delete(entryId: String) {
         // Clean up associated image files
         try { imageStorageManager.deleteAllImages(entryId) } catch (_: Exception) { }
 
         try {
-            entryDao.deleteById(entryId)
+            // Soft-delete: mark for deletion, push to cloud, then hard-delete
+            entryDao.updateSyncStatus(entryId, SyncStatus.PENDING_DELETE)
+            CoroutineScope(Dispatchers.IO).launch {
+                try { syncService.pushEntryDeletion(entryId) } catch (_: Exception) { }
+            }
         } catch (_: SQLiteException) {
             // FTS delete trigger fails (encoding/tokenization mismatch) — drop it and retry
             entryDao.rawExec(SimpleSQLiteQuery("DROP TRIGGER IF EXISTS entries_ad"))

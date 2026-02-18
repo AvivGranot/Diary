@@ -11,6 +11,7 @@ import com.proactivediary.data.repository.GoalRepository
 import com.proactivediary.data.repository.GoalRepositoryImpl
 import com.proactivediary.data.repository.ReminderRepository
 import com.proactivediary.data.repository.ReminderRepositoryImpl
+import com.proactivediary.data.sync.SyncService
 import com.proactivediary.domain.search.SearchEngine
 import com.proactivediary.domain.search.SearchEngineImpl
 import dagger.Module
@@ -27,21 +28,24 @@ object AppModule {
     @Singleton
     fun provideEntryRepository(
         entryDao: EntryDao,
-        imageStorageManager: ImageStorageManager
-    ): EntryRepository = EntryRepositoryImpl(entryDao, imageStorageManager)
+        imageStorageManager: ImageStorageManager,
+        syncService: SyncService
+    ): EntryRepository = EntryRepositoryImpl(entryDao, imageStorageManager, syncService)
 
     @Provides
     @Singleton
     fun provideGoalRepository(
         goalDao: GoalDao,
-        goalCheckInDao: GoalCheckInDao
-    ): GoalRepository = GoalRepositoryImpl(goalDao, goalCheckInDao)
+        goalCheckInDao: GoalCheckInDao,
+        syncService: SyncService
+    ): GoalRepository = GoalRepositoryImpl(goalDao, goalCheckInDao, syncService)
 
     @Provides
     @Singleton
     fun provideReminderRepository(
-        reminderDao: WritingReminderDao
-    ): ReminderRepository = ReminderRepositoryImpl(reminderDao)
+        reminderDao: WritingReminderDao,
+        syncService: SyncService
+    ): ReminderRepository = ReminderRepositoryImpl(reminderDao, syncService)
 
     @Provides
     @Singleton

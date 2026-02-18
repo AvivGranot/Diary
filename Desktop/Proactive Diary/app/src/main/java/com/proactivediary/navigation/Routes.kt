@@ -40,8 +40,8 @@ sealed class Routes(val route: String) {
     }
 
     // New onboarding
-    object SocialSplash : Routes("social_splash")
     object QuickAuth : Routes("quick_auth")
+    object ProfilePicture : Routes("profile_picture")
     object WriteFirstNote : Routes("write_first_note")
     object QuotesPreview : Routes("quotes_preview")
 }

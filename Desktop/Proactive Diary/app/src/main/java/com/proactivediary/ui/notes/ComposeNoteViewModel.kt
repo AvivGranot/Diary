@@ -2,6 +2,7 @@ package com.proactivediary.ui.notes
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.social.ContactMatcher
 import com.proactivediary.data.social.ContentModerator
 import com.proactivediary.data.social.MatchedContact
@@ -32,7 +33,8 @@ data class ComposeNoteState(
 class ComposeNoteViewModel @Inject constructor(
     private val notesRepository: NotesRepository,
     private val contactMatcher: ContactMatcher,
-    private val contentModerator: ContentModerator
+    private val contentModerator: ContentModerator,
+    private val analyticsService: AnalyticsService
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ComposeNoteState())
@@ -92,6 +94,7 @@ class ComposeNoteViewModel @Inject constructor(
             val result = notesRepository.sendNote(recipientId, current.content)
             result.fold(
                 onSuccess = {
+                    analyticsService.logNoteSent(current.wordCount)
                     _state.value = _state.value.copy(isSending = false, isSent = true)
                 },
                 onFailure = { e ->
@@ -109,6 +112,6 @@ class ComposeNoteViewModel @Inject constructor(
     }
 
     companion object {
-        const val MAX_WORDS = 100
+        const val MAX_WORDS = 150
     }
 }

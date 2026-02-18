@@ -33,19 +33,32 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.ui.theme.DiaryColors
 
 @Composable
 fun QuickAuthScreen(
     onAuthenticated: () -> Unit,
     onSkip: () -> Unit,
+    analyticsService: AnalyticsService,
     viewModel: QuickAuthViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
+    val screenStartTime = remember { System.currentTimeMillis() }
+
+    // Track onboarding funnel entry + auth screen shown
+    LaunchedEffect(Unit) {
+        analyticsService.logOnboardingStart()
+        analyticsService.logOnboardingAuthStart()
+    }
 
     LaunchedEffect(state.isSignedIn) {
         if (state.isSignedIn) {
+            analyticsService.logOnboardingAuthComplete(
+                method = "google",
+                durationMs = System.currentTimeMillis() - screenStartTime
+            )
             onAuthenticated()
         }
     }
@@ -140,7 +153,10 @@ fun QuickAuthScreen(
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
-                        onClick = onSkip
+                        onClick = {
+                            analyticsService.logOnboardingAuthSkip()
+                            onSkip()
+                        }
                     )
                     .padding(vertical = 8.dp)
             )

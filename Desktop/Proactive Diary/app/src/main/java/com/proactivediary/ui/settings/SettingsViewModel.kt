@@ -99,6 +99,10 @@ class SettingsViewModel @Inject constructor(
     private val _isBatteryOptimized = MutableStateFlow(false)
     val isBatteryOptimized: StateFlow<Boolean> = _isBatteryOptimized
 
+    // Entry count for AI insight feedback
+    private val _entryCount = MutableStateFlow(0)
+    val entryCount: StateFlow<Int> = _entryCount
+
     // Delete confirmation state
     private val _deleteStep = MutableStateFlow(0) // 0=none, 1=first dialog, 2=type DELETE
     val deleteStep: StateFlow<Int> = _deleteStep
@@ -106,7 +110,14 @@ class SettingsViewModel @Inject constructor(
     init {
         loadStreakPref()
         loadAIPref()
+        loadEntryCount()
         refreshNotificationHealth()
+    }
+
+    private fun loadEntryCount() {
+        viewModelScope.launch {
+            _entryCount.value = entryDao.getTotalCount()
+        }
     }
 
     fun refreshNotificationHealth() {

@@ -33,18 +33,30 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.LaunchedEffect
+import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.ui.theme.CormorantGaramond
 import com.proactivediary.ui.theme.DiaryColors
 
 @Composable
 fun NotificationPermissionScreen(
     onContinue: () -> Unit,
-    onSkip: () -> Unit
+    onSkip: () -> Unit,
+    analyticsService: AnalyticsService
 ) {
+    // Track screen shown
+    LaunchedEffect(Unit) {
+        analyticsService.logOnboardingNotifShown()
+    }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
-    ) { _ ->
-        // Whether granted or denied, proceed to next screen
+    ) { granted ->
+        if (granted) {
+            analyticsService.logOnboardingNotifGranted()
+        } else {
+            analyticsService.logOnboardingNotifDenied()
+        }
         onContinue()
     }
 
@@ -132,7 +144,10 @@ fun NotificationPermissionScreen(
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
-                    onClick = onSkip
+                    onClick = {
+                        analyticsService.logOnboardingNotifDenied()
+                        onSkip()
+                    }
                 )
                 .padding(vertical = 8.dp)
         )

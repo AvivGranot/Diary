@@ -18,6 +18,10 @@ import com.proactivediary.data.repository.EntryRepository
 import com.proactivediary.data.weather.WeatherService
 import com.proactivediary.data.repository.StreakRepository
 import com.proactivediary.domain.WritingGoalService
+import com.proactivediary.domain.recommendations.NearbyPlace
+import com.proactivediary.domain.recommendations.LocationSuggestion
+import com.proactivediary.domain.recommendations.RecommendationsProvider
+import com.proactivediary.domain.recommendations.RecommendationsState
 import com.proactivediary.domain.model.TaggedContact
 import com.proactivediary.playstore.InAppReviewService
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -144,6 +148,7 @@ class WriteViewModel @Inject constructor(
     private val locationService: LocationService,
     private val weatherService: WeatherService,
     private val insightDao: InsightDao,
+    private val recommendationsProvider: RecommendationsProvider,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -154,6 +159,10 @@ class WriteViewModel @Inject constructor(
     private var titleSaveJob: Job? = null
     private val _transcribedTextFlow = MutableSharedFlow<String>(extraBufferCapacity = 20)
     val transcribedTextFlow: SharedFlow<String> = _transcribedTextFlow
+
+    private val _recommendations = MutableStateFlow(RecommendationsState())
+    val recommendations: StateFlow<RecommendationsState> = _recommendations.asStateFlow()
+
     private val gson = Gson()
     private val sessionStartMs = System.currentTimeMillis()
 
@@ -174,6 +183,7 @@ class WriteViewModel @Inject constructor(
         loadGoalProgress()
         loadSmartPrompt()
         analyticsService.logWriteScreenViewed()
+        loadRecommendations()
 
         val pacificZone = java.time.ZoneId.of("America/Los_Angeles")
         val today = LocalDate.now(pacificZone)
@@ -797,6 +807,14 @@ class WriteViewModel @Inject constructor(
                     }
                     analyticsService.logFeatureUsed("location_captured")
 
+                    // Load nearby places for recommendations
+                    try {
+                        val places = withContext(Dispatchers.IO) {
+                            recommendationsProvider.getNearbyPlaces(locationData.latitude, locationData.longitude)
+                        }
+                        _recommendations.update { it.copy(nearbyPlaces = places) }
+                    } catch (_: Exception) {}
+
                     // Chain weather fetch after location
                     val weather = withContext(Dispatchers.IO) {
                         weatherService.getWeather(locationData.latitude, locationData.longitude)
@@ -845,5 +863,53 @@ class WriteViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    private fun loadRecommendations() {
+        viewModelScope.launch {
+            _recommendations.update { it.copy(isLoading = true) }
+            try {
+                val recentEntries = recommendationsProvider.getRecentEntries()
+                val pastLocations = recommendationsProvider.getRecentLocations()
+                _recommendations.update {
+                    it.copy(
+                        recentEntries = recentEntries,
+                        pastLocations = pastLocations,
+                        isLoading = false
+                    )
+                }
+            } catch (_: Exception) {
+                _recommendations.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    fun loadDevicePhotos() {
+        viewModelScope.launch {
+            val photos = recommendationsProvider.getRecentDevicePhotos()
+            _recommendations.update { it.copy(devicePhotos = photos, hasPhotoPermission = true) }
+        }
+    }
+
+    fun onNearbyPlaceTapped(place: NearbyPlace) {
+        _uiState.update {
+            it.copy(
+                latitude = place.lat,
+                longitude = place.lng,
+                locationName = place.name
+            )
+        }
+        activateGuidedPrompt("Write about your visit to ${place.name}...")
+    }
+
+    fun onLocationSuggestionTapped(location: LocationSuggestion) {
+        _uiState.update {
+            it.copy(
+                latitude = location.lat,
+                longitude = location.lng,
+                locationName = location.name
+            )
+        }
+        activateGuidedPrompt("Write about ${location.name}...")
     }
 }

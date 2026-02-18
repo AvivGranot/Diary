@@ -88,11 +88,13 @@ fun WriteScreen(
     onOpenDesignStudio: (() -> Unit)? = null,
     onShareStreak: ((Int) -> Unit)? = null,
     onEntrySaved: (() -> Unit)? = null,
+    onNavigateToEntry: ((String) -> Unit)? = null,
     notificationPrompt: String? = null,
     notificationStreak: Int = 0,
     onNotificationPromptConsumed: (() -> Unit)? = null
 ) {
     val state by viewModel.uiState.collectAsState()
+    val recommendationsState by viewModel.recommendations.collectAsState()
     val context = LocalContext.current
     val activity = context as? android.app.Activity
     var showTagDialog by remember { mutableStateOf(false) }
@@ -159,10 +161,31 @@ fun WriteScreen(
         }
     }
 
+    // Photo permission launcher for recommendations panel
+    val photoPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            viewModel.loadDevicePhotos()
+        }
+    }
+
+    // Check photo permission on launch
+    LaunchedEffect(Unit) {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            Manifest.permission.READ_MEDIA_IMAGES
+        } else {
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+        val hasPermission = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+        if (hasPermission) {
+            viewModel.loadDevicePhotos()
+        }
+    }
+
     var showImagePicker by remember { mutableStateOf(false) }
     var viewingImageId by remember { mutableStateOf<String?>(null) }
     var showTemplatePicker by remember { mutableStateOf(false) }
-    var showAttachmentTray by remember { mutableStateOf(false) }
     var dictationSeconds by remember { mutableStateOf(0) }
 
     // Track dictation duration
@@ -523,6 +546,24 @@ fun WriteScreen(
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                 }
+
+                // Apple Journal-style recommendations — scroll down to discover
+                RecommendationsPanel(
+                    state = recommendationsState,
+                    colorKey = state.colorKey,
+                    onNearbyPlaceTapped = { viewModel.onNearbyPlaceTapped(it) },
+                    onPhotoTapped = { viewModel.addImage(it.uri) },
+                    onLocationTapped = { viewModel.onLocationSuggestionTapped(it) },
+                    onRecentEntryTapped = { entryId -> onNavigateToEntry?.invoke(entryId) },
+                    onRequestPhotoPermission = {
+                        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            Manifest.permission.READ_MEDIA_IMAGES
+                        } else {
+                            Manifest.permission.READ_EXTERNAL_STORAGE
+                        }
+                        photoPermissionLauncher.launch(permission)
+                    }
+                )
             }
 
             // Bottom toolbar — always visible
@@ -531,7 +572,24 @@ fun WriteScreen(
                 showWordCount = showWordCount,
                 colorKey = state.colorKey,
                 richTextState = richTextState,
-                onAttachmentClick = { showAttachmentTray = true },
+                onPhotoClick = { showImagePicker = true },
+                onDictateClick = {
+                    val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.RECORD_AUDIO
+                        ) == PackageManager.PERMISSION_GRANTED
+                    } else {
+                        true
+                    }
+                    if (hasPermission) {
+                        viewModel.startDictation()
+                    } else {
+                        micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    }
+                },
+                onTemplatesClick = { showTemplatePicker = true },
+                onShareClick = { contactPickerLauncher.launch(null) },
                 isDictating = state.isDictating,
                 dictationSeconds = dictationSeconds,
                 onStopDictation = { viewModel.stopDictation() }
@@ -570,32 +628,6 @@ fun WriteScreen(
             )
         }
 
-        // Attachment tray overlay
-        AttachmentTray(
-            isVisible = showAttachmentTray,
-            onDismiss = { showAttachmentTray = false },
-            onAddPhoto = { showImagePicker = true },
-            onStartVoice = {
-                val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.RECORD_AUDIO
-                    ) == PackageManager.PERMISSION_GRANTED
-                } else {
-                    true
-                }
-                if (hasPermission) {
-                    viewModel.startDictation()
-                } else {
-                    micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                }
-            },
-            onOpenTemplates = { showTemplatePicker = true },
-            onOpenContacts = { contactPickerLauncher.launch(null) },
-            textColor = textColor,
-            secondaryTextColor = secondaryTextColor,
-            bgColor = bgColor
-        )
     }
 
     // Design Studio prompt after first entry save

@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.social.Quote
 import com.proactivediary.data.social.QuotesRepository
 import com.proactivediary.data.social.UserProfileRepository
@@ -40,13 +41,16 @@ import com.proactivediary.ui.theme.DiaryColors
 @Composable
 fun QuotesPreviewScreen(
     onContinue: () -> Unit,
+    analyticsService: AnalyticsService,
     quotesRepository: QuotesRepository,
     userProfileRepository: UserProfileRepository
 ) {
     var topQuotes by remember { mutableStateOf<List<Quote>>(emptyList()) }
     var quoteCount by remember { mutableStateOf(0L) }
+    val screenStartTime = remember { System.currentTimeMillis() }
 
     LaunchedEffect(Unit) {
+        analyticsService.logOnboardingQuotesShown()
         val result = quotesRepository.getLeaderboard("weekly", 5)
         result.onSuccess { topQuotes = it }
 
@@ -144,7 +148,12 @@ fun QuotesPreviewScreen(
             }
 
             Button(
-                onClick = onContinue,
+                onClick = {
+                    analyticsService.logOnboardingQuotesComplete(
+                        System.currentTimeMillis() - screenStartTime
+                    )
+                    onContinue()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

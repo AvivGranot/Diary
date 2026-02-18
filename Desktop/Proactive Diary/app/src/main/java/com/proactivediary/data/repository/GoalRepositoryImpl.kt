@@ -4,12 +4,18 @@ import com.proactivediary.data.db.dao.GoalCheckInDao
 import com.proactivediary.data.db.dao.GoalDao
 import com.proactivediary.data.db.entities.GoalCheckInEntity
 import com.proactivediary.data.db.entities.GoalEntity
+import com.proactivediary.data.sync.SyncService
+import com.proactivediary.data.sync.SyncStatus
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class GoalRepositoryImpl @Inject constructor(
     private val goalDao: GoalDao,
-    private val goalCheckInDao: GoalCheckInDao
+    private val goalCheckInDao: GoalCheckInDao,
+    private val syncService: SyncService
 ) : GoalRepository {
 
     override fun getActiveGoals(): Flow<List<GoalEntity>> =
@@ -36,17 +42,33 @@ class GoalRepositoryImpl @Inject constructor(
     override suspend fun countCompletedInRange(goalId: String, startDate: String, endDate: String): Int =
         goalCheckInDao.countCompletedInRange(goalId, startDate, endDate)
 
-    override suspend fun insertGoal(goal: GoalEntity) =
+    override suspend fun insertGoal(goal: GoalEntity) {
         goalDao.insert(goal)
+        CoroutineScope(Dispatchers.IO).launch {
+            try { syncService.pushGoal(goal) } catch (_: Exception) { }
+        }
+    }
 
-    override suspend fun updateGoal(goal: GoalEntity) =
+    override suspend fun updateGoal(goal: GoalEntity) {
         goalDao.update(goal)
+        CoroutineScope(Dispatchers.IO).launch {
+            try { syncService.pushGoal(goal) } catch (_: Exception) { }
+        }
+    }
 
-    override suspend fun deleteGoal(goalId: String) =
-        goalDao.deleteById(goalId)
+    override suspend fun deleteGoal(goalId: String) {
+        goalDao.updateSyncStatus(goalId, SyncStatus.PENDING_DELETE)
+        CoroutineScope(Dispatchers.IO).launch {
+            try { syncService.pushGoalDeletion(goalId) } catch (_: Exception) { }
+        }
+    }
 
-    override suspend fun insertCheckIn(checkIn: GoalCheckInEntity) =
+    override suspend fun insertCheckIn(checkIn: GoalCheckInEntity) {
         goalCheckInDao.insert(checkIn)
+        CoroutineScope(Dispatchers.IO).launch {
+            try { syncService.pushCheckIn(checkIn) } catch (_: Exception) { }
+        }
+    }
 
     override suspend fun deleteAllGoals() =
         goalDao.deleteAll()

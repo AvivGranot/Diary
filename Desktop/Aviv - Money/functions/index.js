@@ -1,4 +1,5 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { beforeUserCreated } = require("firebase-functions/v2/identity");
 const admin = require("firebase-admin");
@@ -12,6 +13,23 @@ const db = admin.firestore();
 const SUPPORT_EMAIL = "support@proactivediary.com";
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || "";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
+
+// ──────────────────────────────────────────────
+// ANALYTICS EVENT LOGGING
+// ──────────────────────────────────────────────
+
+async function logEvent(event, uid, props = {}) {
+  try {
+    await db.collection("events").add({
+      event,
+      uid: uid || "anonymous",
+      ts: admin.firestore.FieldValue.serverTimestamp(),
+      props,
+    });
+  } catch (e) {
+    console.error("Event log failed:", e.message);
+  }
+}
 
 // ──────────────────────────────────────────────
 // SUPPORT FUNCTIONS (existing)
@@ -228,17 +246,19 @@ exports.createUserProfile = onCall(async (request) => {
   }
 
   const uid = request.auth.uid;
-  const { displayName, phoneHash, emailHash } = request.data;
+  const { displayName, phoneHash, emailHash, photoUrl } = request.data;
 
   const userRef = db.collection("users").doc(uid);
   const existing = await userRef.get();
 
   if (existing.exists) {
-    // Update FCM token if profile already exists
+    // Update FCM token + photo if profile already exists
     const updates = {};
     if (request.data.fcmToken) updates.fcmToken = request.data.fcmToken;
     if (displayName) updates.displayName = displayName;
+    if (photoUrl) updates.photoUrl = photoUrl;
     if (Object.keys(updates).length > 0) await userRef.update(updates);
+    await logEvent("user_returned", uid, { hadToken: !!existing.data().fcmToken });
     return { success: true, created: false };
   }
 
@@ -246,6 +266,7 @@ exports.createUserProfile = onCall(async (request) => {
     displayName: displayName || "Anonymous",
     phoneHash: phoneHash || null,
     emailHash: emailHash || null,
+    photoUrl: photoUrl || null,
     fcmToken: request.data.fcmToken || null,
     noteCount: 0,
     quoteCount: 0,
@@ -258,6 +279,11 @@ exports.createUserProfile = onCall(async (request) => {
     { userCount: admin.firestore.FieldValue.increment(1) },
     { merge: true }
   );
+
+  await logEvent("user_created", uid, {
+    method: phoneHash ? "phone" : emailHash ? "email" : "anonymous",
+    hasContacts: !!(phoneHash || emailHash),
+  });
 
   return { success: true, created: true };
 });
@@ -313,6 +339,12 @@ exports.resolveContacts = onCall(async (request) => {
     }
   }
 
+  await logEvent("contacts_resolved", request.auth.uid, {
+    phoneCount: phoneHashes ? phoneHashes.length : 0,
+    emailCount: emailHashes ? emailHashes.length : 0,
+    matchCount: matches.length,
+  });
+
   return { matches };
 });
 
@@ -359,10 +391,10 @@ exports.sendNote = onCall(async (request) => {
     throw new HttpsError("invalid-argument", "Missing recipientId or content");
   }
 
-  // Validate word count (max 100)
+  // Validate word count (max 150)
   const wordCount = content.trim().split(/\s+/).length;
-  if (wordCount > 100) {
-    throw new HttpsError("invalid-argument", "Note must be 100 words or less");
+  if (wordCount > 150) {
+    throw new HttpsError("invalid-argument", "Note must be 150 words or less");
   }
 
   if (content.trim().length === 0) {
@@ -378,6 +410,7 @@ exports.sendNote = onCall(async (request) => {
   // Content moderation
   const modResult = await isContentPositive(content);
   if (!modResult.positive) {
+    await logEvent("content_rejected", request.auth.uid, { type: "note", reason: modResult.reason });
     throw new HttpsError("permission-denied", modResult.reason);
   }
 
@@ -395,6 +428,8 @@ exports.sendNote = onCall(async (request) => {
   await db.collection("users").doc(request.auth.uid).update({
     noteCount: admin.firestore.FieldValue.increment(1),
   });
+
+  await logEvent("note_sent", request.auth.uid, { recipientId, wordCount });
 
   // Send FCM push notification to recipient
   const recipientData = recipientDoc.data();
@@ -419,6 +454,7 @@ exports.sendNote = onCall(async (request) => {
           },
         },
       });
+      await logEvent("note_push_sent", request.auth.uid, { recipientId, noteId: noteRef.id });
     } catch (fcmErr) {
       console.error("FCM send failed:", fcmErr.message);
       // Note was saved successfully, FCM failure is non-fatal
@@ -458,16 +494,20 @@ exports.submitQuote = onCall(async (request) => {
   // Content moderation
   const modResult = await isContentPositive(content);
   if (!modResult.positive) {
+    await logEvent("content_rejected", request.auth.uid, { type: "quote", reason: modResult.reason });
     throw new HttpsError("permission-denied", modResult.reason);
   }
 
-  // Get author display name
+  // Get author display name and photo
   const userDoc = await db.collection("users").doc(request.auth.uid).get();
-  const authorName = userDoc.exists ? userDoc.data().displayName : "Anonymous";
+  const userData = userDoc.exists ? userDoc.data() : {};
+  const authorName = userData.displayName || "Anonymous";
+  const authorPhotoUrl = userData.photoUrl || null;
 
   const quoteRef = await db.collection("quotes").add({
     authorId: request.auth.uid,
     authorName,
+    authorPhotoUrl,
     content: content.trim(),
     likeCount: 0,
     commentCount: 0,
@@ -485,6 +525,8 @@ exports.submitQuote = onCall(async (request) => {
     { quoteCount: admin.firestore.FieldValue.increment(1) },
     { merge: true }
   );
+
+  await logEvent("quote_submitted", request.auth.uid, { wordCount, quoteId: quoteRef.id });
 
   return { success: true, quoteId: quoteRef.id };
 });
@@ -516,6 +558,7 @@ exports.toggleLike = onCall(async (request) => {
     await quoteRef.update({
       likeCount: admin.firestore.FieldValue.increment(-1),
     });
+    await logEvent("quote_unliked", request.auth.uid, { quoteId });
     return { success: true, liked: false };
   } else {
     // Like
@@ -525,6 +568,7 @@ exports.toggleLike = onCall(async (request) => {
     await quoteRef.update({
       likeCount: admin.firestore.FieldValue.increment(1),
     });
+    await logEvent("quote_liked", request.auth.uid, { quoteId, authorId: quoteDoc.data().authorId });
     return { success: true, liked: true };
   }
 });
@@ -555,6 +599,7 @@ exports.addComment = onCall(async (request) => {
   // Content moderation for comments too
   const modResult = await isContentPositive(content);
   if (!modResult.positive) {
+    await logEvent("content_rejected", request.auth.uid, { type: "comment", reason: modResult.reason });
     throw new HttpsError("permission-denied", modResult.reason);
   }
 
@@ -573,6 +618,8 @@ exports.addComment = onCall(async (request) => {
   await quoteRef.update({
     commentCount: admin.firestore.FieldValue.increment(1),
   });
+
+  await logEvent("comment_added", request.auth.uid, { quoteId, charCount: content.trim().length });
 
   return { success: true };
 });
@@ -611,12 +658,15 @@ exports.getLeaderboard = onCall(async (request) => {
       id: doc.id,
       authorId: data.authorId,
       authorName: data.authorName,
+      authorPhotoUrl: data.authorPhotoUrl || null,
       content: data.content,
       likeCount: data.likeCount,
       commentCount: data.commentCount,
       createdAt: data.createdAt ? data.createdAt.toMillis() : 0,
     });
   });
+
+  await logEvent("leaderboard_viewed", request.auth.uid, { period: period || "all_time", resultCount: quotes.length });
 
   return { quotes };
 });
@@ -635,4 +685,218 @@ exports.getCounters = onCall(async (request) => {
     userCount: data.userCount || 0,
     quoteCount: data.quoteCount || 0,
   };
+});
+
+// ──────────────────────────────────────────────
+// CLIENT EVENT TRACKING
+// ──────────────────────────────────────────────
+
+exports.trackClientEvent = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Must be signed in");
+  }
+  const { event, props } = request.data;
+  if (!event || typeof event !== "string") {
+    throw new HttpsError("invalid-argument", "Missing event name");
+  }
+  await logEvent(event, request.auth.uid, props || {});
+  return { success: true };
+});
+
+exports.trackBatchEvents = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Must be signed in");
+  }
+  const { events } = request.data;
+  if (!events || !Array.isArray(events)) {
+    throw new HttpsError("invalid-argument", "Missing events array");
+  }
+  const batch = db.batch();
+  // Cap at 25 events per batch to stay within Firestore limits
+  events.slice(0, 25).forEach((e) => {
+    if (e.event && typeof e.event === "string") {
+      const ref = db.collection("events").doc();
+      batch.set(ref, {
+        event: e.event,
+        uid: request.auth.uid,
+        ts: admin.firestore.FieldValue.serverTimestamp(),
+        props: e.props || {},
+      });
+    }
+  });
+  await batch.commit();
+  return { success: true, count: Math.min(events.length, 25) };
+});
+
+// ──────────────────────────────────────────────
+// GROWTH METRICS (admin dashboard)
+// ──────────────────────────────────────────────
+
+exports.getGrowthMetrics = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Must be signed in");
+  }
+
+  const now = new Date();
+  const dayAgo = new Date(now - 24 * 60 * 60 * 1000);
+  const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+  const monthAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
+
+  // Helper: count distinct UIDs in time range
+  async function countActiveUsers(since) {
+    const snap = await db.collection("events")
+      .where("ts", ">=", admin.firestore.Timestamp.fromDate(since))
+      .select("uid")
+      .get();
+    const uids = new Set();
+    snap.forEach((doc) => uids.add(doc.data().uid));
+    return uids.size;
+  }
+
+  // Helper: count events by name in time range
+  async function countEvents(eventName, since) {
+    const snap = await db.collection("events")
+      .where("event", "==", eventName)
+      .where("ts", ">=", admin.firestore.Timestamp.fromDate(since))
+      .count()
+      .get();
+    return snap.data().count;
+  }
+
+  const [dau, wau, mau] = await Promise.all([
+    countActiveUsers(dayAgo),
+    countActiveUsers(weekAgo),
+    countActiveUsers(monthAgo),
+  ]);
+
+  // Onboarding funnel (last 30 days)
+  const [
+    onboardingStarts,
+    authCompletes,
+    firstNoteCompletes,
+    onboardingCompletes,
+    notifGranted,
+    notifDenied,
+  ] = await Promise.all([
+    countEvents("onboarding_start", monthAgo),
+    countEvents("onboarding_auth_complete", monthAgo),
+    countEvents("onboarding_first_note_complete", monthAgo),
+    countEvents("onboarding_complete", monthAgo),
+    countEvents("onboarding_notif_granted", monthAgo),
+    countEvents("onboarding_notif_denied", monthAgo),
+  ]);
+
+  // Viral metrics (last 30 days)
+  const [notesSent, usersCreated, quotesSub, quoteLikes, comments] = await Promise.all([
+    countEvents("note_sent", monthAgo),
+    countEvents("user_created", monthAgo),
+    countEvents("quote_submitted", monthAgo),
+    countEvents("quote_liked", monthAgo),
+    countEvents("comment_added", monthAgo),
+  ]);
+
+  // Paywall (last 30 days)
+  const [paywallShown, subStarted] = await Promise.all([
+    countEvents("paywall_shown", monthAgo),
+    countEvents("subscription_started", monthAgo),
+  ]);
+
+  return {
+    engagement: {
+      dau,
+      wau,
+      mau,
+      stickiness: mau > 0 ? Math.round((dau / mau) * 100) : 0,
+    },
+    onboardingFunnel: {
+      starts: onboardingStarts,
+      authCompletes,
+      firstNoteCompletes,
+      completes: onboardingCompletes,
+      completionRate: onboardingStarts > 0
+        ? Math.round((onboardingCompletes / onboardingStarts) * 100)
+        : 0,
+      notifOptInRate: (notifGranted + notifDenied) > 0
+        ? Math.round((notifGranted / (notifGranted + notifDenied)) * 100)
+        : 0,
+    },
+    social: {
+      notesSent,
+      usersCreated,
+      quotesSubmitted: quotesSub,
+      quoteLikes,
+      comments,
+      viralRatio: usersCreated > 0
+        ? Math.round((notesSent / usersCreated) * 100) / 100
+        : 0,
+    },
+    monetization: {
+      paywallShown,
+      subscriptionsStarted: subStarted,
+      conversionRate: paywallShown > 0
+        ? Math.round((subStarted / paywallShown) * 100)
+        : 0,
+    },
+  };
+});
+
+// ──────────────────────────────────────────────
+// CLOUD SYNC
+// ──────────────────────────────────────────────
+
+/**
+ * Returns the count of cloud entries/goals for the authenticated user.
+ * Used by the client to decide whether to restore or push.
+ */
+exports.getSyncStatus = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Must be signed in");
+  }
+
+  const uid = request.auth.uid;
+  const userRef = db.collection("users").doc(uid);
+
+  const [entrySnap, goalSnap] = await Promise.all([
+    userRef.collection("entries").where("_deleted", "!=", true).count().get(),
+    userRef.collection("goals").where("_deleted", "!=", true).count().get(),
+  ]);
+
+  return {
+    hasCloudData: entrySnap.data().count > 0 || goalSnap.data().count > 0,
+    entryCount: entrySnap.data().count,
+    goalCount: goalSnap.data().count,
+  };
+});
+
+/**
+ * Scheduled cleanup: hard-deletes tombstoned sync documents older than 30 days.
+ * Runs once daily to keep Firestore clean.
+ */
+exports.cleanupDeletedSyncData = onSchedule("every 24 hours", async () => {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const thirtyDaysAgoMs = thirtyDaysAgo.getTime();
+  const collections = ["entries", "goals", "goal_checkins", "reminders"];
+
+  const usersSnap = await db.collection("users").listDocuments();
+
+  for (const userDoc of usersSnap) {
+    for (const collName of collections) {
+      try {
+        const snap = await userDoc.collection(collName)
+          .where("_deleted", "==", true)
+          .where("updatedAt", "<", thirtyDaysAgoMs)
+          .limit(100)
+          .get();
+
+        if (snap.size > 0) {
+          const batch = db.batch();
+          snap.forEach((doc) => batch.delete(doc.ref));
+          await batch.commit();
+          console.log(`Cleaned ${snap.size} deleted docs from ${userDoc.id}/${collName}`);
+        }
+      } catch (e) {
+        console.error(`Cleanup failed for ${userDoc.id}/${collName}: ${e.message}`);
+      }
+    }
+  }
 });

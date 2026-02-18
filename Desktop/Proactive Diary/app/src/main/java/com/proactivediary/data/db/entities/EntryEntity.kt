@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.proactivediary.data.sync.SyncStatus
 
 @Entity(
     tableName = "entries",
@@ -29,5 +30,6 @@ data class EntryEntity(
     @ColumnInfo(name = "content_plain") val contentPlain: String? = null,
     @ColumnInfo(name = "word_count") val wordCount: Int = 0,
     @ColumnInfo(name = "created_at") val createdAt: Long,
-    @ColumnInfo(name = "updated_at") val updatedAt: Long
+    @ColumnInfo(name = "updated_at") val updatedAt: Long,
+    @ColumnInfo(name = "sync_status") val syncStatus: Int = SyncStatus.PENDING_UPLOAD
 )

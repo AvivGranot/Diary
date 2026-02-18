@@ -33,8 +33,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -46,6 +48,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.ui.notes.ComposeNoteViewModel
 import com.proactivediary.ui.theme.DiaryColors
 import com.proactivediary.ui.write.resolveContact
@@ -53,10 +56,17 @@ import com.proactivediary.ui.write.resolveContact
 @Composable
 fun WriteFirstNoteScreen(
     onContinue: () -> Unit,
+    analyticsService: AnalyticsService,
     viewModel: ComposeNoteViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
+    val screenStartTime = remember { System.currentTimeMillis() }
+
+    // Track screen shown
+    LaunchedEffect(Unit) {
+        analyticsService.logOnboardingFirstNoteShown()
+    }
 
     val contactPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickContact()
@@ -67,6 +77,16 @@ fun WriteFirstNoteScreen(
                 name = contact?.displayName,
                 phone = contact?.phone,
                 email = contact?.email
+            )
+        }
+    }
+
+    // Track note sent success
+    LaunchedEffect(state.isSent) {
+        if (state.isSent) {
+            analyticsService.logOnboardingFirstNoteComplete(
+                wordCount = state.wordCount,
+                durationMs = System.currentTimeMillis() - screenStartTime
             )
         }
     }
@@ -249,6 +269,7 @@ fun WriteFirstNoteScreen(
             } else if (state.isRecipientOnApp == false) {
                 Button(
                     onClick = {
+                        analyticsService.logNoteInviteSent()
                         val shareText = "Someone wants to send you a kind note on Proactive Diary! Download it: https://play.google.com/store/apps/details?id=com.proactivediary"
                         val sendIntent = Intent().apply {
                             action = Intent.ACTION_SEND
@@ -282,7 +303,10 @@ fun WriteFirstNoteScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Skip option
-            TextButton(onClick = onContinue) {
+            TextButton(onClick = {
+                analyticsService.logOnboardingFirstNoteSkip()
+                onContinue()
+            }) {
                 Text(
                     "Skip for now",
                     color = DiaryColors.Pencil,

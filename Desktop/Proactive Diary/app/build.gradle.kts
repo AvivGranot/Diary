@@ -43,6 +43,13 @@ android {
             "GEMINI_API_KEY",
             "\"${project.findProperty("GEMINI_API_KEY") ?: ""}\""
         )
+
+        // Google Places API key injected from local.properties (gitignored)
+        buildConfigField(
+            "String",
+            "PLACES_API_KEY",
+            "\"${project.findProperty("PLACES_API_KEY") ?: ""}\""
+        )
     }
 
     signingConfigs {
@@ -130,6 +137,9 @@ dependencies {
     // Google Play Services Location
     implementation("com.google.android.gms:play-services-location:21.3.0")
 
+    // Google Places SDK (Nearby Search)
+    implementation("com.google.android.libraries.places:places:4.1.0")
+
     // OkHttp (weather API)
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
@@ -156,6 +166,7 @@ dependencies {
     implementation("com.google.firebase:firebase-functions-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-messaging-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
 
     // Google Sign-In (Credential Manager)
     implementation("androidx.credentials:credentials:1.3.0")

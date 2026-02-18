@@ -19,9 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
@@ -140,21 +138,21 @@ fun ComposeNoteScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Envelope body
+            // Envelope body — expands to fill available space
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .weight(1f)
                     .clip(RoundedCornerShape(12.dp))
                     .background(Color(0xFFFAF6EE))
                     .padding(20.dp)
             ) {
-                Column {
+                Column(modifier = Modifier.fillMaxSize()) {
                     Text(
                         text = "Write something kind...",
                         style = MaterialTheme.typography.labelSmall,
@@ -167,7 +165,7 @@ fun ComposeNoteScreen(
                         onValueChange = { viewModel.updateContent(it) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(180.dp),
+                            .weight(1f),
                         placeholder = {
                             Text(
                                 "You inspire me because...",
@@ -186,7 +184,7 @@ fun ComposeNoteScreen(
                         )
                     )
 
-                    // Word counter
+                    // Word counter — pinned at bottom of envelope
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End

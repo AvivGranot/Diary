@@ -145,7 +145,7 @@ fun SwipeHint(
             contentAlignment = Alignment.TopCenter
         ) {
             Surface(
-                modifier = modifier.padding(start = 32.dp, end = 32.dp, top = 180.dp),
+                modifier = modifier.padding(start = 32.dp, end = 32.dp, top = 340.dp),
                 shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.onBackground,
                 shadowElevation = 8.dp

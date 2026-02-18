@@ -71,8 +71,6 @@ fun SettingsScreen(
     onNavigateToGoals: () -> Unit = {},
     onNavigateToReminders: () -> Unit = {},
     onNavigateToTypewriter: () -> Unit = {},
-    onNavigateToYearInReview: () -> Unit = {},
-    onNavigateToBugReport: () -> Unit = {},
     onNavigateToSupport: () -> Unit = {},
     onNavigateToDiaryWrapped: () -> Unit = {},
     onNavigateToThemeEvolution: () -> Unit = {},
@@ -82,9 +80,9 @@ fun SettingsScreen(
     authViewModel: AuthViewModel = hiltViewModel()
 ) {
 
-    val fontSize by viewModel.fontSize.collectAsState()
     val isStreakEnabled by viewModel.isStreakEnabled.collectAsState()
     val isAIEnabled by viewModel.isAIEnabled.collectAsState()
+    val entryCount by viewModel.entryCount.collectAsState()
     val designSummary by viewModel.diaryDesignSummary.collectAsState()
     val activeReminderCount by viewModel.activeReminderCount.collectAsState()
     val activeGoalCount by viewModel.activeGoalCount.collectAsState()
@@ -100,7 +98,6 @@ fun SettingsScreen(
     var showPaywall by remember { mutableStateOf(false) }
     var showAuthDialog by remember { mutableStateOf(false) }
     var showExportOptions by remember { mutableStateOf(false) }
-    var showFontSizeMenu by remember { mutableStateOf(false) }
     var showPrivacyPolicy by remember { mutableStateOf(false) }
     var showTermsOfService by remember { mutableStateOf(false) }
     var deleteConfirmText by remember { mutableStateOf("") }
@@ -146,7 +143,7 @@ fun SettingsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
+                .background(Color(0xFFF5F1EB))
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 24.dp)
         ) {
@@ -181,34 +178,10 @@ fun SettingsScreen(
             SettingsCard {
                 // Diary Design
                 SettingsRow(
-                    label = "Diary Design",
+                    label = "Personalization",
                     value = designSummary,
                     onClick = onOpenDesignStudio
                 )
-                SettingsDivider()
-
-                // Font Size
-                Box {
-                    SettingsRow(
-                        label = "Font Size",
-                        value = fontSize.replaceFirstChar { it.uppercase() },
-                        onClick = { showFontSizeMenu = true }
-                    )
-                    DropdownMenu(
-                        expanded = showFontSizeMenu,
-                        onDismissRequest = { showFontSizeMenu = false }
-                    ) {
-                        listOf("small" to "Small (14sp)", "medium" to "Medium (16sp)", "large" to "Large (18sp)").forEach { (key, label) ->
-                            DropdownMenuItem(
-                                text = { Text(label) },
-                                onClick = {
-                                    viewModel.setFontSize(key)
-                                    showFontSizeMenu = false
-                                }
-                            )
-                        }
-                    }
-                }
                 SettingsDivider()
 
                 // Writing Streak toggle
@@ -300,6 +273,17 @@ fun SettingsScreen(
                         )
                     )
                 }
+                if (isAIEnabled && entryCount < 7) {
+                    Text(
+                        text = "You\u2019re ${7 - entryCount} entries away from your first insight. Keep writing!",
+                        style = TextStyle(
+                            fontSize = 12.sp,
+                            fontStyle = FontStyle.Italic,
+                            color = MaterialTheme.colorScheme.secondary
+                        ),
+                        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
+                    )
+                }
             }
 
             Spacer(Modifier.height(24.dp))
@@ -369,10 +353,10 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // DATA section (secondary — no card background)
-            SectionHeaderSecondary("DATA")
+            // DATA section
+            SectionHeader("DATA")
             Spacer(Modifier.height(8.dp))
-            Column {
+            SettingsCard {
                 Box {
                     SettingsRow(
                         label = "Export Writing",
@@ -425,12 +409,6 @@ fun SettingsScreen(
                     value = "Mood & growth patterns",
                     onClick = onNavigateToThemeEvolution
                 )
-                SettingsDivider()
-                SettingsRow(
-                    label = "Year in Review",
-                    value = "${java.time.LocalDate.now().year}",
-                    onClick = onNavigateToYearInReview
-                )
             }
 
             Spacer(Modifier.height(24.dp))
@@ -476,17 +454,12 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // HELP & SUPPORT section (secondary)
-            SectionHeaderSecondary("HELP & SUPPORT")
+            // SUPPORT section (secondary)
+            SectionHeaderSecondary("SUPPORT")
             Spacer(Modifier.height(8.dp))
             Column {
                 SettingsRow(
-                    label = "Report a Bug",
-                    onClick = onNavigateToBugReport
-                )
-                SettingsDivider()
-                SettingsRow(
-                    label = "Contact Support",
+                    label = "Contact Us",
                     onClick = onNavigateToSupport
                 )
             }
@@ -522,10 +495,12 @@ fun SettingsScreen(
             Spacer(Modifier.height(32.dp))
         }
 
-        // Snackbar host
+        // Snackbar host — elevated above bottom nav bar
         SnackbarHost(
             hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter)
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 64.dp)
         )
     }
 
@@ -537,7 +512,7 @@ fun SettingsScreen(
             entryCount = subState.entryCount,
             totalWords = subState.totalWords,
             monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$5/month",
-            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$30/year",
+            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$40/year",
             onSelectPlan = { sku ->
                 activity?.let { billingViewModel.launchPurchase(it, sku) }
                 showPaywall = false
@@ -798,7 +773,7 @@ private fun SectionHeaderSecondary(title: String) {
 private fun SettingsCard(content: @Composable () -> Unit) {
     Surface(
         shape = RoundedCornerShape(8.dp),
-        color = MaterialTheme.colorScheme.surface
+        color = Color(0xFFFAF9F5)
     ) {
         Column {
             content()

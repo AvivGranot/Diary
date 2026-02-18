@@ -3,6 +3,7 @@ package com.proactivediary.ui.notes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.social.Note
 import com.proactivediary.data.social.NotesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,7 +22,8 @@ data class EnvelopeRevealState(
 @HiltViewModel
 class EnvelopeRevealViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val notesRepository: NotesRepository
+    private val notesRepository: NotesRepository,
+    private val analyticsService: AnalyticsService
 ) : ViewModel() {
 
     private val noteId: String = savedStateHandle["noteId"] ?: ""
@@ -37,9 +39,10 @@ class EnvelopeRevealViewModel @Inject constructor(
                 val note = notes.find { it.id == noteId }
                 _state.value = EnvelopeRevealState(note = note, isLoading = false)
 
-                // Mark as read
+                // Mark as read and track
                 if (note != null && note.status != "read") {
                     notesRepository.markAsRead(noteId)
+                    analyticsService.logNoteRead(noteId)
                 }
             }
         } else {

@@ -11,6 +11,13 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.proactivediary.data.social.UserProfileRepository
+import com.proactivediary.data.sync.RestoreService
+import com.proactivediary.data.sync.SyncWorker
+import androidx.work.Constraints
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,7 +32,8 @@ import javax.inject.Singleton
 @Singleton
 class AuthService @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val userProfileRepository: UserProfileRepository
+    private val userProfileRepository: UserProfileRepository,
+    private val restoreService: RestoreService
 ) {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val credentialManager = CredentialManager.create(context)
@@ -81,6 +89,7 @@ class AuthService @Inject constructor(
                     ?: return Result.failure(Exception("Sign-in succeeded but user is null"))
                 _currentUser.value = user
                 syncUserProfile(user)
+                triggerCloudSync()
                 Result.success(user)
             } else {
                 Result.failure(Exception("Unexpected credential type"))
@@ -141,12 +150,41 @@ class AuthService @Inject constructor(
             try {
                 userProfileRepository.createOrUpdateProfile(
                     displayName = user.displayName,
-                    email = user.email
+                    email = user.email,
+                    photoUrl = user.photoUrl?.toString()
                 )
             } catch (e: Exception) {
                 // Non-fatal: profile sync failure shouldn't block sign-in
             }
         }
+    }
+
+    /**
+     * Triggers cloud sync after sign-in: restores data from cloud or pushes local data.
+     * Also enqueues a one-shot SyncWorker for immediate background sync.
+     */
+    private fun triggerCloudSync() {
+        // Restore/push data
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                restoreService.checkAndRestore()
+            } catch (e: Exception) {
+                // Non-fatal: sync failure shouldn't block sign-in
+            }
+        }
+        // Also enqueue a one-shot worker for any remaining pending changes
+        try {
+            val constraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build()
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                SyncWorker.WORK_NAME_ONESHOT,
+                ExistingWorkPolicy.REPLACE,
+                OneTimeWorkRequestBuilder<SyncWorker>()
+                    .setConstraints(constraints)
+                    .build()
+            )
+        } catch (_: Exception) { }
     }
 
     fun signOut() {

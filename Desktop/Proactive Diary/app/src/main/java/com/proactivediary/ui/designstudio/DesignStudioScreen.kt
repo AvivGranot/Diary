@@ -160,7 +160,9 @@ fun DesignStudioScreen(
                         ) {
                             DetailsSection(
                                 features = state.features,
-                                onToggleFeature = viewModel::toggleFeature
+                                onToggleFeature = viewModel::toggleFeature,
+                                selectedFontSize = state.fontSize,
+                                onFontSizeSelected = viewModel::selectFontSize
                             )
                         }
                     }

@@ -116,6 +116,7 @@ class MainActivity : ComponentActivity() {
             val deepLinkGoalId by _deepLinkGoalId.collectAsState()
             ProactiveDiaryTheme {
                 ProactiveDiaryNavHost(
+                    analyticsService = analyticsService,
                     deepLinkDestination = deepLink,
                     deepLinkPrompt = deepLinkPrompt,
                     deepLinkGoalId = deepLinkGoalId,
@@ -138,6 +139,7 @@ class MainActivity : ComponentActivity() {
         val destination = intent?.getStringExtra("destination")
         if (destination != null) {
             analyticsService.logNotificationTapped(destination)
+            analyticsService.logAppOpenedWithSource("notification")
             _deepLinkDestination.value = destination
             _deepLinkPrompt.value = intent.getStringExtra("notification_prompt")
             _deepLinkGoalId.value = intent.getStringExtra("notification_goal_id")
@@ -147,6 +149,10 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         sessionStartMs = System.currentTimeMillis()
+        // Track app open source (launcher if no deep link pending)
+        if (_deepLinkDestination.value == null) {
+            analyticsService.logAppOpenedWithSource("launcher")
+        }
     }
 
     override fun onStop() {

@@ -224,6 +224,114 @@ class AnalyticsService @Inject constructor() {
         ))
     }
 
+    // ─── Social Onboarding Funnel ───
+    fun logOnboardingStart() = log("onboarding_start")
+
+    fun logOnboardingSplashComplete(durationMs: Long) {
+        log("onboarding_splash_complete", bundleOf("duration_ms" to durationMs))
+    }
+
+    fun logOnboardingAuthStart() = log("onboarding_auth_start")
+
+    fun logOnboardingAuthComplete(method: String, durationMs: Long) {
+        log("onboarding_auth_complete", bundleOf("method" to method, "duration_ms" to durationMs))
+    }
+
+    fun logOnboardingAuthSkip() = log("onboarding_auth_skip")
+
+    fun logOnboardingFirstNoteShown() = log("onboarding_first_note_shown")
+
+    fun logOnboardingFirstNoteComplete(wordCount: Int, durationMs: Long) {
+        log("onboarding_first_note_complete", bundleOf("word_count" to wordCount, "duration_ms" to durationMs))
+    }
+
+    fun logOnboardingFirstNoteSkip() = log("onboarding_first_note_skip")
+
+    fun logOnboardingQuotesShown() = log("onboarding_quotes_shown")
+
+    fun logOnboardingQuotesComplete(durationMs: Long) {
+        log("onboarding_quotes_complete", bundleOf("duration_ms" to durationMs))
+    }
+
+    fun logOnboardingNotifShown() = log("onboarding_notif_shown")
+    fun logOnboardingNotifGranted() = log("onboarding_notif_granted")
+    fun logOnboardingNotifDenied() = log("onboarding_notif_denied")
+
+    // ─── Social — Notes (Viral Loop) ───
+    fun logContactsImported(totalContacts: Int, matchCount: Int) {
+        log("contacts_imported", bundleOf("total_contacts" to totalContacts, "match_count" to matchCount))
+    }
+
+    fun logNoteComposeStart() = log("note_compose_start")
+
+    fun logNoteSent(wordCount: Int) {
+        log("note_sent", bundleOf("word_count" to wordCount))
+    }
+
+    fun logNoteInboxOpened(unreadCount: Int) {
+        log("note_inbox_opened", bundleOf("unread_count" to unreadCount))
+    }
+
+    fun logNoteRead(noteId: String) {
+        log("note_read", bundleOf("note_id" to noteId))
+    }
+
+    fun logNotePushTapped(noteId: String) {
+        log("note_push_tapped", bundleOf("note_id" to noteId))
+    }
+
+    fun logNoteInviteSent() = log("note_invite_sent")
+
+    // ─── Social — Quotes (Engagement Loop) ───
+    fun logQuotesTabViewed() = log("quotes_tab_viewed")
+    fun logQuoteComposeStart() = log("quote_compose_start")
+
+    fun logQuoteSubmitted(wordCount: Int) {
+        log("quote_submitted", bundleOf("word_count" to wordCount))
+    }
+
+    fun logQuoteLiked(quoteId: String) {
+        log("quote_liked", bundleOf("quote_id" to quoteId))
+    }
+
+    fun logQuoteUnliked(quoteId: String) {
+        log("quote_unliked", bundleOf("quote_id" to quoteId))
+    }
+
+    fun logCommentSubmitted(quoteId: String) {
+        log("comment_submitted", bundleOf("quote_id" to quoteId))
+    }
+
+    fun logLeaderboardPeriodChanged(period: String) {
+        log("leaderboard_period_changed", bundleOf("period" to period))
+    }
+
+    // ─── Profile Picture ───
+    fun logProfilePictureScreenShown() = log("profile_picture_shown")
+    fun logProfilePictureSkipped() = log("profile_picture_skipped")
+
+    fun logProfilePhotoUploaded(source: String) {
+        log("profile_photo_uploaded", bundleOf("source" to source))
+    }
+
+    // ─── Navigation ───
+    fun logTabSwitched(tab: String) {
+        log("tab_switched", bundleOf("tab" to tab))
+    }
+
+    fun logAppOpenedWithSource(source: String) {
+        log("app_opened_source", bundleOf("source" to source))
+    }
+
+    // ─── Billing (extended) ───
+    fun logEntryLimitHit(entryCount: Int) {
+        log("entry_limit_hit", bundleOf("entry_count" to entryCount))
+    }
+
+    fun logPaywallShownWithTrigger(trigger: String) {
+        log("paywall_shown", bundleOf("trigger" to trigger))
+    }
+
     // ─── V2 Feature Analytics ───
     fun logPhotoAttached() = log("photo_attached")
     fun logPhotoRemoved() = log("photo_removed")
@@ -243,6 +351,45 @@ class AnalyticsService @Inject constructor() {
     fun logCalendarViewOpened() = log("calendar_view_opened")
     fun logGalleryViewOpened() = log("gallery_view_opened")
     fun logSwipeNavigationUsed() = log("swipe_navigation_used")
+
+    // ─── Sync ───
+
+    fun logSyncRestoreStarted(cloudEntryCount: Int) {
+        log("sync_restore_started", Bundle().apply { putInt("cloud_entries", cloudEntryCount) })
+    }
+
+    fun logSyncRestoreCompleted(entryCount: Int, goalCount: Int, durationMs: Long) {
+        log("sync_restore_completed", Bundle().apply {
+            putInt("entries", entryCount)
+            putInt("goals", goalCount)
+            putLong("duration_ms", durationMs)
+        })
+    }
+
+    fun logSyncRestoreFailed(error: String) {
+        log("sync_restore_failed", Bundle().apply { putString("error", error) })
+    }
+
+    fun logGuestDataMerged(localEntries: Int, cloudEntries: Int) {
+        log("guest_data_merged", Bundle().apply {
+            putInt("local_entries", localEntries)
+            putInt("cloud_entries", cloudEntries)
+        })
+    }
+
+    fun logSyncPushSuccess(source: String, count: Int) {
+        log("sync_push_success", Bundle().apply {
+            putString("source", source)
+            putInt("count", count)
+        })
+    }
+
+    fun logSyncPushFailed(source: String, error: String) {
+        log("sync_push_failed", Bundle().apply {
+            putString("source", source)
+            putString("error", error)
+        })
+    }
 
     // ─── Helpers ───
     private fun log(event: String, params: Bundle? = null) {
