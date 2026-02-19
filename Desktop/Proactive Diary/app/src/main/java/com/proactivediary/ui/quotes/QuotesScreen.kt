@@ -58,22 +58,12 @@ fun QuotesScreen(
     val state by viewModel.state.collectAsState()
 
     Scaffold(
-        floatingActionButton = {
-            Box(modifier = Modifier.padding(bottom = 56.dp)) {
-                FloatingActionButton(
-                    onClick = { viewModel.showComposeSheet() },
-                    containerColor = DiaryColors.WineRed
-                ) {
-                    Icon(Icons.Default.Add, "Write a quote", tint = Color.White)
-                }
-            }
-        },
         containerColor = DiaryColors.Paper
     ) { padding ->
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
         ) {
             // Header row: title + notification bell
             Row(
@@ -211,13 +201,6 @@ fun QuotesScreen(
                             fontWeight = FontWeight.SemiBold,
                             color = DiaryColors.Ink
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Write a quote",
-                            modifier = Modifier.size(48.dp),
-                            tint = DiaryColors.WineRed
-                        )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = "Write up to 25 words and inspire thousands",
@@ -251,6 +234,18 @@ fun QuotesScreen(
                         )
                     }
                 }
+            }
+        }
+
+            // FAB at bottom-left
+            FloatingActionButton(
+                onClick = { viewModel.showComposeSheet() },
+                containerColor = DiaryColors.WineRed,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(start = 16.dp, bottom = 72.dp)
+            ) {
+                Icon(Icons.Default.Add, "Write a quote", tint = Color.White)
             }
         }
     }

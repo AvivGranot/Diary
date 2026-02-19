@@ -55,6 +55,8 @@ import com.proactivediary.data.db.entities.WritingReminderEntity
 import com.proactivediary.ui.components.WheelTimePicker
 import com.proactivediary.ui.components.formatTime
 import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.DiaryColors
+import androidx.compose.foundation.layout.statusBarsPadding
 
 @Composable
 fun ReminderManagementScreen(
@@ -72,12 +74,13 @@ fun ReminderManagementScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(DiaryColors.Paper)
     ) {
         // Header: back + title + add
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .statusBarsPadding()
                 .padding(horizontal = 8.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -111,9 +114,12 @@ fun ReminderManagementScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(32.dp),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.TopCenter
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(top = 80.dp)
+                ) {
                     Text(
                         text = "No reminders yet",
                         style = TextStyle(

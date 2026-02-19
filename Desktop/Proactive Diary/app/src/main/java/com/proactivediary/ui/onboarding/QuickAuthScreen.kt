@@ -76,27 +76,6 @@ fun QuickAuthScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = "Send an anonymous note",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = DiaryColors.Ink,
-                textAlign = TextAlign.Center,
-                lineHeight = 36.sp
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = "That was from us. Now it\u2019s your turn\nto start a chain of kindness.",
-                style = MaterialTheme.typography.bodyMedium,
-                fontStyle = FontStyle.Italic,
-                color = DiaryColors.Pencil,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(40.dp))
-
             Button(
                 onClick = { viewModel.signInWithGoogle(context) },
                 modifier = Modifier
@@ -133,17 +112,23 @@ fun QuickAuthScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
-            Text(
-                text = "Sign in to send & receive notes.\nYour identity stays anonymous.",
-                style = MaterialTheme.typography.bodySmall,
-                color = DiaryColors.Pencil.copy(alpha = 0.6f),
-                textAlign = TextAlign.Center,
-                lineHeight = 18.sp
-            )
+            listOf(
+                "Send an anonymous note",
+                "Discover quotes",
+                "Write your own journal"
+            ).forEach { feature ->
+                Text(
+                    text = feature,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = DiaryColors.Ink,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(vertical = 6.dp)
+                )
+            }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.weight(1f))
 
             Text(
                 text = "Skip for now",

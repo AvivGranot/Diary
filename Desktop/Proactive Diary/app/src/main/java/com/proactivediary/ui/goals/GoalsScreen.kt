@@ -49,6 +49,7 @@ import com.proactivediary.ui.components.formatTime
 import com.proactivediary.ui.components.parseStoredTime
 import com.proactivediary.ui.theme.CormorantGaramond
 import com.proactivediary.ui.theme.DiaryColors
+import androidx.compose.foundation.layout.statusBarsPadding
 
 @Composable
 fun GoalsScreen(
@@ -73,6 +74,7 @@ fun GoalsScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .statusBarsPadding()
                 .padding(horizontal = 8.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -106,9 +108,12 @@ fun GoalsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(32.dp),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.TopCenter
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(top = 80.dp)
+                ) {
                     Text(
                         text = "No goals yet",
                         style = TextStyle(

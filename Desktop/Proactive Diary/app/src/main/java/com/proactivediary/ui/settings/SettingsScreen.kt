@@ -394,6 +394,18 @@ fun SettingsScreen(
 
             Spacer(Modifier.height(24.dp))
 
+            // SUPPORT section (secondary)
+            SectionHeaderSecondary("SUPPORT")
+            Spacer(Modifier.height(8.dp))
+            Column {
+                SettingsRow(
+                    label = "Contact Us",
+                    onClick = onNavigateToSupport
+                )
+            }
+
+            Spacer(Modifier.height(24.dp))
+
             // YOUR STORY section (secondary)
             SectionHeaderSecondary("YOUR STORY")
             Spacer(Modifier.height(8.dp))
@@ -450,18 +462,6 @@ fun SettingsScreen(
                         onClick = { showAuthDialog = true }
                     )
                 }
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            // SUPPORT section (secondary)
-            SectionHeaderSecondary("SUPPORT")
-            Spacer(Modifier.height(8.dp))
-            Column {
-                SettingsRow(
-                    label = "Contact Us",
-                    onClick = onNavigateToSupport
-                )
             }
 
             Spacer(Modifier.height(24.dp))

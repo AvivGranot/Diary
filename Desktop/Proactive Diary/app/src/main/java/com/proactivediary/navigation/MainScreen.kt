@@ -76,6 +76,10 @@ import com.proactivediary.ui.quotes.QuotesScreen
 import com.proactivediary.ui.write.WriteScreen
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 
 data class BottomNavItem(
     val route: String,
@@ -285,23 +289,51 @@ fun MainScreen(
             // Goals overlay
             AnimatedVisibility(
                 visible = showGoals,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+                enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+                exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
             ) {
-                GoalsScreen(
-                    onBack = { showGoals = false }
-                )
+                Box(modifier = Modifier.fillMaxSize().pointerInput(Unit) {
+                    var totalDrag = 0f
+                    detectHorizontalDragGestures(
+                        onDragStart = { totalDrag = 0f },
+                        onHorizontalDrag = { _, dragAmount ->
+                            totalDrag += dragAmount
+                            if (totalDrag > 200f) {
+                                showGoals = false
+                                totalDrag = 0f
+                            }
+                        }
+                    )
+                }) {
+                    GoalsScreen(
+                        onBack = { showGoals = false }
+                    )
+                }
             }
 
             // Reminders overlay
             AnimatedVisibility(
                 visible = showReminders,
-                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+                enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+                exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
             ) {
-                ReminderManagementScreen(
-                    onBack = { showReminders = false }
-                )
+                Box(modifier = Modifier.fillMaxSize().pointerInput(Unit) {
+                    var totalDrag = 0f
+                    detectHorizontalDragGestures(
+                        onDragStart = { totalDrag = 0f },
+                        onHorizontalDrag = { _, dragAmount ->
+                            totalDrag += dragAmount
+                            if (totalDrag > 200f) {
+                                showReminders = false
+                                totalDrag = 0f
+                            }
+                        }
+                    )
+                }) {
+                    ReminderManagementScreen(
+                        onBack = { showReminders = false }
+                    )
+                }
             }
 
             // Coach mark — shown on top of everything
@@ -309,42 +341,6 @@ fun MainScreen(
                 visible = showSwipeHint && pagerState.currentPage == PAGE_QUOTES,
                 onDismiss = { discoveryViewModel.dismissSwipeHint() }
             )
-
-            // Bell icon — notification inbox (top-right, below status bar)
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .statusBarsPadding()
-                    .padding(top = 8.dp, end = 12.dp)
-            ) {
-                IconButton(
-                    onClick = {
-                        analyticsService.logNoteInboxOpened(unreadNoteCount)
-                        rootNavController.navigate(Routes.NoteInbox.route)
-                    },
-                    modifier = Modifier.size(36.dp)
-                ) {
-                    BadgedBox(
-                        badge = {
-                            if (unreadNoteCount > 0) {
-                                Badge {
-                                    Text(
-                                        text = "$unreadNoteCount",
-                                        style = androidx.compose.ui.text.TextStyle(fontSize = 10.sp)
-                                    )
-                                }
-                            }
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Notifications,
-                            contentDescription = "Notifications",
-                            modifier = Modifier.size(22.dp),
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
-                    }
-                }
-            }
 
             // Bottom navigation — flat, flush, Instagram style
             Column(

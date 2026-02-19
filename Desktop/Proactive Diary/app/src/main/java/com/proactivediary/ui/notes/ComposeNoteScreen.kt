@@ -154,7 +154,7 @@ fun ComposeNoteScreen(
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     Text(
-                        text = "Write something kind...",
+                        text = "Write something to your contacts anonymously. Only positive sentiments \u2014 negative ones won\u2019t be sent.",
                         style = MaterialTheme.typography.labelSmall,
                         color = DiaryColors.Pencil,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -168,7 +168,7 @@ fun ComposeNoteScreen(
                             .weight(1f),
                         placeholder = {
                             Text(
-                                "You inspire me because...",
+                                "I really appreciate the time...",
                                 fontStyle = FontStyle.Italic,
                                 color = DiaryColors.Pencil.copy(alpha = 0.5f)
                             )

@@ -56,6 +56,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.DiaryColors
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,16 +75,36 @@ fun JournalScreen(
     var viewMode by remember { mutableStateOf("list") } // "list", "calendar", "gallery"
     var selectedDate by remember { mutableStateOf<java.time.LocalDate?>(null) }
 
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .then(
+                if (onBack != null) Modifier.pointerInput(Unit) {
+                    var totalDrag = 0f
+                    detectHorizontalDragGestures(
+                        onDragStart = { totalDrag = 0f },
+                        onHorizontalDrag = { _, dragAmount ->
+                            totalDrag += dragAmount
+                            if (totalDrag > 200f) {
+                                onBack()
+                                totalDrag = 0f
+                            }
+                        }
+                    )
+                } else Modifier
+            )
+    ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(DiaryColors.Paper)
     ) {
         // Back button header when shown as standalone screen
         if (onBack != null) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .statusBarsPadding()
                     .padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -88,7 +112,7 @@ fun JournalScreen(
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onBackground
+                        tint = DiaryColors.Ink
                     )
                 }
                 Text(
@@ -96,7 +120,7 @@ fun JournalScreen(
                     style = TextStyle(
                         fontFamily = CormorantGaramond,
                         fontSize = 24.sp,
-                        color = MaterialTheme.colorScheme.onBackground
+                        color = DiaryColors.Ink
                     )
                 )
             }
@@ -363,6 +387,7 @@ fun JournalScreen(
             }
         }
     }
+    } // Close swipe-back Box
 
     // Delete confirmation dialog
     entryToDelete?.let { entry ->
@@ -470,11 +495,11 @@ private fun EmptyState(
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.TopCenter
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(48.dp)
+            modifier = Modifier.padding(top = 80.dp, start = 48.dp, end = 48.dp)
         ) {
             Text(
                 text = title,
