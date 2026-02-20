@@ -42,7 +42,6 @@ import com.proactivediary.ui.onthisday.OnThisDayScreen
 import com.proactivediary.ui.settings.ContactSupportScreen
 import com.proactivediary.ui.settings.ExportScreen
 import com.proactivediary.ui.settings.LayoutScreen
-import com.proactivediary.ui.wrapped.DiaryWrappedScreen
 import com.proactivediary.ui.insights.ThemeEvolutionScreen
 import com.proactivediary.ui.write.WriteScreen
 
@@ -219,9 +218,8 @@ fun ProactiveDiaryNavHost(
                     navController.navigate(Routes.ContactSupport.createRoute("support"))
                 },
                 onNavigateToDiaryWrapped = {
-                    // Wrapped is deprecated but still navigable during migration
-                    @Suppress("DEPRECATION")
-                    navController.navigate(Routes.DiaryWrapped.route)
+                    // Wrapped removed — navigate to Theme Evolution instead
+                    navController.navigate(Routes.ThemeEvolution.route)
                 },
                 onNavigateToThemeEvolution = {
                     navController.navigate(Routes.ThemeEvolution.route)
@@ -279,14 +277,6 @@ fun ProactiveDiaryNavHost(
                 onEntryTap = { entryId ->
                     navController.navigate(Routes.EntryDetail.createRoute(entryId))
                 }
-            )
-        }
-
-        // Kept during migration — will be removed
-        @Suppress("DEPRECATION")
-        composable(Routes.DiaryWrapped.route) {
-            DiaryWrappedScreen(
-                onBack = { navController.popBackStack() }
             )
         }
 

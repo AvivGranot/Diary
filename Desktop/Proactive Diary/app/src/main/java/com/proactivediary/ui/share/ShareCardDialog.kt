@@ -37,7 +37,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.proactivediary.ui.theme.DiaryColors
 import com.proactivediary.ui.theme.PlusJakartaSans
 
 @Composable
@@ -157,7 +156,7 @@ fun ShareCardDialog(
                         .fillMaxWidth()
                         .background(
                             brush = Brush.horizontalGradient(
-                                listOf(DiaryColors.ElectricIndigo, DiaryColors.NeonPink)
+                                listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
                             ),
                             shape = RoundedCornerShape(12.dp)
                         )

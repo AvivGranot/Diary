@@ -42,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.notes.components.NoteContentCard
-import com.proactivediary.ui.theme.DiaryColors
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -86,15 +85,15 @@ fun EnvelopeRevealScreen(
                 title = {},
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = DiaryColors.Ink)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DiaryColors.Paper
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
         },
-        containerColor = DiaryColors.Paper
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Box(
             modifier = Modifier
@@ -106,7 +105,7 @@ fun EnvelopeRevealScreen(
                 Text(
                     text = "Opening...",
                     style = MaterialTheme.typography.bodyLarge,
-                    color = DiaryColors.Pencil,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontStyle = FontStyle.Italic
                 )
             } else if (state.note != null) {
@@ -118,7 +117,7 @@ fun EnvelopeRevealScreen(
                     Text(
                         text = "Someone wrote you...",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = DiaryColors.Pencil,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontStyle = FontStyle.Italic,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
@@ -128,7 +127,7 @@ fun EnvelopeRevealScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFFFAF6EE))
+                            .background(MaterialTheme.colorScheme.surface)
                     ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -144,7 +143,7 @@ fun EnvelopeRevealScreen(
                                         cameraDistance = 12f * density
                                     }
                                     .background(
-                                        Color(0xFFE8DFD0),
+                                        MaterialTheme.colorScheme.surfaceVariant,
                                         RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp)
                                     ),
                                 contentAlignment = Alignment.Center
@@ -154,7 +153,7 @@ fun EnvelopeRevealScreen(
                                     Box(
                                         modifier = Modifier
                                             .background(
-                                                DiaryColors.ElectricIndigo,
+                                                MaterialTheme.colorScheme.primary,
                                                 RoundedCornerShape(50)
                                             )
                                             .padding(horizontal = 12.dp, vertical = 4.dp)
@@ -188,7 +187,7 @@ fun EnvelopeRevealScreen(
                     Text(
                         text = "Spread the kindness \u2014 send one back",
                         style = MaterialTheme.typography.bodySmall,
-                        color = DiaryColors.Pencil,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontStyle = FontStyle.Italic,
                         textAlign = TextAlign.Center
                     )

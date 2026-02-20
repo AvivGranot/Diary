@@ -45,6 +45,7 @@ import androidx.compose.material.icons.outlined.Person
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
@@ -71,7 +72,6 @@ import androidx.compose.ui.unit.sp
 import com.mohamedrejeb.richeditor.model.RichTextState
 import com.proactivediary.ui.theme.CormorantGaramond
 import com.proactivediary.domain.model.DiaryThemeConfig
-import com.proactivediary.ui.theme.DiaryColors
 
 @Composable
 fun WriteToolbar(
@@ -526,9 +526,9 @@ internal fun TagInputDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = DiaryColors.Paper,
-        titleContentColor = DiaryColors.Ink,
-        textContentColor = DiaryColors.Pencil,
+        containerColor = MaterialTheme.colorScheme.background,
+        titleContentColor = MaterialTheme.colorScheme.onBackground,
+        textContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         title = {
             Text(
                 text = "Tags",
@@ -546,7 +546,7 @@ internal fun TagInputDialog(
                     style = TextStyle(
                         fontFamily = FontFamily.Default,
                         fontSize = 13.sp,
-                        color = DiaryColors.Pencil
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -559,18 +559,18 @@ internal fun TagInputDialog(
                             style = TextStyle(
                                 fontFamily = FontFamily.Default,
                                 fontSize = 14.sp,
-                                color = DiaryColors.Pencil.copy(alpha = 0.5f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                             )
                         )
                     },
                     colors = TextFieldDefaults.colors(
                         unfocusedContainerColor = Color.Transparent,
                         focusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = DiaryColors.Ink,
-                        unfocusedIndicatorColor = DiaryColors.Pencil.copy(alpha = 0.3f),
-                        cursorColor = DiaryColors.Ink,
-                        focusedTextColor = DiaryColors.Ink,
-                        unfocusedTextColor = DiaryColors.Ink
+                        focusedIndicatorColor = MaterialTheme.colorScheme.onBackground,
+                        unfocusedIndicatorColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                        cursorColor = MaterialTheme.colorScheme.onBackground,
+                        focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                        unfocusedTextColor = MaterialTheme.colorScheme.onBackground
                     ),
                     modifier = Modifier.fillMaxWidth(),
                     textStyle = TextStyle(
@@ -590,12 +590,12 @@ internal fun TagInputDialog(
                     .filter { it.isNotBlank() }
                 onConfirm(parsed)
             }) {
-                Text("Save", color = DiaryColors.Ink)
+                Text("Save", color = MaterialTheme.colorScheme.onBackground)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = DiaryColors.Pencil)
+                Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     )

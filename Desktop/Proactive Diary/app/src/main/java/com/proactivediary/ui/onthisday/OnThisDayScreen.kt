@@ -45,14 +45,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.proactivediary.data.media.ImageMetadata
+import androidx.compose.material3.MaterialTheme
 import com.proactivediary.ui.theme.CormorantGaramond
 import java.io.File
-
-private val Cream = Color(0xFFF3EEE7)
-private val Ink = Color(0xFF313131)
-private val InkSecondary = Color(0xFF787878)
-private val InkTertiary = Color(0xFFAAAAAA)
-private val CardBg = Color(0xFFFAF7F2)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,7 +61,7 @@ fun OnThisDayScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Cream)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         TopAppBar(
             title = {
@@ -75,7 +70,7 @@ fun OnThisDayScreen(
                     style = TextStyle(
                         fontFamily = CormorantGaramond,
                         fontSize = 20.sp,
-                        color = Ink
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 )
             },
@@ -84,11 +79,11 @@ fun OnThisDayScreen(
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = Ink
+                        tint = MaterialTheme.colorScheme.onBackground
                     )
                 }
             },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = Cream)
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
         )
 
         if (state.isLoading) {
@@ -99,7 +94,7 @@ fun OnThisDayScreen(
                         fontFamily = CormorantGaramond,
                         fontSize = 16.sp,
                         fontStyle = FontStyle.Italic,
-                        color = InkSecondary
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
             }
@@ -115,7 +110,7 @@ fun OnThisDayScreen(
                         style = TextStyle(
                             fontFamily = CormorantGaramond,
                             fontSize = 20.sp,
-                            color = Ink
+                            color = MaterialTheme.colorScheme.onBackground
                         )
                     )
                     Spacer(Modifier.height(8.dp))
@@ -125,7 +120,7 @@ fun OnThisDayScreen(
                             fontFamily = CormorantGaramond,
                             fontSize = 14.sp,
                             fontStyle = FontStyle.Italic,
-                            color = InkSecondary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     )
                 }
@@ -145,7 +140,7 @@ fun OnThisDayScreen(
                             fontFamily = CormorantGaramond,
                             fontSize = 12.sp,
                             letterSpacing = 2.sp,
-                            color = InkTertiary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                         )
                     )
                 }
@@ -176,7 +171,7 @@ private fun MemoryCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(CardBg)
+            .background(MaterialTheme.colorScheme.surface)
             .clickable(onClick = onClick)
             .padding(20.dp)
     ) {
@@ -187,7 +182,7 @@ private fun MemoryCard(
                 fontFamily = CormorantGaramond,
                 fontSize = 12.sp,
                 letterSpacing = 1.sp,
-                color = InkTertiary
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
         )
 
@@ -200,7 +195,7 @@ private fun MemoryCard(
                 style = TextStyle(
                     fontFamily = CormorantGaramond,
                     fontSize = 18.sp,
-                    color = Ink
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             )
             Spacer(Modifier.height(6.dp))
@@ -213,7 +208,7 @@ private fun MemoryCard(
                 fontFamily = CormorantGaramond,
                 fontSize = 15.sp,
                 fontStyle = FontStyle.Italic,
-                color = InkSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 lineHeight = 22.sp
             ),
             maxLines = 5,
@@ -265,11 +260,11 @@ private fun MemoryCard(
                         text = chip,
                         style = TextStyle(
                             fontSize = 11.sp,
-                            color = InkSecondary
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         ),
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
-                            .background(Cream)
+                            .background(MaterialTheme.colorScheme.background)
                             .padding(horizontal = 10.dp, vertical = 4.dp)
                     )
                 }
@@ -282,7 +277,7 @@ private fun MemoryCard(
             text = "${entry.wordCount} words",
             style = TextStyle(
                 fontSize = 10.sp,
-                color = InkTertiary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                 letterSpacing = 0.5.sp
             )
         )

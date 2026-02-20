@@ -33,7 +33,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.notes.components.EnvelopeCard
-import com.proactivediary.ui.theme.DiaryColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

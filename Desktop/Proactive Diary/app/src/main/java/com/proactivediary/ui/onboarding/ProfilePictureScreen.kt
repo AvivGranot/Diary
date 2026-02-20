@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.proactivediary.analytics.AnalyticsService
-import com.proactivediary.ui.theme.DiaryColors
 
 @Composable
 fun ProfilePictureScreen(
@@ -76,7 +75,7 @@ fun ProfilePictureScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DiaryColors.Paper),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -90,7 +89,7 @@ fun ProfilePictureScreen(
                 text = "Add a profile photo",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = DiaryColors.Ink,
+                color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
                 lineHeight = 36.sp
             )
@@ -101,7 +100,7 @@ fun ProfilePictureScreen(
                 text = "Show up on the leaderboard with a face,\nnot just a name.",
                 style = MaterialTheme.typography.bodyMedium,
                 fontStyle = FontStyle.Italic,
-                color = DiaryColors.Pencil,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
 
@@ -112,7 +111,7 @@ fun ProfilePictureScreen(
                 modifier = Modifier
                     .size(120.dp)
                     .clip(CircleShape)
-                    .background(DiaryColors.Parchment),
+                    .background(MaterialTheme.colorScheme.surface),
                 contentAlignment = Alignment.Center
             ) {
                 when {
@@ -137,7 +136,7 @@ fun ProfilePictureScreen(
                             imageVector = Icons.Default.Person,
                             contentDescription = "Placeholder",
                             modifier = Modifier.size(56.dp),
-                            tint = DiaryColors.Pencil.copy(alpha = 0.4f)
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                         )
                     }
                 }
@@ -154,7 +153,7 @@ fun ProfilePictureScreen(
             ) {
                 Text(
                     text = if (state.selectedImageUri != null) "Change Photo" else "Choose Photo",
-                    color = DiaryColors.Ink,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 16.sp
                 )
             }
@@ -167,7 +166,7 @@ fun ProfilePictureScreen(
                     modifier = Modifier.fillMaxWidth().height(48.dp),
                     enabled = !state.isUploading,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFC0392B)
+                        containerColor = MaterialTheme.colorScheme.primary
                     ),
                     shape = RoundedCornerShape(16.dp)
                 ) {
@@ -191,7 +190,7 @@ fun ProfilePictureScreen(
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     enabled = !state.isUploading,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = DiaryColors.WineRed
+                        containerColor = MaterialTheme.colorScheme.primary
                     ),
                     shape = RoundedCornerShape(16.dp)
                 ) {
@@ -211,7 +210,7 @@ fun ProfilePictureScreen(
             if (state.error != null) {
                 Text(
                     text = state.error!!,
-                    color = DiaryColors.CoralRed,
+                    color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 12.dp),
                     textAlign = TextAlign.Center
@@ -224,7 +223,7 @@ fun ProfilePictureScreen(
             Text(
                 text = "Skip for now",
                 fontSize = 14.sp,
-                color = DiaryColors.Pencil.copy(alpha = 0.6f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 modifier = Modifier
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },

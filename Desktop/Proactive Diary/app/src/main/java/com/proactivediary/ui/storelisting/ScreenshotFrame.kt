@@ -24,13 +24,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.proactivediary.ui.theme.CormorantGaramond
-import com.proactivediary.ui.theme.DiaryColors
 
 @Composable
 fun ScreenshotFrame(
     headline: String,
     subheadline: String = "",
-    backgroundColor: Color = DiaryColors.Paper,
+    backgroundColor: Color = Color(0xFF000000),
     content: @Composable () -> Unit
 ) {
     Column(
@@ -55,7 +54,7 @@ fun ScreenshotFrame(
                     style = TextStyle(
                         fontFamily = CormorantGaramond,
                         fontSize = 28.sp,
-                        color = DiaryColors.Ink
+                        color = Color(0xFFFFFFFF)
                     ),
                     textAlign = TextAlign.Center
                 )
@@ -66,7 +65,7 @@ fun ScreenshotFrame(
                         style = TextStyle(
                             fontSize = 14.sp,
                             fontStyle = FontStyle.Italic,
-                            color = DiaryColors.Pencil
+                            color = Color(0xFF888888)
                         ),
                         textAlign = TextAlign.Center
                     )
@@ -84,8 +83,8 @@ fun ScreenshotFrame(
                 .shadow(
                     elevation = 8.dp,
                     shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-                    ambientColor = DiaryColors.Ink.copy(alpha = 0.15f),
-                    spotColor = DiaryColors.Ink.copy(alpha = 0.15f)
+                    ambientColor = Color(0xFFFFFFFF).copy(alpha = 0.15f),
+                    spotColor = Color(0xFFFFFFFF).copy(alpha = 0.15f)
                 )
                 .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                 .background(MaterialTheme.colorScheme.background)

@@ -27,7 +27,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.proactivediary.ui.theme.DiaryColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,7 +44,7 @@ fun ComposeQuoteSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = DiaryColors.Paper
+        containerColor = MaterialTheme.colorScheme.background
     ) {
         Column(
             modifier = Modifier
@@ -57,7 +56,7 @@ fun ComposeQuoteSheet(
             Text(
                 text = "Share Your Wisdom",
                 style = MaterialTheme.typography.titleMedium,
-                color = DiaryColors.Ink
+                color = MaterialTheme.colorScheme.onBackground
             )
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -65,7 +64,7 @@ fun ComposeQuoteSheet(
             Text(
                 text = "Write a short quote that inspires",
                 style = MaterialTheme.typography.bodySmall,
-                color = DiaryColors.Pencil,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontStyle = FontStyle.Italic
             )
 
@@ -81,17 +80,17 @@ fun ComposeQuoteSheet(
                     Text(
                         "The best way to predict the future is to create it.",
                         fontStyle = FontStyle.Italic,
-                        color = DiaryColors.Pencil.copy(alpha = 0.4f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                     )
                 },
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = DiaryColors.Parchment,
-                    unfocusedContainerColor = DiaryColors.Parchment,
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
-                    focusedTextColor = DiaryColors.Ink,
-                    unfocusedTextColor = DiaryColors.Ink,
-                    cursorColor = DiaryColors.ElectricIndigo
+                    focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                    unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                    cursorColor = MaterialTheme.colorScheme.primary
                 ),
                 shape = RoundedCornerShape(12.dp)
             )
@@ -107,14 +106,14 @@ fun ComposeQuoteSheet(
                     text = "$wordCount/${QuotesViewModel.MAX_QUOTE_WORDS} words",
                     style = MaterialTheme.typography.bodySmall,
                     color = if (wordCount >= QuotesViewModel.MAX_QUOTE_WORDS)
-                        DiaryColors.CoralRed else DiaryColors.Pencil
+                        MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
             if (error != null) {
                 Text(
                     text = error,
-                    color = DiaryColors.CoralRed,
+                    color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 8.dp),
                     textAlign = TextAlign.Center
@@ -130,7 +129,7 @@ fun ComposeQuoteSheet(
                     .height(48.dp),
                 enabled = content.isNotBlank() && !isSubmitting,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = DiaryColors.ElectricIndigo
+                    containerColor = MaterialTheme.colorScheme.primary
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {

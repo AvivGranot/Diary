@@ -31,7 +31,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.proactivediary.data.social.Quote
-import com.proactivediary.ui.theme.DiaryColors
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -45,7 +44,7 @@ fun QuoteCard(
     modifier: Modifier = Modifier
 ) {
     val likeColor by animateColorAsState(
-        targetValue = if (isLiked) DiaryColors.CoralRed else DiaryColors.Pencil,
+        targetValue = if (isLiked) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
         label = "likeColor"
     )
 
@@ -53,7 +52,7 @@ fun QuoteCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(DiaryColors.Parchment)
+            .background(MaterialTheme.colorScheme.surface)
             .clickable(onClick = onClick)
             .padding(20.dp)
     ) {
@@ -65,7 +64,7 @@ fun QuoteCard(
                 lineHeight = 24.sp
             ),
             fontStyle = FontStyle.Italic,
-            color = DiaryColors.Ink,
+            color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Start
         )
 
@@ -87,7 +86,7 @@ fun QuoteCard(
                 Text(
                     text = "\u2014 ${quote.authorName}",
                     style = MaterialTheme.typography.bodySmall,
-                    color = DiaryColors.Pencil
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
@@ -95,7 +94,7 @@ fun QuoteCard(
             Text(
                 text = dateFormat.format(Date(quote.createdAt)),
                 style = MaterialTheme.typography.bodySmall,
-                color = DiaryColors.Pencil.copy(alpha = 0.6f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             )
         }
 
@@ -116,7 +115,7 @@ fun QuoteCard(
             Text(
                 text = "${quote.likeCount}",
                 style = MaterialTheme.typography.bodySmall,
-                color = DiaryColors.Pencil
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -124,14 +123,14 @@ fun QuoteCard(
             Icon(
                 Icons.Default.ChatBubbleOutline,
                 contentDescription = "Comments",
-                tint = DiaryColors.Pencil,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(16.dp)
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(
                 text = "${quote.commentCount}",
                 style = MaterialTheme.typography.bodySmall,
-                color = DiaryColors.Pencil
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }

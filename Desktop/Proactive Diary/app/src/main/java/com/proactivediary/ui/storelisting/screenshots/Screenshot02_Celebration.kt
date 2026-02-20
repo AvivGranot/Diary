@@ -12,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -20,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.proactivediary.ui.storelisting.ScreenshotFrame
 import com.proactivediary.ui.theme.CormorantGaramond
-import com.proactivediary.ui.theme.DiaryColors
 import com.proactivediary.ui.theme.ProactiveDiaryTheme
 
 @Composable
@@ -32,14 +32,14 @@ fun Screenshot02Celebration() {
 
 @Composable
 private fun CelebrationContent() {
-    val inkColor = DiaryColors.Ink
-    val pencilColor = DiaryColors.Pencil
-    val parchmentColor = DiaryColors.Parchment
+    val inkColor = Color(0xFFFFFFFF)
+    val pencilColor = Color(0xFF888888)
+    val parchmentColor = Color(0xFF111111)
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DiaryColors.Paper),
+            .background(Color(0xFF000000)),
         contentAlignment = Alignment.Center
     ) {
         Column(

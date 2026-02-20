@@ -55,7 +55,6 @@ import com.proactivediary.data.db.entities.WritingReminderEntity
 import com.proactivediary.ui.components.WheelTimePicker
 import com.proactivediary.ui.components.formatTime
 import com.proactivediary.ui.theme.CormorantGaramond
-import com.proactivediary.ui.theme.DiaryColors
 import androidx.compose.foundation.layout.statusBarsPadding
 
 @Composable
@@ -74,7 +73,7 @@ fun ReminderManagementScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DiaryColors.Paper)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // Header: back + title + add
         Row(

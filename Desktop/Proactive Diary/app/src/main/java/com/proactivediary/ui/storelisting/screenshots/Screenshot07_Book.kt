@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.TextStyle
@@ -24,7 +25,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.proactivediary.ui.storelisting.ScreenshotFrame
 import com.proactivediary.ui.theme.CormorantGaramond
-import com.proactivediary.ui.theme.DiaryColors
 import com.proactivediary.ui.theme.ProactiveDiaryTheme
 
 @Composable
@@ -36,13 +36,13 @@ fun Screenshot07Book() {
 
 @Composable
 private fun BookContent() {
-    val inkColor = DiaryColors.Ink
-    val pencilColor = DiaryColors.Pencil
+    val inkColor = Color(0xFFFFFFFF)
+    val pencilColor = Color(0xFF888888)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DiaryColors.Paper)
+            .background(Color(0xFF000000))
             .padding(horizontal = 24.dp, vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -76,7 +76,7 @@ private fun BookContent() {
                 .height(260.dp)
                 .shadow(6.dp, RoundedCornerShape(4.dp))
                 .clip(RoundedCornerShape(4.dp))
-                .background(DiaryColors.Paper),
+                .background(Color(0xFF000000)),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -142,7 +142,7 @@ private fun BookContent() {
                 style = TextStyle(
                     fontSize = 13.sp,
                     letterSpacing = 1.sp,
-                    color = DiaryColors.Parchment
+                    color = Color(0xFF111111)
                 )
             )
         }

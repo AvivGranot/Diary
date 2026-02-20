@@ -30,7 +30,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.proactivediary.ui.components.ConfettiEffect
-import com.proactivediary.ui.theme.DiaryColors
+import androidx.compose.material3.MaterialTheme
 import com.proactivediary.ui.theme.PlusJakartaSans
 import kotlinx.coroutines.delay
 
@@ -89,7 +89,7 @@ fun StreakCelebration(
             .alpha(alpha)
             .background(
                 Brush.verticalGradient(
-                    listOf(DiaryColors.ElectricIndigo, DiaryColors.NeonPink, DiaryColors.VividPurple)
+                    listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.8f), MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
                 )
             )
             .clickable(
@@ -176,7 +176,7 @@ fun StreakCelebration(
                             fontFamily = PlusJakartaSans,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = DiaryColors.ElectricIndigo,
+                            color = MaterialTheme.colorScheme.primary,
                             letterSpacing = 0.3.sp
                         )
                     )
@@ -236,7 +236,7 @@ fun FirstEntryCelebration(
             .alpha(alpha)
             .background(
                 Brush.verticalGradient(
-                    listOf(DiaryColors.CyberTeal, DiaryColors.ElectricBlue)
+                    listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary.copy(alpha = 0.7f))
                 )
             )
             .clickable(

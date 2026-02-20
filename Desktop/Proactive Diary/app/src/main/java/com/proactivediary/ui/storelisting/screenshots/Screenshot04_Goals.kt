@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -19,7 +20,6 @@ import com.proactivediary.ui.goals.GoalCard
 import com.proactivediary.ui.goals.GoalUiState
 import com.proactivediary.ui.storelisting.ScreenshotFrame
 import com.proactivediary.ui.theme.CormorantGaramond
-import com.proactivediary.ui.theme.DiaryColors
 import com.proactivediary.ui.theme.ProactiveDiaryTheme
 
 @Composable
@@ -34,7 +34,7 @@ private fun GoalsContent() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DiaryColors.Paper)
+            .background(Color(0xFF000000))
             .padding(horizontal = 16.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -43,7 +43,7 @@ private fun GoalsContent() {
             style = TextStyle(
                 fontFamily = CormorantGaramond,
                 fontSize = 24.sp,
-                color = DiaryColors.Ink
+                color = Color(0xFFFFFFFF)
             )
         )
 

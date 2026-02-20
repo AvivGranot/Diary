@@ -16,6 +16,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,7 +28,6 @@ import com.proactivediary.ui.journal.DiaryCard
 import com.proactivediary.ui.journal.DiaryCardData
 import com.proactivediary.ui.storelisting.ScreenshotFrame
 import com.proactivediary.ui.theme.CormorantGaramond
-import com.proactivediary.ui.theme.DiaryColors
 import com.proactivediary.ui.theme.ProactiveDiaryTheme
 import java.time.LocalDate
 
@@ -56,7 +56,7 @@ private fun JournalContent() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DiaryColors.Paper)
+            .background(Color(0xFF000000))
             .verticalScroll(rememberScrollState())
     ) {
         Spacer(Modifier.height(12.dp))

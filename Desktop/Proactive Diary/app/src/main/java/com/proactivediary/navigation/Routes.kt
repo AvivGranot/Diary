@@ -45,11 +45,4 @@ sealed class Routes(val route: String) {
     object WriteFirstNote : Routes("write_first_note")
     object QuotesPreview : Routes("quotes_preview")
 
-    // @Deprecated — kept for backward compat during migration, will be deleted
-    @Deprecated("Replaced by Layout screen", replaceWith = ReplaceWith("Layout"))
-    object DesignStudio : Routes("design_studio?edit={edit}") {
-        fun createRoute(edit: Boolean = false) = "design_studio?edit=$edit"
-    }
-    @Deprecated("Removed — Profile recap cards replace this")
-    object DiaryWrapped : Routes("diary_wrapped")
 }

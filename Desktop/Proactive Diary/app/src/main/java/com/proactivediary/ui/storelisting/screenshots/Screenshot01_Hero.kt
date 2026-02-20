@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.proactivediary.ui.storelisting.ScreenshotFrame
 import com.proactivediary.ui.theme.CormorantGaramond
-import com.proactivediary.ui.theme.DiaryColors
 import com.proactivediary.ui.theme.ProactiveDiaryTheme
 
 @Composable
@@ -36,14 +35,14 @@ fun Screenshot01Hero() {
 
 @Composable
 private fun HeroContent() {
-    val inkColor = DiaryColors.Ink
-    val pencilColor = DiaryColors.Pencil
-    val lineColor = DiaryColors.Pencil.copy(alpha = 0.12f)
+    val inkColor = Color(0xFFFFFFFF)
+    val pencilColor = Color(0xFF888888)
+    val lineColor = Color(0xFF888888).copy(alpha = 0.12f)
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DiaryColors.Paper)
+            .background(Color(0xFF000000))
             .padding(horizontal = 24.dp, vertical = 20.dp)
     ) {
         // Date header

@@ -18,15 +18,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.proactivediary.ui.storelisting.screenshots.Screenshot01Hero
 import com.proactivediary.ui.storelisting.screenshots.Screenshot02Celebration
 import com.proactivediary.ui.storelisting.screenshots.Screenshot03Journal
 import com.proactivediary.ui.storelisting.screenshots.Screenshot04Goals
-import com.proactivediary.ui.storelisting.screenshots.Screenshot05DesignStudio
 import com.proactivediary.ui.storelisting.screenshots.Screenshot07Book
 import com.proactivediary.ui.storelisting.screenshots.Screenshot08Privacy
-import com.proactivediary.ui.theme.DiaryColors
 import com.proactivediary.ui.theme.ProactiveDiaryTheme
 
 class StoreListingActivity : ComponentActivity() {
@@ -40,7 +39,7 @@ class StoreListingActivity : ComponentActivity() {
     }
 }
 
-private const val PAGE_COUNT = 7
+private const val PAGE_COUNT = 6
 
 @Composable
 private fun StoreListingPager() {
@@ -56,9 +55,8 @@ private fun StoreListingPager() {
                 1 -> Screenshot02Celebration()
                 2 -> Screenshot03Journal()
                 3 -> Screenshot04Goals()
-                4 -> Screenshot05DesignStudio()
-                5 -> Screenshot07Book()
-                6 -> Screenshot08Privacy()
+                4 -> Screenshot07Book()
+                5 -> Screenshot08Privacy()
             }
         }
 
@@ -78,8 +76,8 @@ private fun StoreListingPager() {
                         .size(if (isSelected) 8.dp else 6.dp)
                         .clip(CircleShape)
                         .background(
-                            if (isSelected) DiaryColors.Ink
-                            else DiaryColors.Pencil.copy(alpha = 0.3f)
+                            if (isSelected) Color(0xFFFFFFFF)
+                            else Color(0xFF888888).copy(alpha = 0.3f)
                         )
                 )
             }

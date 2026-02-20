@@ -46,7 +46,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.proactivediary.ui.theme.DiaryColors
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -66,13 +65,13 @@ fun QuoteDetailScreen(
                 title = {},
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = DiaryColors.Ink)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = DiaryColors.Paper)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        containerColor = DiaryColors.Paper
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -84,7 +83,7 @@ fun QuoteDetailScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    CircularProgressIndicator(color = DiaryColors.ElectricIndigo)
+                    CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             } else if (state.quote != null) {
                 val quote = state.quote!!
@@ -102,7 +101,7 @@ fun QuoteDetailScreen(
                             lineHeight = 32.sp
                         ),
                         fontStyle = FontStyle.Italic,
-                        color = DiaryColors.Ink,
+                        color = MaterialTheme.colorScheme.onBackground,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -112,14 +111,14 @@ fun QuoteDetailScreen(
                     Text(
                         text = "\u2014 ${quote.authorName}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = DiaryColors.Pencil,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
 
                     Text(
                         text = dateFormat.format(Date(quote.createdAt)),
                         style = MaterialTheme.typography.bodySmall,
-                        color = DiaryColors.Pencil.copy(alpha = 0.6f),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
                             .padding(top = 2.dp)
@@ -138,22 +137,22 @@ fun QuoteDetailScreen(
                                 imageVector = if (state.isLiked) Icons.Default.Favorite
                                     else Icons.Default.FavoriteBorder,
                                 contentDescription = "Like",
-                                tint = if (state.isLiked) DiaryColors.CoralRed
-                                    else DiaryColors.Pencil,
+                                tint = if (state.isLiked) MaterialTheme.colorScheme.error
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
                         Text(
                             text = "${quote.likeCount} likes",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = DiaryColors.Pencil
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
                 HorizontalDivider(
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
-                    color = DiaryColors.Divider
+                    color = MaterialTheme.colorScheme.outline
                 )
 
                 // Comments header
@@ -161,7 +160,7 @@ fun QuoteDetailScreen(
                     text = "Comments (${quote.commentCount})",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    color = DiaryColors.Ink,
+                    color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
                 )
 
@@ -176,7 +175,7 @@ fun QuoteDetailScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(DiaryColors.Parchment)
+                                .background(MaterialTheme.colorScheme.surface)
                                 .padding(12.dp)
                         ) {
                             Row(
@@ -187,19 +186,19 @@ fun QuoteDetailScreen(
                                     text = comment.authorName,
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = FontWeight.Medium,
-                                    color = DiaryColors.Ink
+                                    color = MaterialTheme.colorScheme.onBackground
                                 )
                                 val commentDate = SimpleDateFormat("MMM d", Locale.getDefault())
                                 Text(
                                     text = commentDate.format(Date(comment.createdAt)),
                                     style = MaterialTheme.typography.labelSmall,
-                                    color = DiaryColors.Pencil.copy(alpha = 0.6f)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                                 )
                             }
                             Text(
                                 text = comment.content,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = DiaryColors.Ink,
+                                color = MaterialTheme.colorScheme.onBackground,
                                 modifier = Modifier.padding(top = 4.dp)
                             )
                         }
@@ -211,7 +210,7 @@ fun QuoteDetailScreen(
                                 text = "No comments yet. Be the first!",
                                 style = MaterialTheme.typography.bodySmall,
                                 fontStyle = FontStyle.Italic,
-                                color = DiaryColors.Pencil,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(vertical = 16.dp)
                             )
                         }
@@ -219,7 +218,7 @@ fun QuoteDetailScreen(
                 }
 
                 // Comment input
-                HorizontalDivider(color = DiaryColors.Divider)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -231,15 +230,15 @@ fun QuoteDetailScreen(
                         onValueChange = { viewModel.updateCommentText(it) },
                         modifier = Modifier.weight(1f),
                         placeholder = {
-                            Text("Add a comment...", color = DiaryColors.Pencil.copy(alpha = 0.5f))
+                            Text("Add a comment...", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
                         },
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = Color.Transparent,
                             unfocusedContainerColor = Color.Transparent,
                             focusedIndicatorColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent,
-                            focusedTextColor = DiaryColors.Ink,
-                            cursorColor = DiaryColors.ElectricIndigo
+                            focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            cursorColor = MaterialTheme.colorScheme.primary
                         ),
                         singleLine = true
                     )
@@ -254,14 +253,14 @@ fun QuoteDetailScreen(
                             CircularProgressIndicator(
                                 modifier = Modifier.size(20.dp),
                                 strokeWidth = 2.dp,
-                                color = DiaryColors.ElectricIndigo
+                                color = MaterialTheme.colorScheme.primary
                             )
                         } else {
                             Icon(
                                 Icons.AutoMirrored.Filled.Send,
                                 "Send",
                                 tint = if (state.commentText.isNotBlank())
-                                    DiaryColors.ElectricIndigo else DiaryColors.Pencil
+                                    MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -270,7 +269,7 @@ fun QuoteDetailScreen(
                 if (state.commentError != null) {
                     Text(
                         text = state.commentError!!,
-                        color = DiaryColors.CoralRed,
+                        color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp)
                     )

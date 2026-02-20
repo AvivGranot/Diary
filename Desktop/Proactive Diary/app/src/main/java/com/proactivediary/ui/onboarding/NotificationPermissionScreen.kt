@@ -34,9 +34,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.material3.MaterialTheme
 import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.ui.theme.CormorantGaramond
-import com.proactivediary.ui.theme.DiaryColors
 
 @Composable
 fun NotificationPermissionScreen(
@@ -63,7 +63,7 @@ fun NotificationPermissionScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DiaryColors.Paper)
+            .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -83,7 +83,7 @@ fun NotificationPermissionScreen(
             style = TextStyle(
                 fontFamily = CormorantGaramond,
                 fontSize = 28.sp,
-                color = DiaryColors.Ink,
+                color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center
             )
         )
@@ -96,7 +96,7 @@ fun NotificationPermissionScreen(
             style = TextStyle(
                 fontFamily = FontFamily.Default,
                 fontSize = 15.sp,
-                color = DiaryColors.Pencil,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 lineHeight = 22.sp
             )
@@ -110,7 +110,7 @@ fun NotificationPermissionScreen(
                 .fillMaxWidth()
                 .height(52.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(DiaryColors.Ink)
+                .background(MaterialTheme.colorScheme.onBackground)
                 .clickable {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -125,7 +125,7 @@ fun NotificationPermissionScreen(
                 style = TextStyle(
                     fontFamily = FontFamily.Default,
                     fontSize = 16.sp,
-                    color = DiaryColors.Paper
+                    color = MaterialTheme.colorScheme.background
                 )
             )
         }
@@ -138,7 +138,7 @@ fun NotificationPermissionScreen(
             style = TextStyle(
                 fontFamily = FontFamily.Default,
                 fontSize = 14.sp,
-                color = DiaryColors.Pencil.copy(alpha = 0.6f)
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
             ),
             modifier = Modifier
                 .clickable(
@@ -158,8 +158,8 @@ fun NotificationPermissionScreen(
 
 @Composable
 private fun NotificationIllustration(modifier: Modifier = Modifier) {
-    val inkColor = DiaryColors.Ink
-    val pencilColor = DiaryColors.Pencil
+    val inkColor = MaterialTheme.colorScheme.onBackground
+    val pencilColor = MaterialTheme.colorScheme.onSurfaceVariant
 
     Canvas(modifier = modifier) {
         val w = size.width

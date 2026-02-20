@@ -34,7 +34,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.analytics.AnalyticsService
-import com.proactivediary.ui.theme.DiaryColors
 
 @Composable
 fun QuickAuthScreen(
@@ -66,7 +65,7 @@ fun QuickAuthScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DiaryColors.Paper),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -83,7 +82,7 @@ fun QuickAuthScreen(
                     .height(56.dp),
                 enabled = !state.isSigningIn,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFC0392B)
+                    containerColor = MaterialTheme.colorScheme.primary
                 ),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -105,7 +104,7 @@ fun QuickAuthScreen(
             if (state.error != null) {
                 Text(
                     text = state.error!!,
-                    color = DiaryColors.CoralRed,
+                    color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 12.dp),
                     textAlign = TextAlign.Center
@@ -122,7 +121,7 @@ fun QuickAuthScreen(
                 Text(
                     text = feature,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = DiaryColors.Ink,
+                    color = MaterialTheme.colorScheme.onBackground,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(vertical = 6.dp)
                 )
@@ -133,7 +132,7 @@ fun QuickAuthScreen(
             Text(
                 text = "Skip for now",
                 fontSize = 14.sp,
-                color = DiaryColors.Pencil.copy(alpha = 0.6f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
                 modifier = Modifier
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },

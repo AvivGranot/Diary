@@ -13,7 +13,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
-import com.proactivediary.ui.theme.DiaryColors
+import androidx.compose.material3.MaterialTheme
 import kotlin.random.Random
 
 data class ConfettiParticle(
@@ -34,13 +34,13 @@ fun ConfettiEffect(
     particleCount: Int = 50,
     durationMs: Int = 2500,
     colors: List<Color> = listOf(
-        DiaryColors.ElectricIndigo,
-        DiaryColors.NeonPink,
-        DiaryColors.CyberTeal,
-        DiaryColors.SunsetOrange,
-        DiaryColors.VividPurple,
-        DiaryColors.LimeGreen,
-        DiaryColors.ElectricBlue
+        MaterialTheme.colorScheme.primary,
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.9f),
+        MaterialTheme.colorScheme.tertiary,
+        MaterialTheme.colorScheme.secondary,
+        MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+        MaterialTheme.colorScheme.tertiary.copy(alpha = 0.8f),
+        MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f)
     )
 ) {
     val progress = remember { Animatable(0f) }

@@ -36,7 +36,6 @@ import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.social.Quote
 import com.proactivediary.data.social.QuotesRepository
 import com.proactivediary.data.social.UserProfileRepository
-import com.proactivediary.ui.theme.DiaryColors
 
 @Composable
 fun QuotesPreviewScreen(
@@ -61,7 +60,7 @@ fun QuotesPreviewScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DiaryColors.Paper)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -75,7 +74,7 @@ fun QuotesPreviewScreen(
                 text = "Top Quotes\nThis Week",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = DiaryColors.Ink,
+                color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
                 lineHeight = 36.sp
             )
@@ -86,7 +85,7 @@ fun QuotesPreviewScreen(
                 text = "Can you beat them?",
                 style = MaterialTheme.typography.bodyMedium,
                 fontStyle = FontStyle.Italic,
-                color = DiaryColors.Pencil
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -101,7 +100,7 @@ fun QuotesPreviewScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(DiaryColors.Parchment)
+                                .background(MaterialTheme.colorScheme.surface)
                                 .padding(16.dp)
                         ) {
                             Column {
@@ -109,12 +108,12 @@ fun QuotesPreviewScreen(
                                     text = "\u201C${quote.content}\u201D",
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontStyle = FontStyle.Italic,
-                                    color = DiaryColors.Ink
+                                    color = MaterialTheme.colorScheme.onBackground
                                 )
                                 Text(
                                     text = "\u2014 ${quote.authorName}  \u00B7  ${quote.likeCount} \u2764",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = DiaryColors.Pencil,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(top = 8.dp)
                                 )
                             }
@@ -131,7 +130,7 @@ fun QuotesPreviewScreen(
                             text = "No quotes yet.\nBe the one everyone quotes.",
                             style = MaterialTheme.typography.bodyLarge,
                             fontStyle = FontStyle.Italic,
-                            color = DiaryColors.Pencil,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -142,7 +141,7 @@ fun QuotesPreviewScreen(
                 Text(
                     text = "$quoteCount quotes shared this week",
                     style = MaterialTheme.typography.bodySmall,
-                    color = DiaryColors.Pencil,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
@@ -158,7 +157,7 @@ fun QuotesPreviewScreen(
                     .fillMaxWidth()
                     .height(56.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = DiaryColors.ElectricIndigo
+                    containerColor = MaterialTheme.colorScheme.primary
                 ),
                 shape = RoundedCornerShape(16.dp)
             ) {

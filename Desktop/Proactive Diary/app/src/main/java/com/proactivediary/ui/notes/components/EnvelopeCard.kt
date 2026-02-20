@@ -25,7 +25,6 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.proactivediary.ui.theme.DiaryColors
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -44,15 +43,15 @@ fun EnvelopeCard(
     )
 
     val envelopeColor = if (isRead) {
-        Color(0xFFF5F0E8)
+        MaterialTheme.colorScheme.surface
     } else {
-        Color(0xFFFAF6EE)
+        MaterialTheme.colorScheme.surfaceVariant
     }
 
     val sealColor = if (isRead) {
-        DiaryColors.Pencil.copy(alpha = 0.3f)
+        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
     } else {
-        DiaryColors.ElectricIndigo
+        MaterialTheme.colorScheme.primary
     }
 
     Box(
@@ -102,7 +101,7 @@ fun EnvelopeCard(
                 text = if (isRead) "A kind note" else "Someone sent you a kind note",
                 style = MaterialTheme.typography.bodyLarge,
                 fontStyle = FontStyle.Italic,
-                color = if (isRead) DiaryColors.Pencil else DiaryColors.Ink,
+                color = if (isRead) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 8.dp)
             )
@@ -111,7 +110,7 @@ fun EnvelopeCard(
             Text(
                 text = dateFormat.format(Date(createdAt)),
                 style = MaterialTheme.typography.bodySmall,
-                color = DiaryColors.Pencil,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp)
             )
         }

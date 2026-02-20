@@ -1,14 +1,18 @@
 package com.proactivediary.domain.model
 
 import androidx.compose.ui.graphics.Color
-import com.proactivediary.ui.theme.DiaryColors
 
+/**
+ * Write-canvas theme configuration.
+ * These colors are for the writing surface only (paper/texture),
+ * NOT the app-wide theme. App theme uses MaterialTheme.colorScheme.
+ */
 data class DiaryThemeConfig(
-    val colorScheme: String = "indigo",
-    val primaryColor: Color = DiaryColors.IndigoMist,
+    val colorScheme: String = "dark",
+    val primaryColor: Color = Color(0xFF111111),
     val colorMode: String = "adaptive",
     val form: String = "focused",
-    val texture: String = "paper",
+    val texture: String = "dark",
     val canvas: String = "lined",
     val features: List<String> = listOf("auto_save", "word_count", "date_header", "daily_quote"),
     val markText: String = "",
@@ -18,73 +22,79 @@ data class DiaryThemeConfig(
     companion object {
         val DEFAULT = DiaryThemeConfig()
 
+        // Canvas background colors (for Write screen paper only)
+        private val canvasColors = mapOf(
+            // Dark variants (new defaults)
+            "dark" to Color(0xFF111111),
+            "midnight" to Color(0xFF2C2C34),
+            "charcoal" to Color(0xFF30302E),
+            "wine_red" to Color(0xFF8B3A3A),
+            "forest" to Color(0xFF3A5A40),
+            "ocean" to Color(0xFF2C5F7C),
+            // Classic light variants (kept for existing user prefs)
+            "cream" to Color(0xFFF3EEE7),
+            "blush" to Color(0xFFF0E0D6),
+            "sage" to Color(0xFFE4E8DF),
+            "sky" to Color(0xFFDDE4EC),
+            "lavender" to Color(0xFFE4DEE8),
+            // Vibrant mist variants
+            "indigo" to Color(0xFF0F0F2E),
+            "pink" to Color(0xFF2E0F1F),
+            "teal" to Color(0xFF0F2E2A),
+            "sunset" to Color(0xFF2E1A0F),
+            "purple" to Color(0xFF1A0F2E)
+        )
+
+        private val accentColors = mapOf(
+            "indigo" to Color(0xFF6366F1),
+            "pink" to Color(0xFFEC4899),
+            "teal" to Color(0xFF14B8A6),
+            "sunset" to Color(0xFFF97316),
+            "purple" to Color(0xFF8B5CF6),
+            "mint" to Color(0xFF4ADE80)
+        )
+
         fun colorForKey(key: String): Color {
-            return when (key) {
-                // Vibrant (new defaults)
-                "indigo" -> DiaryColors.IndigoMist
-                "pink" -> DiaryColors.PinkMist
-                "teal" -> DiaryColors.TealMist
-                "sunset" -> DiaryColors.OrangeMist
-                "purple" -> DiaryColors.PurpleMist
-                // Classic
-                "cream" -> DiaryColors.Cream
-                "blush" -> DiaryColors.Blush
-                "sage" -> DiaryColors.Sage
-                "sky" -> DiaryColors.Sky
-                "lavender" -> DiaryColors.Lavender
-                "midnight" -> DiaryColors.Midnight
-                "charcoal" -> DiaryColors.Charcoal
-                "wine_red" -> DiaryColors.WineRed
-                "forest" -> DiaryColors.Forest
-                "ocean" -> DiaryColors.Ocean
-                else -> DiaryColors.IndigoMist
-            }
+            return canvasColors[key] ?: Color(0xFF111111)
         }
 
         fun accentForKey(key: String): Color {
-            return when (key) {
-                "indigo" -> DiaryColors.ElectricIndigo
-                "pink" -> DiaryColors.NeonPink
-                "teal" -> DiaryColors.CyberTeal
-                "sunset" -> DiaryColors.SunsetOrange
-                "purple" -> DiaryColors.VividPurple
-                else -> DiaryColors.ElectricIndigo
-            }
+            return accentColors[key] ?: Color(0xFF4ADE80) // mint green default
         }
 
         fun textureColorForKey(textureKey: String): Color {
             return when (textureKey) {
-                "paper" -> Color(0xFFF3EEE7)
-                "parchment" -> Color(0xFFF0E6D0)
-                "linen" -> Color(0xFFEDE8E0)
-                "smooth" -> Color(0xFFFAF9F5)
-                "dark" -> Color(0xFF2A2928)
-                else -> Color(0xFFF3EEE7)
+                "paper" -> Color(0xFF1A1A1A)
+                "parchment" -> Color(0xFF1C1A15)
+                "linen" -> Color(0xFF1A1918)
+                "smooth" -> Color(0xFF151515)
+                "dark" -> Color(0xFF111111)
+                else -> Color(0xFF111111)
             }
         }
 
         fun isTextureColorDark(textureKey: String): Boolean {
-            return textureKey == "dark"
+            return true // all textures are dark in the new theme
         }
 
         fun textureTextColor(textureKey: String): Color {
-            return if (isTextureColorDark(textureKey)) Color(0xFFE8E7E5) else Color(0xFF313131)
+            return Color(0xFFE8E7E5) // light text on dark canvas
         }
 
         fun textureSecondaryTextColor(textureKey: String): Color {
-            return if (isTextureColorDark(textureKey)) Color(0xFFA0A09E) else Color(0xFF585858)
+            return Color(0xFFA0A09E) // muted text on dark canvas
         }
 
         fun isDarkColor(key: String): Boolean {
-            return key in listOf("midnight", "charcoal", "wine_red", "forest", "ocean")
+            return true // all canvas colors are dark now
         }
 
         fun textColorFor(key: String): Color {
-            return if (isDarkColor(key)) Color(0xFFE8E7E5) else Color(0xFF313131)
+            return Color(0xFFE8E7E5) // light text
         }
 
         fun secondaryTextColorFor(key: String): Color {
-            return if (isDarkColor(key)) Color(0xFFA0A09E) else Color(0xFF585858)
+            return Color(0xFFA0A09E) // muted text
         }
     }
 }

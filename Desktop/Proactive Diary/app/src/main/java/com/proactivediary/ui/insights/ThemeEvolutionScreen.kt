@@ -49,12 +49,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.material3.MaterialTheme
 import com.proactivediary.ui.theme.CormorantGaramond
-
-private val Cream = Color(0xFFF3EEE7)
-private val Ink = Color(0xFF313131)
-private val InkLight = Color(0xFF787878)
-private val CardBg = Color(0xFFFAF7F2)
 
 private enum class EvolutionPage {
     OVERVIEW, WRITING_TIME, TOPICS, LOCATIONS
@@ -73,11 +69,11 @@ fun ThemeEvolutionScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Cream),
+                .background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                CircularProgressIndicator(color = Ink, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                 Spacer(Modifier.height(16.dp))
                 Text(
                     text = "Preparing\u2026",
@@ -85,7 +81,7 @@ fun ThemeEvolutionScreen(
                         fontFamily = CormorantGaramond,
                         fontSize = 16.sp,
                         fontStyle = FontStyle.Italic,
-                        color = InkLight
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 )
             }
@@ -98,7 +94,7 @@ fun ThemeEvolutionScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Cream),
+                .background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -110,7 +106,7 @@ fun ThemeEvolutionScreen(
                     style = TextStyle(
                         fontFamily = CormorantGaramond,
                         fontSize = 22.sp,
-                        color = Ink
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 )
                 Spacer(Modifier.height(8.dp))
@@ -120,7 +116,7 @@ fun ThemeEvolutionScreen(
                         fontFamily = CormorantGaramond,
                         fontSize = 14.sp,
                         fontStyle = FontStyle.Italic,
-                        color = InkLight
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     ),
                     textAlign = TextAlign.Center
                 )
@@ -130,7 +126,7 @@ fun ThemeEvolutionScreen(
                     style = TextStyle(
                         fontFamily = CormorantGaramond,
                         fontSize = 14.sp,
-                        color = InkLight
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     ),
                     modifier = Modifier.clickable(onClick = onBack)
                 )
@@ -155,7 +151,7 @@ fun ThemeEvolutionScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Cream)
+            .background(MaterialTheme.colorScheme.background)
             .navigationBarsPadding()
     ) {
         // Top bar
@@ -169,7 +165,7 @@ fun ThemeEvolutionScreen(
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
-                    tint = Ink
+                    tint = MaterialTheme.colorScheme.onBackground
                 )
             }
             Spacer(Modifier.width(4.dp))
@@ -178,7 +174,7 @@ fun ThemeEvolutionScreen(
                 style = TextStyle(
                     fontFamily = CormorantGaramond,
                     fontSize = 22.sp,
-                    color = Ink
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             )
         }
@@ -215,7 +211,7 @@ fun ThemeEvolutionScreen(
                         .weight(1f)
                         .height(2.dp)
                         .clip(RoundedCornerShape(1.dp))
-                        .background(Ink.copy(alpha = 0.12f))
+                        .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f))
                 ) {
                     if (index <= pagerState.currentPage) {
                         Box(
@@ -223,7 +219,7 @@ fun ThemeEvolutionScreen(
                                 .fillMaxWidth()
                                 .fillMaxHeight()
                                 .clip(RoundedCornerShape(1.dp))
-                                .background(Ink.copy(alpha = 0.7f))
+                                .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f))
                         )
                     }
                 }
@@ -238,7 +234,7 @@ fun ThemeEvolutionScreen(
                     fontFamily = CormorantGaramond,
                     fontSize = 13.sp,
                     fontStyle = FontStyle.Italic,
-                    color = InkLight
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
@@ -260,7 +256,7 @@ private fun OverviewPage(state: ThemeEvolutionUiState) {
             .fillMaxSize()
             .padding(vertical = 8.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(CardBg),
+            .background(MaterialTheme.colorScheme.surface),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -273,7 +269,7 @@ private fun OverviewPage(state: ThemeEvolutionUiState) {
                 style = TextStyle(
                     fontFamily = CormorantGaramond,
                     fontSize = 18.sp,
-                    color = InkLight
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 textAlign = TextAlign.Center
             )
@@ -287,7 +283,7 @@ private fun OverviewPage(state: ThemeEvolutionUiState) {
                     fontFamily = CormorantGaramond,
                     fontSize = 64.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Ink
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             )
             Text(
@@ -295,7 +291,7 @@ private fun OverviewPage(state: ThemeEvolutionUiState) {
                 style = TextStyle(
                     fontFamily = CormorantGaramond,
                     fontSize = 16.sp,
-                    color = InkLight
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
 
@@ -308,12 +304,12 @@ private fun OverviewPage(state: ThemeEvolutionUiState) {
                     fontFamily = CormorantGaramond,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Ink
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             )
             Text(
                 text = "words written",
-                style = TextStyle(fontSize = 12.sp, color = InkLight)
+                style = TextStyle(fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             )
         }
     }
@@ -328,7 +324,7 @@ private fun WritingTimePage(patterns: List<TimePattern>, totalEntries: Int) {
             .fillMaxSize()
             .padding(vertical = 8.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(CardBg)
+            .background(MaterialTheme.colorScheme.surface)
     ) {
         Column(
             modifier = Modifier
@@ -340,7 +336,7 @@ private fun WritingTimePage(patterns: List<TimePattern>, totalEntries: Int) {
                 style = TextStyle(
                     fontFamily = CormorantGaramond,
                     fontSize = 18.sp,
-                    color = InkLight
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center
@@ -372,7 +368,7 @@ private fun TopicsPage(topics: List<TopicWord>) {
             .fillMaxSize()
             .padding(vertical = 8.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(CardBg),
+            .background(MaterialTheme.colorScheme.surface),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -386,7 +382,7 @@ private fun TopicsPage(topics: List<TopicWord>) {
                 style = TextStyle(
                     fontFamily = CormorantGaramond,
                     fontSize = 18.sp,
-                    color = InkLight
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 textAlign = TextAlign.Center
             )
@@ -417,7 +413,7 @@ private fun LocationsPage(locations: List<LocationMood>) {
             .fillMaxSize()
             .padding(vertical = 8.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(CardBg)
+            .background(MaterialTheme.colorScheme.surface)
     ) {
         Column(
             modifier = Modifier
@@ -429,7 +425,7 @@ private fun LocationsPage(locations: List<LocationMood>) {
                 style = TextStyle(
                     fontFamily = CormorantGaramond,
                     fontSize = 18.sp,
-                    color = InkLight
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center
@@ -476,11 +472,11 @@ private fun TimePatternRow(pattern: TimePattern, totalEntries: Int) {
             ) {
                 Text(
                     text = pattern.label,
-                    style = TextStyle(fontSize = 16.sp, color = Ink)
+                    style = TextStyle(fontSize = 16.sp, color = MaterialTheme.colorScheme.onBackground)
                 )
                 Text(
                     text = "${pattern.entryCount} entries",
-                    style = TextStyle(fontSize = 13.sp, color = InkLight)
+                    style = TextStyle(fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 )
             }
 
@@ -499,14 +495,14 @@ private fun TimePatternRow(pattern: TimePattern, totalEntries: Int) {
                     .fillMaxWidth()
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp))
-                    .background(Ink.copy(alpha = 0.08f))
+                    .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f))
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(animatedFill)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(4.dp))
-                        .background(Ink.copy(alpha = 0.45f))
+                        .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f))
                 )
             }
         }
@@ -523,7 +519,7 @@ private fun TopicWordChip(topic: TopicWord) {
         style = TextStyle(
             fontFamily = CormorantGaramond,
             fontSize = fontSize,
-            color = Ink.copy(alpha = alpha)
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = alpha)
         ),
         modifier = Modifier.padding(horizontal = 3.dp, vertical = 2.dp)
     )
@@ -540,13 +536,13 @@ private fun LocationMoodRow(location: LocationMood) {
         Column {
             Text(
                 text = location.name,
-                style = TextStyle(fontSize = 15.sp, color = Ink),
+                style = TextStyle(fontSize = 15.sp, color = MaterialTheme.colorScheme.onBackground),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = "${location.entryCount} entries",
-                style = TextStyle(fontSize = 12.sp, color = InkLight)
+                style = TextStyle(fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             )
         }
     }

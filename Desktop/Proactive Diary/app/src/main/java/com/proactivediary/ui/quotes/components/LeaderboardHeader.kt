@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.proactivediary.data.social.Quote
-import com.proactivediary.ui.theme.DiaryColors
 
 private val Gold = Color(0xFFFFD700)
 private val Silver = Color(0xFFC0C0C0)
@@ -43,14 +42,14 @@ fun LeaderboardHeader(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(DiaryColors.ElectricIndigo.copy(alpha = 0.08f))
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.08f))
             .padding(20.dp)
     ) {
         Text(
             text = "Top Quotes This Week",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
-            color = DiaryColors.Ink,
+            color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
@@ -59,7 +58,7 @@ fun LeaderboardHeader(
                 0 -> Gold to "1st"
                 1 -> Silver to "2nd"
                 2 -> Bronze to "3rd"
-                else -> DiaryColors.Pencil to "${index + 1}th"
+                else -> MaterialTheme.colorScheme.onSurfaceVariant to "${index + 1}th"
             }
 
             Row(
@@ -97,14 +96,14 @@ fun LeaderboardHeader(
                         text = "\u201C${quote.content}\u201D",
                         style = MaterialTheme.typography.bodySmall,
                         fontStyle = FontStyle.Italic,
-                        color = DiaryColors.Ink,
+                        color = MaterialTheme.colorScheme.onBackground,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = "\u2014 ${quote.authorName}",
                         style = MaterialTheme.typography.labelSmall,
-                        color = DiaryColors.Pencil,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 2.dp)
                     )
                 }
@@ -113,7 +112,7 @@ fun LeaderboardHeader(
                 Text(
                     text = "${quote.likeCount} \u2764",
                     style = MaterialTheme.typography.bodySmall,
-                    color = DiaryColors.Pencil
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -131,7 +130,7 @@ fun AuthorAvatar(
         modifier = modifier
             .size(size.dp)
             .clip(CircleShape)
-            .background(DiaryColors.Parchment),
+            .background(MaterialTheme.colorScheme.surface),
         contentAlignment = Alignment.Center
     ) {
         if (!photoUrl.isNullOrBlank()) {
@@ -148,7 +147,7 @@ fun AuthorAvatar(
                 text = initial,
                 fontSize = (size / 2).sp,
                 fontWeight = FontWeight.SemiBold,
-                color = DiaryColors.Pencil,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
         }

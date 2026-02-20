@@ -52,7 +52,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.proactivediary.ui.theme.DiaryColors
 import com.proactivediary.ui.write.resolveContact
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,7 +82,7 @@ fun ComposeNoteScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(DiaryColors.Paper),
+                .background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -93,7 +92,7 @@ fun ComposeNoteScreen(
                 Text(
                     text = "Sealed & sent \u2728",
                     style = MaterialTheme.typography.headlineMedium,
-                    color = DiaryColors.Ink,
+                    color = MaterialTheme.colorScheme.onBackground,
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -101,14 +100,14 @@ fun ComposeNoteScreen(
                     text = "They\u2019ll never know it was you.\nBut they\u2019ll never forget how it felt.",
                     style = MaterialTheme.typography.bodyLarge,
                     fontStyle = FontStyle.Italic,
-                    color = DiaryColors.Pencil,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(
                     onClick = onNoteSent,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = DiaryColors.ElectricIndigo
+                        containerColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
                     Text("Done")
@@ -121,18 +120,18 @@ fun ComposeNoteScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Send a Kind Note", color = DiaryColors.Ink) },
+                title = { Text("Send a Kind Note", color = MaterialTheme.colorScheme.onBackground) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = DiaryColors.Ink)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = MaterialTheme.colorScheme.onBackground)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DiaryColors.Paper
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
         },
-        containerColor = DiaryColors.Paper
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -149,14 +148,14 @@ fun ComposeNoteScreen(
                     .fillMaxWidth()
                     .weight(1f)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFFFAF6EE))
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(20.dp)
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
                     Text(
                         text = "Write something to your contacts anonymously. Only positive sentiments \u2014 negative ones won\u2019t be sent.",
                         style = MaterialTheme.typography.labelSmall,
-                        color = DiaryColors.Pencil,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
@@ -170,7 +169,7 @@ fun ComposeNoteScreen(
                             Text(
                                 "I really appreciate the time...",
                                 fontStyle = FontStyle.Italic,
-                                color = DiaryColors.Pencil.copy(alpha = 0.5f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                             )
                         },
                         colors = TextFieldDefaults.colors(
@@ -178,9 +177,9 @@ fun ComposeNoteScreen(
                             unfocusedContainerColor = Color.Transparent,
                             focusedIndicatorColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent,
-                            focusedTextColor = DiaryColors.Ink,
-                            unfocusedTextColor = DiaryColors.Ink,
-                            cursorColor = DiaryColors.ElectricIndigo
+                            focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            cursorColor = MaterialTheme.colorScheme.primary
                         )
                     )
 
@@ -193,7 +192,7 @@ fun ComposeNoteScreen(
                             text = "${state.wordCount}/${ComposeNoteViewModel.MAX_WORDS} words",
                             style = MaterialTheme.typography.bodySmall,
                             color = if (state.wordCount >= ComposeNoteViewModel.MAX_WORDS)
-                                DiaryColors.CoralRed else DiaryColors.Pencil
+                                MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -203,7 +202,7 @@ fun ComposeNoteScreen(
             if (state.moderationError != null) {
                 Text(
                     text = state.moderationError!!,
-                    color = DiaryColors.CoralRed,
+                    color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 8.dp),
                     textAlign = TextAlign.Center
@@ -219,7 +218,7 @@ fun ComposeNoteScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Default.Person, "Pick contact", modifier = Modifier.size(20.dp))
-                    Text("  Choose Recipient", color = DiaryColors.Ink)
+                    Text("  Choose Recipient", color = MaterialTheme.colorScheme.onBackground)
                 }
             } else {
                 // Recipient selected
@@ -227,7 +226,7 @@ fun ComposeNoteScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(DiaryColors.ElectricIndigo.copy(alpha = 0.1f))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
                         .padding(16.dp)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally,
@@ -235,20 +234,20 @@ fun ComposeNoteScreen(
                         Text(
                             text = "To: ${state.recipientName}",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = DiaryColors.Ink
+                            color = MaterialTheme.colorScheme.onBackground
                         )
 
                         AnimatedVisibility(visible = !state.isResolving) {
                             when (state.isRecipientOnApp) {
                                 true -> Text(
                                     text = "Ready to send!",
-                                    color = DiaryColors.CyberTeal,
+                                    color = MaterialTheme.colorScheme.primary,
                                     style = MaterialTheme.typography.bodySmall,
                                     modifier = Modifier.padding(top = 4.dp)
                                 )
                                 false -> Text(
                                     text = "Tap below to share with them",
-                                    color = DiaryColors.SunsetOrange,
+                                    color = MaterialTheme.colorScheme.error,
                                     style = MaterialTheme.typography.bodySmall,
                                     modifier = Modifier.padding(top = 4.dp)
                                 )
@@ -260,7 +259,7 @@ fun ComposeNoteScreen(
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp).padding(top = 4.dp),
                                 strokeWidth = 2.dp,
-                                color = DiaryColors.ElectricIndigo
+                                color = MaterialTheme.colorScheme.primary
                             )
                         }
                     }
@@ -269,7 +268,7 @@ fun ComposeNoteScreen(
                 // Change recipient
                 Text(
                     text = "Change recipient",
-                    color = DiaryColors.ElectricIndigo,
+                    color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier
                         .padding(top = 4.dp)
@@ -289,7 +288,7 @@ fun ComposeNoteScreen(
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     enabled = state.content.isNotBlank() && !state.isSending,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = DiaryColors.ElectricIndigo
+                        containerColor = MaterialTheme.colorScheme.primary
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -317,7 +316,7 @@ fun ComposeNoteScreen(
                     },
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = DiaryColors.Ink
+                        containerColor = MaterialTheme.colorScheme.onBackground
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -330,7 +329,7 @@ fun ComposeNoteScreen(
             if (state.error != null) {
                 Text(
                     text = state.error!!,
-                    color = DiaryColors.CoralRed,
+                    color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 8.dp),
                     textAlign = TextAlign.Center

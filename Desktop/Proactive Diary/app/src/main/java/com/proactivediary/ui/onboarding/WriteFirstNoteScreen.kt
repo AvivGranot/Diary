@@ -50,7 +50,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.ui.notes.ComposeNoteViewModel
-import com.proactivediary.ui.theme.DiaryColors
 import com.proactivediary.ui.write.resolveContact
 
 @Composable
@@ -96,7 +95,7 @@ fun WriteFirstNoteScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(DiaryColors.Paper),
+                .background(MaterialTheme.colorScheme.background),
             contentAlignment = Alignment.Center
         ) {
             Column(
@@ -107,7 +106,7 @@ fun WriteFirstNoteScreen(
                     text = "You just made\nsomeone's day!",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = DiaryColors.Ink,
+                    color = MaterialTheme.colorScheme.onBackground,
                     textAlign = TextAlign.Center,
                     lineHeight = 36.sp
                 )
@@ -115,7 +114,7 @@ fun WriteFirstNoteScreen(
                 Button(
                     onClick = onContinue,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = DiaryColors.ElectricIndigo
+                        containerColor = MaterialTheme.colorScheme.primary
                     ),
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier
@@ -132,7 +131,7 @@ fun WriteFirstNoteScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DiaryColors.Paper)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -147,7 +146,7 @@ fun WriteFirstNoteScreen(
                 text = "Write something kind\nto someone you care about",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.SemiBold,
-                color = DiaryColors.Ink,
+                color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center,
                 lineHeight = 32.sp
             )
@@ -159,7 +158,7 @@ fun WriteFirstNoteScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFFFAF6EE))
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(16.dp)
             ) {
                 Column {
@@ -173,7 +172,7 @@ fun WriteFirstNoteScreen(
                             Text(
                                 "I'm grateful for you because...",
                                 fontStyle = FontStyle.Italic,
-                                color = DiaryColors.Pencil.copy(alpha = 0.5f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                             )
                         },
                         colors = TextFieldDefaults.colors(
@@ -181,8 +180,8 @@ fun WriteFirstNoteScreen(
                             unfocusedContainerColor = Color.Transparent,
                             focusedIndicatorColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent,
-                            focusedTextColor = DiaryColors.Ink,
-                            cursorColor = DiaryColors.ElectricIndigo
+                            focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            cursorColor = MaterialTheme.colorScheme.primary
                         )
                     )
 
@@ -193,7 +192,7 @@ fun WriteFirstNoteScreen(
                         Text(
                             text = "${state.wordCount}/100 words",
                             style = MaterialTheme.typography.bodySmall,
-                            color = DiaryColors.Pencil
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -202,7 +201,7 @@ fun WriteFirstNoteScreen(
             if (state.moderationError != null) {
                 Text(
                     text = state.moderationError!!,
-                    color = DiaryColors.CoralRed,
+                    color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 8.dp)
                 )
@@ -217,19 +216,19 @@ fun WriteFirstNoteScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Default.Person, null, modifier = Modifier.size(20.dp))
-                    Text("  Choose a Friend", color = DiaryColors.Ink)
+                    Text("  Choose a Friend", color = MaterialTheme.colorScheme.onBackground)
                 }
             } else {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(DiaryColors.ElectricIndigo.copy(alpha = 0.1f))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
                         .padding(12.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("To: ${state.recipientName}", color = DiaryColors.Ink)
+                        Text("To: ${state.recipientName}", color = MaterialTheme.colorScheme.onBackground)
                         if (state.isResolving) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp).padding(top = 4.dp),
@@ -251,7 +250,7 @@ fun WriteFirstNoteScreen(
                         .height(52.dp),
                     enabled = state.content.isNotBlank() && !state.isSending,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = DiaryColors.ElectricIndigo
+                        containerColor = MaterialTheme.colorScheme.primary
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -282,7 +281,7 @@ fun WriteFirstNoteScreen(
                         .fillMaxWidth()
                         .height(52.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = DiaryColors.SunsetOrange
+                        containerColor = MaterialTheme.colorScheme.primary
                     ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -294,7 +293,7 @@ fun WriteFirstNoteScreen(
             if (state.error != null) {
                 Text(
                     text = state.error!!,
-                    color = DiaryColors.CoralRed,
+                    color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(top = 8.dp)
                 )
@@ -309,7 +308,7 @@ fun WriteFirstNoteScreen(
             }) {
                 Text(
                     "Skip for now",
-                    color = DiaryColors.Pencil,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 14.sp
                 )
             }

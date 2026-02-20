@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.quotes.components.LeaderboardHeader
 import com.proactivediary.ui.quotes.components.QuoteCard
-import com.proactivediary.ui.theme.DiaryColors
 
 @Composable
 fun QuotesScreen(
@@ -58,7 +57,7 @@ fun QuotesScreen(
     val state by viewModel.state.collectAsState()
 
     Scaffold(
-        containerColor = DiaryColors.Paper
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
         Column(
@@ -77,7 +76,7 @@ fun QuotesScreen(
                     text = "Quotes",
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
-                    color = DiaryColors.Ink
+                    color = MaterialTheme.colorScheme.onBackground
                 )
 
                 IconButton(onClick = onNotificationBellClick) {
@@ -97,7 +96,7 @@ fun QuotesScreen(
                             imageVector = Icons.Outlined.Notifications,
                             contentDescription = "Notes Inbox",
                             modifier = Modifier.size(24.dp),
-                            tint = DiaryColors.Ink
+                            tint = MaterialTheme.colorScheme.onBackground
                         )
                     }
                 }
@@ -109,8 +108,8 @@ fun QuotesScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 8.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .border(0.5.dp, DiaryColors.Pencil.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
-                    .background(DiaryColors.Parchment)
+                    .border(0.5.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surface)
                     .clickable(onClick = onSendNote)
                     .padding(horizontal = 20.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -118,7 +117,7 @@ fun QuotesScreen(
                 Icon(
                     imageVector = Icons.Outlined.Mail,
                     contentDescription = "Send a note",
-                    tint = DiaryColors.WineRed,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(14.dp))
@@ -126,7 +125,7 @@ fun QuotesScreen(
                     text = "Send an anonymous note to a friend",
                     style = MaterialTheme.typography.bodyLarge,
                     fontStyle = FontStyle.Italic,
-                    color = DiaryColors.Ink
+                    color = MaterialTheme.colorScheme.onBackground
                 )
             }
 
@@ -145,8 +144,8 @@ fun QuotesScreen(
                         modifier = Modifier
                             .clip(RoundedCornerShape(20.dp))
                             .background(
-                                if (isSelected) DiaryColors.Ink
-                                else DiaryColors.Parchment
+                                if (isSelected) MaterialTheme.colorScheme.onBackground
+                                else MaterialTheme.colorScheme.surface
                             )
                             .clickable { viewModel.selectTab(tab) }
                             .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -158,7 +157,7 @@ fun QuotesScreen(
                                 QuotesTab.MY_QUOTES -> "My Quotes"
                             },
                             style = MaterialTheme.typography.labelMedium,
-                            color = if (isSelected) Color.White else DiaryColors.Ink
+                            color = if (isSelected) Color.White else MaterialTheme.colorScheme.onBackground
                         )
                     }
                 }
@@ -171,7 +170,7 @@ fun QuotesScreen(
                 text = "Share your wisdom \u2014 inspire someone today",
                 style = MaterialTheme.typography.bodyMedium,
                 fontStyle = FontStyle.Italic,
-                color = DiaryColors.Pencil,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -199,14 +198,14 @@ fun QuotesScreen(
                             text = "The stage is yours",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.SemiBold,
-                            color = DiaryColors.Ink
+                            color = MaterialTheme.colorScheme.onBackground
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = "Write up to 25 words and inspire thousands",
                             style = MaterialTheme.typography.bodyLarge,
                             fontStyle = FontStyle.Italic,
-                            color = DiaryColors.Pencil,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(horizontal = 32.dp)
                         )
@@ -240,7 +239,7 @@ fun QuotesScreen(
             // FAB at bottom-left
             FloatingActionButton(
                 onClick = { viewModel.showComposeSheet() },
-                containerColor = DiaryColors.WineRed,
+                containerColor = MaterialTheme.colorScheme.primary,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(start = 16.dp, bottom = 72.dp)

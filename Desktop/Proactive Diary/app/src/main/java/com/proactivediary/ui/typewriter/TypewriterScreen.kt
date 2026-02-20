@@ -46,7 +46,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.proactivediary.ui.theme.DiaryColors
+import androidx.compose.material3.MaterialTheme
 import com.proactivediary.ui.theme.PlusJakartaSans
 
 @Composable
@@ -129,13 +129,14 @@ fun TypewriterScreen(
     )
 
     // Dynamic gradient background
+    val primaryColor = MaterialTheme.colorScheme.primary
     val gradientColors = listOf(
-        Color.lerp(DiaryColors.ElectricIndigo, DiaryColors.VividPurple, gradientShift)
-            ?: DiaryColors.ElectricIndigo,
-        Color.lerp(DiaryColors.NeonPink, DiaryColors.ElectricBlue, gradientShift)
-            ?: DiaryColors.NeonPink,
-        Color.lerp(DiaryColors.VividPurple, DiaryColors.CyberTeal, gradientShift)
-            ?: DiaryColors.VividPurple
+        Color.lerp(primaryColor, primaryColor, gradientShift)
+            ?: primaryColor,
+        Color.lerp(primaryColor, primaryColor, gradientShift)
+            ?: primaryColor,
+        Color.lerp(primaryColor, primaryColor, gradientShift)
+            ?: primaryColor
     )
 
     Box(
@@ -238,7 +239,7 @@ fun TypewriterScreen(
                             fontFamily = PlusJakartaSans,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = DiaryColors.ElectricIndigo
+                            color = MaterialTheme.colorScheme.primary
                         )
                     )
                 }

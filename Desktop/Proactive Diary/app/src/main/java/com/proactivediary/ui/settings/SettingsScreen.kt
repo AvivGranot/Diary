@@ -411,12 +411,6 @@ fun SettingsScreen(
             Spacer(Modifier.height(8.dp))
             Column {
                 SettingsRow(
-                    label = "Diary Wrapped",
-                    value = "Your story so far",
-                    onClick = onNavigateToDiaryWrapped
-                )
-                SettingsDivider()
-                SettingsRow(
                     label = "Theme Evolution",
                     value = "Writing & growth patterns",
                     onClick = onNavigateToThemeEvolution

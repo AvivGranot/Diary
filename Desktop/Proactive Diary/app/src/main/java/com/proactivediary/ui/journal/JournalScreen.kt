@@ -56,7 +56,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.theme.CormorantGaramond
-import com.proactivediary.ui.theme.DiaryColors
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -97,7 +96,7 @@ fun JournalScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DiaryColors.Paper)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // Back button header when shown as standalone screen
         if (onBack != null) {
@@ -112,7 +111,7 @@ fun JournalScreen(
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = DiaryColors.Ink
+                        tint = MaterialTheme.colorScheme.onBackground
                     )
                 }
                 Text(
@@ -120,7 +119,7 @@ fun JournalScreen(
                     style = TextStyle(
                         fontFamily = CormorantGaramond,
                         fontSize = 24.sp,
-                        color = DiaryColors.Ink
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 )
             }
