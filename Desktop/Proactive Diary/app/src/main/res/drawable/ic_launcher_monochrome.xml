@@ -5,31 +5,24 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Pen nib body — elegant diagonal stroke from bottom-left to upper-right -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M42,70 L46,66 L62,42 C63.5,39.8 63,37 61,35.5 C59,34 56.2,34.5 54,36.7 L38,56 L34,60 Z" />
-
-    <!-- Nib split line — subtle detail down the center of the pen tip -->
+    <!-- Pen nib silhouette — single color for themed icon -->
     <path
         android:fillColor="#000000"
-        android:pathData="M39.5,58.5 L54.5,38.5"
-        android:strokeColor="#000000"
-        android:strokeWidth="0.6" />
+        android:pathData="M42,70 L46,66 L62,42 C63.5,39.8 63,37 61,35.5 C59,34 56.2,34.5 54,36.7 L38,56 L34,60 Z" />
 
-    <!-- Pen tip — sharp point -->
+    <!-- Pen tip -->
     <path
-        android:fillColor="#CCCCCC"
+        android:fillColor="#000000"
         android:pathData="M34,60 L38,56 L42,70 L34,60 Z" />
 
-    <!-- Mint green ink dot at the pen tip -->
+    <!-- Ink dot -->
     <path
-        android:fillColor="#4ADE80"
+        android:fillColor="#000000"
         android:pathData="M33,65 C33,62.8 34.8,61 37,61 C39.2,61 41,62.8 41,65 C41,67.2 39.2,69 37,69 C34.8,69 33,67.2 33,65 Z" />
 
-    <!-- Small ink splash accent -->
+    <!-- Small ink splash -->
     <path
-        android:fillColor="#4ADE80"
+        android:fillColor="#000000"
         android:pathData="M31,68 C31,67.2 31.7,66.5 32.5,66.5 C33.3,66.5 34,67.2 34,68 C34,68.8 33.3,69.5 32.5,69.5 C31.7,69.5 31,68.8 31,68 Z" />
 
 </vector>

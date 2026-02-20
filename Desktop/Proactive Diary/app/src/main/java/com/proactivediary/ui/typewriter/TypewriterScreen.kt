@@ -128,16 +128,12 @@ fun TypewriterScreen(
         label = "beginPulseAlpha"
     )
 
-    // Dynamic gradient background
-    val primaryColor = MaterialTheme.colorScheme.primary
-    val gradientColors = listOf(
-        Color.lerp(primaryColor, primaryColor, gradientShift)
-            ?: primaryColor,
-        Color.lerp(primaryColor, primaryColor, gradientShift)
-            ?: primaryColor,
-        Color.lerp(primaryColor, primaryColor, gradientShift)
-            ?: primaryColor
-    )
+    // Dynamic gradient background — dark with subtle mint glow
+    val accentColor = MaterialTheme.colorScheme.primary
+    val darkBase = Color(0xFF000000)
+    val darkMid = Color(0xFF0A0A0A)
+    val accentGlow = accentColor.copy(alpha = 0.08f + 0.04f * gradientShift)
+    val gradientColors = listOf(darkBase, darkMid, accentGlow, darkBase)
 
     Box(
         modifier = Modifier
@@ -213,7 +209,7 @@ fun TypewriterScreen(
                 )
             }
 
-            // Begin button — gradient filled instead of outlined
+            // Begin button — mint green accent
             if (uiState.beginButtonAlpha > 0f) {
                 Spacer(modifier = Modifier.height(40.dp))
                 Box(
@@ -221,8 +217,8 @@ fun TypewriterScreen(
                         .alpha(uiState.beginButtonAlpha * beginPulse)
                         .fillMaxWidth(0.6f)
                         .background(
-                            color = Color.White,
-                            shape = RoundedCornerShape(28.dp)
+                            color = accentColor,
+                            shape = RoundedCornerShape(14.dp)
                         )
                         .clickable(
                             indication = null,
@@ -239,7 +235,7 @@ fun TypewriterScreen(
                             fontFamily = PlusJakartaSans,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = Color.Black
                         )
                     )
                 }
