@@ -21,9 +21,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.proactivediary.data.social.QuotesRepository
-import com.proactivediary.data.social.UserProfileRepository
-import com.proactivediary.ui.designstudio.DesignStudioScreen
+import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.ui.journal.EntryDetailScreen
 import com.proactivediary.ui.notes.ComposeNoteScreen
 import com.proactivediary.ui.notes.EnvelopeRevealScreen
@@ -38,11 +36,12 @@ import com.proactivediary.ui.onboarding.WriteFirstNoteScreen
 import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.quotes.QuoteDetailScreen
-import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.ui.typewriter.TypewriterScreen
 import com.proactivediary.ui.export.YearInReviewScreen
 import com.proactivediary.ui.onthisday.OnThisDayScreen
 import com.proactivediary.ui.settings.ContactSupportScreen
+import com.proactivediary.ui.settings.ExportScreen
+import com.proactivediary.ui.settings.LayoutScreen
 import com.proactivediary.ui.wrapped.DiaryWrappedScreen
 import com.proactivediary.ui.insights.ThemeEvolutionScreen
 import com.proactivediary.ui.write.WriteScreen
@@ -80,10 +79,16 @@ fun ProactiveDiaryNavHost(
         navController = navController,
         startDestination = startDestination!!
     ) {
+        // ── Onboarding ──
+        // Flow: Typewriter → QuickAuth → ProfilePicture → WriteFirstNote → QuotesPreview →
+        //       OnboardingGoals → NotificationPermission → Main
+        // (DesignStudio removed from flow)
+
         composable(Routes.Typewriter.route) {
             TypewriterScreen(
                 onNavigateToDesignStudio = {
-                    navController.navigate(Routes.DesignStudio.createRoute(edit = false)) {
+                    // Redirect old DesignStudio path → OnboardingGoals
+                    navController.navigate(Routes.OnboardingGoals.route) {
                         popUpTo(Routes.Typewriter.route) { inclusive = true }
                     }
                 },
@@ -92,30 +97,6 @@ fun ProactiveDiaryNavHost(
                         popUpTo(Routes.Typewriter.route) { inclusive = true }
                     }
                 }
-            )
-        }
-
-        composable(
-            route = Routes.DesignStudio.route,
-            arguments = listOf(
-                navArgument("edit") {
-                    type = NavType.BoolType
-                    defaultValue = false
-                }
-            )
-        ) { backStackEntry ->
-            val isEdit = backStackEntry.arguments?.getBoolean("edit") ?: false
-            DesignStudioScreen(
-                onNavigateToGoals = {
-                    if (isEdit) {
-                        navController.popBackStack()
-                    } else {
-                        navController.navigate(Routes.OnboardingGoals.route) {
-                            popUpTo(Routes.DesignStudio.route) { inclusive = true }
-                        }
-                    }
-                },
-                isEditMode = isEdit
             )
         }
 
@@ -137,14 +118,14 @@ fun ProactiveDiaryNavHost(
         composable(Routes.NotificationPermission.route) {
             NotificationPermissionScreen(
                 onContinue = {
-                    analyticsService.logOnboardingCompleted(designCustomized = true, goalsSet = 0)
+                    analyticsService.logOnboardingCompleted(designCustomized = false, goalsSet = 0)
                     viewModel.markOnboardingComplete()
                     navController.navigate(Routes.Main.route) {
                         popUpTo(Routes.NotificationPermission.route) { inclusive = true }
                     }
                 },
                 onSkip = {
-                    analyticsService.logOnboardingCompleted(designCustomized = true, goalsSet = 0)
+                    analyticsService.logOnboardingCompleted(designCustomized = false, goalsSet = 0)
                     viewModel.markOnboardingComplete()
                     navController.navigate(Routes.Main.route) {
                         popUpTo(Routes.NotificationPermission.route) { inclusive = true }
@@ -153,6 +134,8 @@ fun ProactiveDiaryNavHost(
                 analyticsService = analyticsService
             )
         }
+
+        // ── Main (5-tab) ──
 
         composable(Routes.Main.route) {
             MainScreen(
@@ -166,7 +149,8 @@ fun ProactiveDiaryNavHost(
             )
         }
 
-        // Standalone Journal screen (accessed from Settings)
+        // ── Standalone screens (pushed on top of Main) ──
+
         composable(Routes.Journal.route) {
             com.proactivediary.ui.journal.JournalScreen(
                 onEntryClick = { entryId ->
@@ -174,7 +158,7 @@ fun ProactiveDiaryNavHost(
                 },
                 onNavigateToWrite = {
                     navController.previousBackStackEntry
-                        ?.savedStateHandle?.set("navigateToTab", 1)
+                        ?.savedStateHandle?.set("navigateToTab", 2) // PAGE_DIARY
                     navController.popBackStack()
                 },
                 onNavigateToOnThisDay = {
@@ -213,6 +197,55 @@ fun ProactiveDiaryNavHost(
             WriteScreen()
         }
 
+        // Settings (standalone, pushed from Profile tab gear icon)
+        composable(Routes.Settings.route) {
+            com.proactivediary.ui.settings.SettingsScreen(
+                onOpenDesignStudio = {
+                    // Redirect to Layout screen
+                    navController.navigate(Routes.Layout.route)
+                },
+                onNavigateToGoals = {
+                    navController.navigate(Routes.Goals.route)
+                },
+                onNavigateToReminders = {
+                    navController.navigate(Routes.Reminders.route)
+                },
+                onNavigateToTypewriter = {
+                    navController.navigate(Routes.Typewriter.route) {
+                        popUpTo(Routes.Main.route) { inclusive = true }
+                    }
+                },
+                onNavigateToSupport = {
+                    navController.navigate(Routes.ContactSupport.createRoute("support"))
+                },
+                onNavigateToDiaryWrapped = {
+                    // Wrapped is deprecated but still navigable during migration
+                    @Suppress("DEPRECATION")
+                    navController.navigate(Routes.DiaryWrapped.route)
+                },
+                onNavigateToThemeEvolution = {
+                    navController.navigate(Routes.ThemeEvolution.route)
+                },
+                onNavigateToJournal = {
+                    navController.navigate(Routes.Journal.route)
+                }
+            )
+        }
+
+        // Layout (replaces Design Studio)
+        composable(Routes.Layout.route) {
+            LayoutScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // Export Data
+        composable(Routes.ExportData.route) {
+            ExportScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
         composable(Routes.YearInReview.route) {
             var showYearPaywall by remember { mutableStateOf(false) }
             val yearActivity = (LocalContext.current as? Activity)
@@ -249,6 +282,8 @@ fun ProactiveDiaryNavHost(
             )
         }
 
+        // Kept during migration — will be removed
+        @Suppress("DEPRECATION")
         composable(Routes.DiaryWrapped.route) {
             DiaryWrappedScreen(
                 onBack = { navController.popBackStack() }
@@ -271,7 +306,7 @@ fun ProactiveDiaryNavHost(
             ContactSupportScreen(onBack = { navController.popBackStack() })
         }
 
-        // ── New Social Onboarding ──
+        // ── Social Onboarding ──
 
         composable(Routes.QuickAuth.route) {
             QuickAuthScreen(
@@ -331,7 +366,7 @@ fun ProactiveDiaryNavHost(
             )
         }
 
-        // ── Anonymous Notes ──
+        // ── Anonymous Notes (standalone routes) ──
 
         composable(Routes.ComposeNote.route) {
             ComposeNoteScreen(

@@ -14,6 +14,7 @@ data class EntryEntity(
     @PrimaryKey val id: String,
     val title: String = "",
     val content: String,
+    @Deprecated("Mood tracking removed. Column retained for SQLite backward compatibility.")
     val mood: String? = null,
     val tags: String = "[]",
     @ColumnInfo(name = "tagged_contacts") val taggedContacts: String = "[]",

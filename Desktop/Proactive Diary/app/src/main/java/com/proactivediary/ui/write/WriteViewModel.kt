@@ -64,7 +64,7 @@ object WritingPrompts {
         "Write a letter to your future self.",
         "What does your ideal morning look like?",
         "What's the bravest thing you did recently?",
-        "Describe your current mood in detail.",
+        "Describe how you're feeling right now.",
         "What would you do if you weren't afraid?",
         "Write about a place that feels like home.",
         "What's one thing you'd change about today?",

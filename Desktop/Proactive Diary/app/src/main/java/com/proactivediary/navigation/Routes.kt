@@ -3,9 +3,6 @@ package com.proactivediary.navigation
 sealed class Routes(val route: String) {
     object Discover : Routes("discover")
     object Typewriter : Routes("typewriter")
-    object DesignStudio : Routes("design_studio?edit={edit}") {
-        fun createRoute(edit: Boolean = false) = "design_studio?edit=$edit"
-    }
     object OnboardingGoals : Routes("onboarding_goals")
     object NotificationPermission : Routes("notification_permission")
     object Main : Routes("main")
@@ -22,11 +19,14 @@ sealed class Routes(val route: String) {
     }
     object YearInReview : Routes("year_in_review")
     object OnThisDay : Routes("on_this_day")
-    object DiaryWrapped : Routes("diary_wrapped")
     object ThemeEvolution : Routes("theme_evolution")
     object ContactSupport : Routes("contact_support?category={category}") {
         fun createRoute(category: String = "support") = "contact_support?category=$category"
     }
+
+    // New screens (v3 redesign)
+    object Layout : Routes("layout")
+    object ExportData : Routes("export_data")
 
     // Social features
     object ComposeNote : Routes("compose_note")
@@ -39,9 +39,17 @@ sealed class Routes(val route: String) {
         fun createRoute(quoteId: String) = "quote/$quoteId"
     }
 
-    // New onboarding
+    // Social onboarding (DesignStudio removed from flow)
     object QuickAuth : Routes("quick_auth")
     object ProfilePicture : Routes("profile_picture")
     object WriteFirstNote : Routes("write_first_note")
     object QuotesPreview : Routes("quotes_preview")
+
+    // @Deprecated — kept for backward compat during migration, will be deleted
+    @Deprecated("Replaced by Layout screen", replaceWith = ReplaceWith("Layout"))
+    object DesignStudio : Routes("design_studio?edit={edit}") {
+        fun createRoute(edit: Boolean = false) = "design_studio?edit=$edit"
+    }
+    @Deprecated("Removed — Profile recap cards replace this")
+    object DiaryWrapped : Routes("diary_wrapped")
 }

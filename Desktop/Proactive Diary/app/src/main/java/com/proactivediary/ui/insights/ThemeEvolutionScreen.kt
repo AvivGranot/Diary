@@ -4,7 +4,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,14 +55,9 @@ private val Cream = Color(0xFFF3EEE7)
 private val Ink = Color(0xFF313131)
 private val InkLight = Color(0xFF787878)
 private val CardBg = Color(0xFFFAF7F2)
-private val MoodGreat = Color(0xFF4A6B41)
-private val MoodGood = Color(0xFF5B7A4A)
-private val MoodOkay = Color(0xFF8B7A4A)
-private val MoodBad = Color(0xFF8B5A4A)
-private val MoodAwful = Color(0xFF7A3E3E)
 
 private enum class EvolutionPage {
-    OVERVIEW, MOOD_TIMELINE, WRITING_TIME, TOPICS, LOCATIONS
+    OVERVIEW, WRITING_TIME, TOPICS, LOCATIONS
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -148,7 +142,6 @@ fun ThemeEvolutionScreen(
     // Build dynamic page list based on available data
     val pages = buildList {
         add(EvolutionPage.OVERVIEW)
-        if (state.moodTimeline.isNotEmpty()) add(EvolutionPage.MOOD_TIMELINE)
         if (state.timePatterns.any { it.entryCount > 0 }) add(EvolutionPage.WRITING_TIME)
         if (state.topicWords.isNotEmpty()) add(EvolutionPage.TOPICS)
         if (state.locationMoods.isNotEmpty()) add(EvolutionPage.LOCATIONS)
@@ -200,7 +193,6 @@ fun ThemeEvolutionScreen(
         ) { pageIndex ->
             when (pages[pageIndex]) {
                 EvolutionPage.OVERVIEW -> OverviewPage(state = state)
-                EvolutionPage.MOOD_TIMELINE -> MoodTimelinePage(timeline = state.moodTimeline)
                 EvolutionPage.WRITING_TIME -> WritingTimePage(
                     patterns = state.timePatterns,
                     totalEntries = state.totalEntries
@@ -309,143 +301,25 @@ private fun OverviewPage(state: ThemeEvolutionUiState) {
 
             Spacer(Modifier.height(24.dp))
 
-            // Words + Avg mood in a row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = String.format(java.util.Locale.US, "%,d", state.totalWords),
-                        style = TextStyle(
-                            fontFamily = CormorantGaramond,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Ink
-                        )
-                    )
-                    Text(
-                        text = "words",
-                        style = TextStyle(fontSize = 12.sp, color = InkLight)
-                    )
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = String.format(java.util.Locale.US, "%.1f", state.averageMoodScore),
-                        style = TextStyle(
-                            fontFamily = CormorantGaramond,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Ink
-                        )
-                    )
-                    Text(
-                        text = "avg mood",
-                        style = TextStyle(fontSize = 12.sp, color = InkLight)
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            // Mood trend
-            val trendText = when (state.moodTrend) {
-                "improving" -> "\u2197 Your mood is trending upward"
-                "declining" -> "\u2198 Your mood has dipped recently"
-                else -> "\u2192 Your mood has been steady"
-            }
+            // Total words
             Text(
-                text = trendText,
+                text = String.format(java.util.Locale.US, "%,d", state.totalWords),
                 style = TextStyle(
                     fontFamily = CormorantGaramond,
-                    fontSize = 14.sp,
-                    fontStyle = FontStyle.Italic,
-                    color = InkLight
-                ),
-                textAlign = TextAlign.Center
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Ink
+                )
+            )
+            Text(
+                text = "words written",
+                style = TextStyle(fontSize = 12.sp, color = InkLight)
             )
         }
     }
 }
 
-// ── PAGE 2: MOOD TIMELINE ────────────────────────────────────
-
-@Composable
-private fun MoodTimelinePage(timeline: List<MoodDataPoint>) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(vertical = 8.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(CardBg)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "Mood Over Time",
-                style = TextStyle(
-                    fontFamily = CormorantGaramond,
-                    fontSize = 18.sp,
-                    color = InkLight
-                ),
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            // Scale labels
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = "5 \u2014 Great",
-                    style = TextStyle(fontSize = 9.sp, color = InkLight)
-                )
-                Text(
-                    text = "1 \u2014 Awful",
-                    style = TextStyle(fontSize = 9.sp, color = InkLight)
-                )
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            // Bar chart
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.Bottom
-            ) {
-                timeline.forEach { point ->
-                    MoodBar(point = point)
-                }
-            }
-
-            Spacer(Modifier.height(12.dp))
-
-            // Legend
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                MoodLegendItem("Great", MoodGreat)
-                MoodLegendItem("Good", MoodGood)
-                MoodLegendItem("Okay", MoodOkay)
-                MoodLegendItem("Bad", MoodBad)
-                MoodLegendItem("Awful", MoodAwful)
-            }
-        }
-    }
-}
-
-// ── PAGE 3: WRITING TIME ─────────────────────────────────────
+// ── PAGE 2: WRITING TIME ─────────────────────────────────────
 
 @Composable
 private fun WritingTimePage(patterns: List<TimePattern>, totalEntries: Int) {
@@ -488,7 +362,7 @@ private fun WritingTimePage(patterns: List<TimePattern>, totalEntries: Int) {
     }
 }
 
-// ── PAGE 4: TOPICS ──────────────────────────────────────────
+// ── PAGE 3: TOPICS ──────────────────────────────────────────
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -534,7 +408,7 @@ private fun TopicsPage(topics: List<TopicWord>) {
     }
 }
 
-// ── PAGE 5: LOCATIONS ───────────────────────────────────────
+// ── PAGE 4: LOCATIONS ───────────────────────────────────────
 
 @Composable
 private fun LocationsPage(locations: List<LocationMood>) {
@@ -551,7 +425,7 @@ private fun LocationsPage(locations: List<LocationMood>) {
                 .padding(24.dp)
         ) {
             Text(
-                text = "Where You Feel Best",
+                text = "Where You Write",
                 style = TextStyle(
                     fontFamily = CormorantGaramond,
                     fontSize = 18.sp,
@@ -578,59 +452,6 @@ private fun LocationsPage(locations: List<LocationMood>) {
 }
 
 // ── SHARED COMPONENTS ──────────────────────────────────────
-
-@Composable
-private fun MoodBar(point: MoodDataPoint) {
-    val targetHeight = point.averageMoodScore / 5f * 120f
-    val barColor = moodToColor(point.dominantMood)
-
-    var appeared by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { appeared = true }
-
-    val animatedHeight by animateFloatAsState(
-        targetValue = if (appeared) targetHeight else 0f,
-        animationSpec = tween(800),
-        label = "barGrow"
-    )
-
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = point.entryCount.toString(),
-            style = TextStyle(fontSize = 8.sp, color = InkLight)
-        )
-        Spacer(Modifier.height(2.dp))
-        Box(
-            modifier = Modifier
-                .width(28.dp)
-                .height(animatedHeight.dp)
-                .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
-                .background(barColor)
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = point.month,
-            style = TextStyle(fontSize = 9.sp, color = InkLight),
-            maxLines = 1
-        )
-    }
-}
-
-@Composable
-private fun MoodLegendItem(label: String, color: Color) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(color)
-        )
-        Spacer(Modifier.width(3.dp))
-        Text(
-            text = label,
-            style = TextStyle(fontSize = 8.sp, color = InkLight)
-        )
-    }
-}
 
 @Composable
 private fun TimePatternRow(pattern: TimePattern, totalEntries: Int) {
@@ -685,19 +506,7 @@ private fun TimePatternRow(pattern: TimePattern, totalEntries: Int) {
                         .fillMaxWidth(animatedFill)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(4.dp))
-                        .background(
-                            if (pattern.averageMoodScore >= 3.5f) MoodGood
-                            else if (pattern.averageMoodScore >= 2.5f) MoodOkay
-                            else MoodBad
-                        )
-                )
-            }
-
-            if (pattern.averageMoodScore > 0) {
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = "avg mood: ${String.format(java.util.Locale.US, "%.1f", pattern.averageMoodScore)}/5",
-                    style = TextStyle(fontSize = 11.sp, color = InkLight)
+                        .background(Ink.copy(alpha = 0.45f))
                 )
             }
         }
@@ -722,53 +531,24 @@ private fun TopicWordChip(topic: TopicWord) {
 
 @Composable
 private fun LocationMoodRow(location: LocationMood) {
-    val moodEmoji = when (location.dominantMood) {
-        "great" -> "\uD83D\uDE0A"
-        "good" -> "\uD83D\uDE42"
-        "okay" -> "\uD83D\uDE10"
-        "bad" -> "\uD83D\uDE1E"
-        "awful" -> "\uD83D\uDE2D"
-        else -> "\u2728"
-    }
-
     Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f, fill = false)
-        ) {
-            Text(text = "\uD83D\uDCCD", fontSize = 16.sp)
-            Spacer(Modifier.width(10.dp))
-            Column {
-                Text(
-                    text = location.name,
-                    style = TextStyle(fontSize = 15.sp, color = Ink),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "${location.entryCount} entries \u2022 avg ${String.format(java.util.Locale.US, "%.1f", location.averageMoodScore)}/5",
-                    style = TextStyle(fontSize = 12.sp, color = InkLight)
-                )
-            }
+        Text(text = "\uD83D\uDCCD", fontSize = 16.sp)
+        Spacer(Modifier.width(10.dp))
+        Column {
+            Text(
+                text = location.name,
+                style = TextStyle(fontSize = 15.sp, color = Ink),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = "${location.entryCount} entries",
+                style = TextStyle(fontSize = 12.sp, color = InkLight)
+            )
         }
-
-        Text(
-            text = moodEmoji,
-            fontSize = 24.sp,
-            modifier = Modifier.padding(start = 8.dp)
-        )
     }
 }
 
-private fun moodToColor(mood: String): Color = when (mood) {
-    "great" -> MoodGreat
-    "good" -> MoodGood
-    "okay" -> MoodOkay
-    "bad" -> MoodBad
-    "awful" -> MoodAwful
-    else -> MoodOkay
-}

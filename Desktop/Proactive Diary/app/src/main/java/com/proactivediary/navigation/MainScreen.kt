@@ -4,45 +4,15 @@ import android.app.Activity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.Spring
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.FormatQuote
-import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Notifications
-import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -54,50 +24,34 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.proactivediary.analytics.AnalyticsService
+import com.proactivediary.ui.activity.ActivityScreen
+import com.proactivediary.ui.components.DiaryBottomNav
 import com.proactivediary.ui.components.FeatureDiscoveryViewModel
 import com.proactivediary.ui.components.SwipeHint
 import com.proactivediary.ui.goals.GoalsScreen
-import com.proactivediary.ui.settings.ReminderManagementScreen
+import com.proactivediary.ui.home.DiaryHomeScreen
+import com.proactivediary.ui.notes.NoteInboxScreen
+import com.proactivediary.ui.notes.NoteInboxViewModel
 import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.paywall.PurchaseResult
-import com.proactivediary.ui.settings.SettingsScreen
-import com.proactivediary.analytics.AnalyticsService
-import com.proactivediary.ui.notes.NoteInboxViewModel
+import com.proactivediary.ui.profile.ProfileScreen
 import com.proactivediary.ui.quotes.QuotesScreen
-import com.proactivediary.ui.write.WriteScreen
+import com.proactivediary.ui.settings.ReminderManagementScreen
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 
-data class BottomNavItem(
-    val route: String,
-    val label: String,
-    val icon: ImageVector,
-    val iconSize: Int = 23
-)
-
-private const val WRITE_TAB = "write_tab"
+// 5-tab layout: Quotes | Notes | Diary (center) | Activity | Profile
 private const val PAGE_QUOTES = 0
-private const val PAGE_WRITE = 1
-private const val PAGE_SETTINGS = 2
-
-val bottomNavItems = listOf(
-    BottomNavItem(Routes.Quotes.route, "Quotes", Icons.Outlined.FormatQuote),
-    BottomNavItem(WRITE_TAB, "Write", Icons.Outlined.Edit, iconSize = 24),
-    BottomNavItem(Routes.Settings.route, "Settings", Icons.Outlined.Settings),
-)
+private const val PAGE_NOTES = 1
+private const val PAGE_DIARY = 2
+private const val PAGE_ACTIVITY = 3
+private const val PAGE_PROFILE = 4
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,14 +69,11 @@ fun MainScreen(
 ) {
     val subscriptionState by billingViewModel.subscriptionState.collectAsState()
     val isFirstPaywallView by billingViewModel.isFirstPaywallView.collectAsState()
-    val currentStreak by mainScreenViewModel.currentStreak.collectAsState()
-    val streakEnabled by mainScreenViewModel.streakEnabled.collectAsState()
     var showPaywall by remember { mutableStateOf(false) }
     val purchaseResult by billingViewModel.purchaseResult.collectAsState()
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val activity = context as? Activity
-    val haptic = LocalHapticFeedback.current
     val unreadNoteCount by noteInboxViewModel.unreadCount.collectAsState(initial = 0)
 
     // Coach mark
@@ -132,19 +83,19 @@ fun MainScreen(
     var showGoals by remember { mutableStateOf(false) }
     var showReminders by remember { mutableStateOf(false) }
 
-    // Notification prompt carried through deep link → shown as WelcomeBackOverlay → WriteScreen
+    // Notification prompt carried through deep link
     var activeNotificationPrompt by remember { mutableStateOf<String?>(null) }
 
-    // Pager state — starts on Write tab (page 0)
+    // 5-page pager — starts on Diary tab (center)
     val pagerState = rememberPagerState(
-        initialPage = PAGE_QUOTES,
-        pageCount = { 3 }
+        initialPage = PAGE_DIARY,
+        pageCount = { 5 }
     )
 
-    // Track the last valid page the user was on before a paywall bounce
-    var lastValidPage by remember { mutableStateOf(PAGE_QUOTES) }
+    // Track last valid page for paywall bounce
+    var lastValidPage by remember { mutableStateOf(PAGE_DIARY) }
 
-    // Observe savedStateHandle for tab navigation requests (e.g., from Journal "Begin" button)
+    // Observe savedStateHandle for tab navigation requests
     LaunchedEffect(Unit) {
         val handle = rootNavController.currentBackStackEntry?.savedStateHandle ?: return@LaunchedEffect
         handle.getStateFlow("navigateToTab", -1).collect { tab ->
@@ -155,46 +106,42 @@ fun MainScreen(
         }
     }
 
-    // Sync pager → bottom nav: when user swipes, update selection
-    // Also handle paywall gate: if user swipes to Write while expired, bounce back
+    // Sync pager → analytics; no paywall on diary tab (paywall stays on Write route only)
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .collect { page ->
-                if (page == PAGE_WRITE && !subscriptionState.isActive) {
-                    analyticsService.logPaywallShownWithTrigger("swipe_to_write")
-                    showPaywall = true
-                    pagerState.animateScrollToPage(lastValidPage)
-                } else {
-                    lastValidPage = page
-                    val tabName = when (page) {
-                        PAGE_QUOTES -> "quotes"
-                        PAGE_WRITE -> "write"
-                        PAGE_SETTINGS -> "settings"
-                        else -> "unknown"
-                    }
-                    analyticsService.logTabSwitched(tabName)
+                lastValidPage = page
+                val tabName = when (page) {
+                    PAGE_QUOTES -> "quotes"
+                    PAGE_NOTES -> "notes"
+                    PAGE_DIARY -> "diary"
+                    PAGE_ACTIVITY -> "activity"
+                    PAGE_PROFILE -> "profile"
+                    else -> "unknown"
                 }
+                analyticsService.logTabSwitched(tabName)
             }
     }
 
-    // After successful payment, navigate to Write tab
+    // After successful payment, navigate to diary tab
     LaunchedEffect(purchaseResult) {
         if (purchaseResult is PurchaseResult.Success) {
             billingViewModel.consumePurchaseResult()
             billingViewModel.refreshSubscriptionState()
-            pagerState.animateScrollToPage(PAGE_WRITE)
+            pagerState.animateScrollToPage(PAGE_DIARY)
         }
     }
 
-    // Handle deep link from notification (with paywall gate)
+    // Handle deep link from notification
     LaunchedEffect(deepLinkDestination) {
         deepLinkDestination?.let { dest ->
             when (dest) {
                 "write" -> {
                     if (subscriptionState.isActive) {
                         activeNotificationPrompt = deepLinkPrompt
-                        pagerState.animateScrollToPage(PAGE_WRITE)
+                        // Navigate to diary tab, then the write button opens WriteScreen
+                        pagerState.animateScrollToPage(PAGE_DIARY)
                     } else {
                         showPaywall = true
                     }
@@ -212,7 +159,7 @@ fun MainScreen(
 
     Scaffold { padding ->
         Box(modifier = Modifier.fillMaxSize()) {
-            // Swipeable tab pages
+            // 5-tab swipeable pager
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
@@ -235,45 +182,54 @@ fun MainScreen(
                             }
                         )
                     }
-                    PAGE_WRITE -> {
-                        WriteScreen(
-                            onOpenDesignStudio = {
-                                rootNavController.navigate(Routes.DesignStudio.createRoute(edit = true))
+                    PAGE_NOTES -> {
+                        NoteInboxScreen(
+                            onBack = null, // No back button — it's a tab
+                            onNoteClick = { noteId ->
+                                rootNavController.navigate(Routes.EnvelopeReveal.createRoute(noteId))
                             },
-                            onEntrySaved = {
-                                scope.launch {
-                                    billingViewModel.refreshSubscriptionState()
-                                }
-                            },
-                            onNavigateToEntry = { entryId ->
-                                rootNavController.navigate("write?entryId=$entryId")
-                            },
-                            notificationPrompt = activeNotificationPrompt,
-                            notificationStreak = currentStreak,
-                            onNotificationPromptConsumed = { activeNotificationPrompt = null }
+                            onComposeNote = {
+                                rootNavController.navigate(Routes.ComposeNote.route)
+                            }
                         )
                     }
-                    PAGE_SETTINGS -> {
-                        SettingsScreen(
-                            onOpenDesignStudio = {
-                                rootNavController.navigate(Routes.DesignStudio.createRoute(edit = true))
+                    PAGE_DIARY -> {
+                        DiaryHomeScreen(
+                            onSearchClick = {
+                                rootNavController.navigate(Routes.Journal.route)
                             },
-                            onNavigateToGoals = {
-                                showGoals = true
-                            },
-                            onNavigateToReminders = {
-                                showReminders = true
-                            },
-                            onNavigateToTypewriter = {
-                                rootNavController.navigate(Routes.Typewriter.route) {
-                                    popUpTo(Routes.Main.route) { inclusive = true }
+                            onWriteClick = {
+                                if (subscriptionState.isActive) {
+                                    rootNavController.navigate(Routes.Write.create())
+                                } else {
+                                    showPaywall = true
                                 }
+                            },
+                            onEntryClick = { entryId ->
+                                rootNavController.navigate(Routes.EntryDetail.createRoute(entryId))
+                            },
+                            onNavigateToJournal = {
+                                rootNavController.navigate(Routes.Journal.route)
+                            }
+                        )
+                    }
+                    PAGE_ACTIVITY -> {
+                        ActivityScreen()
+                    }
+                    PAGE_PROFILE -> {
+                        ProfileScreen(
+                            onNavigateToSettings = {
+                                rootNavController.navigate(Routes.Settings.route)
+                            },
+                            onNavigateToGoals = { showGoals = true },
+                            onNavigateToLayout = {
+                                rootNavController.navigate(Routes.Layout.route)
+                            },
+                            onNavigateToExport = {
+                                rootNavController.navigate(Routes.ExportData.route)
                             },
                             onNavigateToSupport = {
                                 rootNavController.navigate(Routes.ContactSupport.createRoute("support"))
-                            },
-                            onNavigateToDiaryWrapped = {
-                                rootNavController.navigate(Routes.DiaryWrapped.route)
                             },
                             onNavigateToThemeEvolution = {
                                 rootNavController.navigate(Routes.ThemeEvolution.route)
@@ -292,19 +248,21 @@ fun MainScreen(
                 enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
                 exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
             ) {
-                Box(modifier = Modifier.fillMaxSize().pointerInput(Unit) {
-                    var totalDrag = 0f
-                    detectHorizontalDragGestures(
-                        onDragStart = { totalDrag = 0f },
-                        onHorizontalDrag = { _, dragAmount ->
-                            totalDrag += dragAmount
-                            if (totalDrag > 200f) {
-                                showGoals = false
-                                totalDrag = 0f
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        var totalDrag = 0f
+                        detectHorizontalDragGestures(
+                            onDragStart = { totalDrag = 0f },
+                            onHorizontalDrag = { _, dragAmount ->
+                                totalDrag += dragAmount
+                                if (totalDrag > 200f) {
+                                    showGoals = false
+                                    totalDrag = 0f
+                                }
                             }
-                        }
-                    )
-                }) {
+                        )
+                    }) {
                     GoalsScreen(
                         onBack = { showGoals = false }
                     )
@@ -317,101 +275,45 @@ fun MainScreen(
                 enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
                 exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
             ) {
-                Box(modifier = Modifier.fillMaxSize().pointerInput(Unit) {
-                    var totalDrag = 0f
-                    detectHorizontalDragGestures(
-                        onDragStart = { totalDrag = 0f },
-                        onHorizontalDrag = { _, dragAmount ->
-                            totalDrag += dragAmount
-                            if (totalDrag > 200f) {
-                                showReminders = false
-                                totalDrag = 0f
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        var totalDrag = 0f
+                        detectHorizontalDragGestures(
+                            onDragStart = { totalDrag = 0f },
+                            onHorizontalDrag = { _, dragAmount ->
+                                totalDrag += dragAmount
+                                if (totalDrag > 200f) {
+                                    showReminders = false
+                                    totalDrag = 0f
+                                }
                             }
-                        }
-                    )
-                }) {
+                        )
+                    }) {
                     ReminderManagementScreen(
                         onBack = { showReminders = false }
                     )
                 }
             }
 
-            // Coach mark — shown on top of everything
+            // Coach mark
             SwipeHint(
                 visible = showSwipeHint && pagerState.currentPage == PAGE_QUOTES,
                 onDismiss = { discoveryViewModel.dismissSwipeHint() }
             )
 
-            // Bottom navigation — flat, flush, Instagram style
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .background(MaterialTheme.colorScheme.surface)
-            ) {
-                // Hairline divider
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(0.5.dp)
-                        .background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
-                )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(49.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    bottomNavItems.forEachIndexed { index, item ->
-                        val selected = pagerState.currentPage == index
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .height(49.dp)
-                                .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
-                                    indication = null
-                                ) {
-                                    if (!selected) {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        if (index == PAGE_WRITE && !subscriptionState.isActive) {
-                                            showPaywall = true
-                                            return@clickable
-                                        }
-                                        scope.launch {
-                                            pagerState.animateScrollToPage(index)
-                                        }
-                                    }
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Box {
-                                Icon(
-                                    imageVector = item.icon,
-                                    contentDescription = item.label,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = if (selected) MaterialTheme.colorScheme.onSurface
-                                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.35f)
-                                )
-                                if (index == PAGE_WRITE && !subscriptionState.isActive) {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Lock,
-                                        contentDescription = "Pro",
-                                        modifier = Modifier
-                                            .size(10.dp)
-                                            .align(Alignment.TopEnd)
-                                            .offset(x = 4.dp, y = (-2).dp),
-                                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                                    )
-                                }
-                            }
-                        }
+            // 5-tab bottom navigation
+            DiaryBottomNav(
+                selectedIndex = pagerState.currentPage,
+                onTabSelected = { index ->
+                    scope.launch {
+                        pagerState.animateScrollToPage(index)
                     }
-                }
-            }
+                },
+                activityBadgeCount = 0, // TODO: wire up activity notifications
+                notesBadgeCount = unreadNoteCount,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         }
     }
 

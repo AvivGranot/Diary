@@ -246,14 +246,13 @@ private fun MemoryCard(
             }
         }
 
-        // Context chips: location, weather, mood
+        // Context chips: location, weather
         val chips = buildList {
             entry.locationName?.let { add("\uD83D\uDCCD $it") }
             entry.weatherCondition?.let { condition ->
                 val temp = entry.weatherTemp?.let { "${it.toInt()}\u00B0" } ?: ""
                 add("$temp ${condition.replaceFirstChar { it.uppercase() }}")
             }
-            entry.mood?.let { add(moodEmoji(it) + " " + it.replaceFirstChar { c -> c.uppercase() }) }
         }
 
         if (chips.isNotEmpty()) {
@@ -290,13 +289,4 @@ private fun MemoryCard(
     }
 }
 
-private fun moodEmoji(mood: String): String {
-    return when (mood.lowercase()) {
-        "great" -> "\uD83D\uDE0A"
-        "good" -> "\uD83D\uDE42"
-        "okay" -> "\uD83D\uDE10"
-        "low" -> "\uD83D\uDE14"
-        "bad" -> "\uD83D\uDE1E"
-        else -> "\u2728"
-    }
-}
+// moodEmoji function removed — mood feature deprecated

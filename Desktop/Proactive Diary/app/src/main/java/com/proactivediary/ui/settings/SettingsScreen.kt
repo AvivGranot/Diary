@@ -418,7 +418,7 @@ fun SettingsScreen(
                 SettingsDivider()
                 SettingsRow(
                     label = "Theme Evolution",
-                    value = "Mood & growth patterns",
+                    value = "Writing & growth patterns",
                     onClick = onNavigateToThemeEvolution
                 )
             }

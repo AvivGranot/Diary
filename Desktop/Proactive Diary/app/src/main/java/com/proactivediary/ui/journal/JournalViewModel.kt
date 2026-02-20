@@ -293,7 +293,7 @@ class JournalViewModel @Inject constructor(
             wordCount = wordCount,
             createdAt = createdAt,
             imageCount = imageCount,
-            mood = mood
+            mood = null // mood feature removed
         )
     }
 
@@ -450,7 +450,7 @@ class JournalViewModel @Inject constructor(
                         aiInsight = AIInsightData(
                             summary = insight.summary,
                             themes = themes,
-                            moodTrend = insight.moodTrend,
+                            moodTrend = null, // mood feature removed
                             promptSuggestions = prompts,
                             isAvailable = true,
                             isLocked = false

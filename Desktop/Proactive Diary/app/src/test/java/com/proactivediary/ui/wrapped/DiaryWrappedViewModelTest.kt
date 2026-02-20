@@ -37,8 +37,8 @@ class DiaryWrappedViewModelTest {
     // ─── WrappedCardType enum tests ───
 
     @Test
-    fun `WrappedCardType has 12 types`() {
-        assertEquals(12, WrappedCardType.entries.size)
+    fun `WrappedCardType has 10 types`() {
+        assertEquals(10, WrappedCardType.entries.size)
     }
 
     @Test
@@ -50,8 +50,6 @@ class DiaryWrappedViewModelTest {
         assertTrue(types.contains("LONGEST_STREAK"))
         assertTrue(types.contains("FAVORITE_TIME"))
         assertTrue(types.contains("BUSIEST_DAY"))
-        assertTrue(types.contains("TOP_MOOD"))
-        assertTrue(types.contains("MOOD_SHIFT"))
         assertTrue(types.contains("TOP_LOCATION"))
         assertTrue(types.contains("LONGEST_ENTRY"))
         assertTrue(types.contains("FIRST_ENTRY"))

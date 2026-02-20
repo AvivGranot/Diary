@@ -254,7 +254,7 @@ class SettingsViewModel @Inject constructor(
                     "id" to entry.id,
                     "title" to entry.title,
                     "content" to entry.content,
-                    "mood" to entry.mood,
+                    // "mood" removed — mood feature deprecated
                     "tags" to tags,
                     "wordCount" to entry.wordCount,
                     "createdAt" to formatIso8601(entry.createdAt),

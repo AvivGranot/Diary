@@ -14,20 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Instant
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 import javax.inject.Inject
-
-/**
- * A single month's mood data point.
- */
-data class MoodDataPoint(
-    val month: String,           // "Jan", "Feb", etc.
-    val yearMonth: String,       // "2025-01"
-    val averageMoodScore: Float, // 1-5 scale (awful=1, great=5)
-    val entryCount: Int,
-    val dominantMood: String
-)
 
 /**
  * A word that appears frequently in entries.
@@ -39,13 +26,11 @@ data class TopicWord(
 )
 
 /**
- * A location with its associated mood.
+ * A location with entry count.
  */
 data class LocationMood(
     val name: String,
-    val entryCount: Int,
-    val averageMoodScore: Float,
-    val dominantMood: String
+    val entryCount: Int
 )
 
 /**
@@ -54,19 +39,15 @@ data class LocationMood(
 data class TimePattern(
     val label: String, // "Morning", "Afternoon", "Evening", "Night"
     val entryCount: Int,
-    val averageMoodScore: Float,
     val percentage: Float
 )
 
 data class ThemeEvolutionUiState(
-    val moodTimeline: List<MoodDataPoint> = emptyList(),
     val topicWords: List<TopicWord> = emptyList(),
     val locationMoods: List<LocationMood> = emptyList(),
     val timePatterns: List<TimePattern> = emptyList(),
     val totalEntries: Int = 0,
     val totalWords: Int = 0,
-    val averageMoodScore: Float = 0f,
-    val moodTrend: String = "",  // "improving", "stable", "declining"
     val isLoading: Boolean = true
 )
 
@@ -79,8 +60,6 @@ class ThemeEvolutionViewModel @Inject constructor(
     val uiState: StateFlow<ThemeEvolutionUiState> = _uiState.asStateFlow()
 
     private val zone = ZoneId.systemDefault()
-    private val monthFormatter = DateTimeFormatter.ofPattern("MMM", Locale.US)
-    private val yearMonthFormatter = DateTimeFormatter.ofPattern("yyyy-MM", Locale.US)
 
     // Common words to exclude from topic analysis
     private val stopWords = setOf(
@@ -115,61 +94,23 @@ class ThemeEvolutionViewModel @Inject constructor(
                 val entries = entryDao.getAllSync()
                 if (entries.isEmpty()) return@withContext null
 
-                val moodTimeline = buildMoodTimeline(entries)
                 val topicWords = buildTopicWords(entries)
                 val locationMoods = buildLocationMoods(entries)
                 val timePatterns = buildTimePatterns(entries)
                 val totalEntries = entries.size
                 val totalWords = entries.sumOf { it.wordCount }
 
-                val moods = entries.mapNotNull { it.mood }
-                val avgMood = if (moods.isNotEmpty()) {
-                    moods.map { moodScore(it) }.average().toFloat()
-                } else 0f
-
-                val moodTrend = calculateMoodTrend(moodTimeline)
-
                 ThemeEvolutionUiState(
-                    moodTimeline = moodTimeline,
                     topicWords = topicWords,
                     locationMoods = locationMoods,
                     timePatterns = timePatterns,
                     totalEntries = totalEntries,
                     totalWords = totalWords,
-                    averageMoodScore = avgMood,
-                    moodTrend = moodTrend,
                     isLoading = false
                 )
             }
 
             _uiState.update { result ?: it.copy(isLoading = false) }
-        }
-    }
-
-    private fun buildMoodTimeline(entries: List<EntryEntity>): List<MoodDataPoint> {
-        val grouped = entries
-            .filter { it.mood != null }
-            .groupBy { entry ->
-                val date = Instant.ofEpochMilli(entry.createdAt).atZone(zone).toLocalDate()
-                date.format(yearMonthFormatter)
-            }
-            .toSortedMap()
-
-        return grouped.map { (yearMonth, monthEntries) ->
-            val moods = monthEntries.mapNotNull { it.mood }
-            val avgScore = moods.map { moodScore(it) }.average().toFloat()
-            val dominant = moods.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: ""
-            val date = monthEntries.first().let {
-                Instant.ofEpochMilli(it.createdAt).atZone(zone).toLocalDate()
-            }
-
-            MoodDataPoint(
-                month = date.format(monthFormatter),
-                yearMonth = yearMonth,
-                averageMoodScore = avgScore,
-                entryCount = monthEntries.size,
-                dominantMood = dominant
-            )
         }
     }
 
@@ -205,24 +146,18 @@ class ThemeEvolutionViewModel @Inject constructor(
 
     private fun buildLocationMoods(entries: List<EntryEntity>): List<LocationMood> {
         val locationEntries = entries
-            .filter { it.locationName != null && it.mood != null }
+            .filter { it.locationName != null }
             .groupBy { it.locationName!! }
 
         return locationEntries
             .filter { it.value.size >= 2 } // Only locations with 2+ entries
             .map { (location, locEntries) ->
-                val moods = locEntries.mapNotNull { it.mood }
-                val avgScore = moods.map { moodScore(it) }.average().toFloat()
-                val dominant = moods.groupingBy { it }.eachCount().maxByOrNull { it.value }?.key ?: ""
-
                 LocationMood(
                     name = location,
-                    entryCount = locEntries.size,
-                    averageMoodScore = avgScore,
-                    dominantMood = dominant
+                    entryCount = locEntries.size
                 )
             }
-            .sortedByDescending { it.averageMoodScore }
+            .sortedByDescending { it.entryCount }
             .take(10)
     }
 
@@ -241,41 +176,13 @@ class ThemeEvolutionViewModel @Inject constructor(
 
         return listOf("Morning", "Afternoon", "Evening", "Night").map { slot ->
             val slotEntries = timeSlots[slot] ?: emptyList()
-            val moods = slotEntries.mapNotNull { it.mood }
-            val avgScore = if (moods.isNotEmpty()) moods.map { moodScore(it) }.average().toFloat() else 0f
 
             TimePattern(
                 label = slot,
                 entryCount = slotEntries.size,
-                averageMoodScore = avgScore,
                 percentage = if (total > 0) slotEntries.size / total else 0f
             )
         }
     }
 
-    private fun calculateMoodTrend(timeline: List<MoodDataPoint>): String {
-        if (timeline.size < 2) return "stable"
-
-        val recentHalf = timeline.takeLast(timeline.size / 2)
-        val olderHalf = timeline.take(timeline.size / 2)
-
-        val recentAvg = recentHalf.map { it.averageMoodScore }.average()
-        val olderAvg = olderHalf.map { it.averageMoodScore }.average()
-
-        val diff = recentAvg - olderAvg
-        return when {
-            diff > 0.3 -> "improving"
-            diff < -0.3 -> "declining"
-            else -> "stable"
-        }
-    }
-
-    private fun moodScore(mood: String): Float = when (mood) {
-        "great" -> 5f
-        "good" -> 4f
-        "okay" -> 3f
-        "bad" -> 2f
-        "awful" -> 1f
-        else -> 3f
-    }
 }

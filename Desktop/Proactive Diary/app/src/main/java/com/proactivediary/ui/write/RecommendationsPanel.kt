@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material.icons.outlined.Place
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -470,16 +471,13 @@ private fun RecentEntryCard(
             modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Mood dot
-            if (entry.mood != null) {
-                val moodColor = DiaryThemeConfig.colorForKey(entry.mood)
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .background(moodColor, CircleShape)
-                )
-                Spacer(Modifier.width(10.dp))
-            }
+            // Mint accent dot (mood feature removed)
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+            )
+            Spacer(Modifier.width(10.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(

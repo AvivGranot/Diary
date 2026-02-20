@@ -38,7 +38,7 @@ import com.proactivediary.ui.theme.DiaryColors
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteInboxScreen(
-    onBack: () -> Unit,
+    onBack: (() -> Unit)? = null,
     onNoteClick: (String) -> Unit,
     onComposeNote: () -> Unit,
     viewModel: NoteInboxViewModel = hiltViewModel()
@@ -48,26 +48,28 @@ fun NoteInboxScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Your Notes", color = DiaryColors.Ink) },
+                title = { Text("Notes", color = MaterialTheme.colorScheme.onSurface) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = DiaryColors.Ink)
+                    if (onBack != null) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = MaterialTheme.colorScheme.onSurface)
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = DiaryColors.Paper
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
         },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onComposeNote,
-                containerColor = DiaryColors.WineRed
+                containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.Add, "Send a note", tint = androidx.compose.ui.graphics.Color.White)
+                Icon(Icons.Default.Add, "Send a note", tint = MaterialTheme.colorScheme.onPrimary)
             }
         },
-        containerColor = DiaryColors.Paper
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         if (notes.isEmpty()) {
             Box(
@@ -80,14 +82,14 @@ fun NoteInboxScreen(
                     Text(
                         text = "Your inbox is waiting",
                         style = MaterialTheme.typography.headlineSmall,
-                        color = DiaryColors.Ink
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Send a note first \u2014 kindness comes back.",
                         style = MaterialTheme.typography.bodyMedium,
                         fontStyle = FontStyle.Italic,
-                        color = DiaryColors.Pencil,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
                 }

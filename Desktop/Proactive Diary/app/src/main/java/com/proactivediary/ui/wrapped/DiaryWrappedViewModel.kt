@@ -42,8 +42,6 @@ enum class WrappedCardType {
     LONGEST_STREAK,
     FAVORITE_TIME,
     BUSIEST_DAY,
-    TOP_MOOD,
-    MOOD_SHIFT,
     TOP_LOCATION,
     LONGEST_ENTRY,
     FIRST_ENTRY,
@@ -192,48 +190,7 @@ class DiaryWrappedViewModel @Inject constructor(
             ))
         }
 
-        // 7. TOP MOOD
-        val moods = entries.mapNotNull { it.mood }
-        if (moods.isNotEmpty()) {
-            val moodCounts = moods.groupingBy { it }.eachCount()
-            val topMood = moodCounts.maxByOrNull { it.value }!!
-            val moodEmoji = moodToEmoji(topMood.key)
-            cards.add(WrappedCard(
-                type = WrappedCardType.TOP_MOOD,
-                headline = "Your most common feeling",
-                bigNumber = moodEmoji,
-                subtitle = "${topMood.key.replaceFirstChar { it.uppercase() }} \u2014 ${topMood.value} entries",
-                detail = moodNarrative(topMood.key, topMood.value, totalEntries),
-                accentColorHex = moodColor(topMood.key)
-            ))
-
-            // 8. MOOD SHIFT — compare first half vs second half
-            if (entries.size >= 10) {
-                val sorted = entries.sortedBy { it.createdAt }
-                val half = sorted.size / 2
-                val firstHalfMoods = sorted.take(half).mapNotNull { it.mood }
-                val secondHalfMoods = sorted.drop(half).mapNotNull { it.mood }
-
-                val firstTopMood = firstHalfMoods.groupingBy { it }.eachCount()
-                    .maxByOrNull { it.value }?.key
-                val secondTopMood = secondHalfMoods.groupingBy { it }.eachCount()
-                    .maxByOrNull { it.value }?.key
-
-                if (firstTopMood != null && secondTopMood != null && firstTopMood != secondTopMood) {
-                    cards.add(WrappedCard(
-                        type = WrappedCardType.MOOD_SHIFT,
-                        headline = "Your mood shifted",
-                        bigNumber = "${moodToEmoji(firstTopMood)} \u2192 ${moodToEmoji(secondTopMood)}",
-                        subtitle = "From ${firstTopMood} to ${secondTopMood}",
-                        detail = "In your earlier entries, you felt mostly ${firstTopMood}. " +
-                                "More recently, ${secondTopMood} became the dominant note.",
-                        accentColorHex = 0xFF6B4A5B
-                    ))
-                }
-            }
-        }
-
-        // 9. TOP LOCATION
+        // 7. TOP LOCATION
         val locations = entries.mapNotNull { it.locationName }
         if (locations.isNotEmpty()) {
             val locCounts = locations.groupingBy { it }.eachCount()
@@ -248,7 +205,7 @@ class DiaryWrappedViewModel @Inject constructor(
             ))
         }
 
-        // 10. LONGEST ENTRY
+        // 8. LONGEST ENTRY
         val longestEntry = entries.maxByOrNull { it.wordCount }
         if (longestEntry != null && longestEntry.wordCount > 50) {
             val date = Instant.ofEpochMilli(longestEntry.createdAt).atZone(zone).toLocalDate()
@@ -264,7 +221,7 @@ class DiaryWrappedViewModel @Inject constructor(
             ))
         }
 
-        // 11. FIRST ENTRY
+        // 9. FIRST ENTRY
         val firstEntry = entries.minByOrNull { it.createdAt }
         if (firstEntry != null) {
             val date = Instant.ofEpochMilli(firstEntry.createdAt).atZone(zone).toLocalDate()
@@ -278,7 +235,7 @@ class DiaryWrappedViewModel @Inject constructor(
             ))
         }
 
-        // 12. CLOSING
+        // 10. CLOSING
         cards.add(WrappedCard(
             type = WrappedCardType.CLOSING,
             headline = "Keep going",
@@ -338,36 +295,6 @@ class DiaryWrappedViewModel @Inject constructor(
         words >= 10_000 -> "10,000 words of honest self-expression."
         words >= 5_000 -> "5,000 words. Every one of them mattered."
         else -> "Every word is a step toward understanding yourself."
-    }
-
-    private fun moodNarrative(mood: String, count: Int, total: Int): String {
-        val pct = (count * 100 / total)
-        return when (mood) {
-            "great" -> "$pct% of your entries carry joy. You\u2019re doing something right."
-            "good" -> "$pct% of the time, life felt good. That\u2019s a strong foundation."
-            "okay" -> "Okay is honest. $pct% of your entries sat in the middle."
-            "bad" -> "$pct% of entries felt heavy. Writing through hard days takes courage."
-            "awful" -> "You wrote through the hard days. $pct% of entries carried real weight."
-            else -> "$pct% of your entries shared this feeling."
-        }
-    }
-
-    private fun moodColor(mood: String): Long = when (mood) {
-        "great" -> 0xFF4A6B41
-        "good" -> 0xFF5B7A4A
-        "okay" -> 0xFF7A6B4A
-        "bad" -> 0xFF7A4A4A
-        "awful" -> 0xFF6B3E3E
-        else -> 0xFF5B5B5B
-    }
-
-    private fun moodToEmoji(mood: String): String = when (mood) {
-        "great" -> "\uD83D\uDE0A"
-        "good" -> "\uD83D\uDE42"
-        "okay" -> "\uD83D\uDE10"
-        "bad" -> "\uD83D\uDE1E"
-        "awful" -> "\uD83D\uDE2D"
-        else -> "\u2728"
     }
 
     private fun calculateLongestStreak(entries: List<EntryEntity>): Int {

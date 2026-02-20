@@ -34,7 +34,7 @@ import com.proactivediary.ui.theme.CormorantGaramond
 data class AIInsightData(
     val summary: String = "",
     val themes: List<String> = emptyList(),
-    val moodTrend: String = "stable",
+    @Deprecated("Mood feature removed") val moodTrend: String? = null,
     val promptSuggestions: List<String> = emptyList(),
     val isAvailable: Boolean = false,
     val isLocked: Boolean = false // true for free users
@@ -66,16 +66,11 @@ fun AIInsightCard(
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val moodColor = when (data.moodTrend) {
-                    "improving" -> MaterialTheme.colorScheme.primary
-                    "declining" -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.secondary
-                }
                 Box(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(moodColor)
+                        .background(MaterialTheme.colorScheme.secondary)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
@@ -85,21 +80,6 @@ fun AIInsightCard(
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Normal,
                         color = MaterialTheme.colorScheme.onSurface
-                    )
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                Text(
-                    text = when (data.moodTrend) {
-                        "improving" -> "Trending up"
-                        "declining" -> "Trending down"
-                        "mixed" -> "Mixed week"
-                        else -> "Steady"
-                    },
-                    style = TextStyle(
-                        fontFamily = FontFamily.Default,
-                        fontSize = 11.sp,
-                        fontStyle = FontStyle.Italic,
-                        color = moodColor
                     )
                 )
             }

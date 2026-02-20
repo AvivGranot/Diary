@@ -17,7 +17,7 @@ object FirestoreMapper {
     fun entryToMap(entry: EntryEntity): Map<String, Any?> = mapOf(
         "title" to entry.title,
         "content" to entry.content,
-        "mood" to entry.mood,
+        // "mood" removed — mood feature deprecated
         "tags" to entry.tags,
         "taggedContacts" to entry.taggedContacts,
         "images" to entry.images,
@@ -43,7 +43,7 @@ object FirestoreMapper {
                 id = doc.id,
                 title = doc.getString("title") ?: "",
                 content = doc.getString("content") ?: "",
-                mood = doc.getString("mood"),
+                mood = null, // mood feature deprecated — stop reading from Firestore
                 tags = doc.getString("tags") ?: "[]",
                 taggedContacts = doc.getString("taggedContacts") ?: "[]",
                 images = doc.getString("images") ?: "[]",

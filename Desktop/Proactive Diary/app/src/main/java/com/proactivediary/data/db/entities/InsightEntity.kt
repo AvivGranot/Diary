@@ -10,6 +10,7 @@ data class InsightEntity(
     @ColumnInfo(name = "week_start") val weekStart: Long,
     val summary: String,
     val themes: String = "[]",
+    @Deprecated("Mood tracking removed. Column retained for SQLite backward compatibility.")
     @ColumnInfo(name = "mood_trend") val moodTrend: String = "stable",
     @ColumnInfo(name = "prompt_suggestions") val promptSuggestions: String = "[]",
     @ColumnInfo(name = "generated_at") val generatedAt: Long

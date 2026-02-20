@@ -132,7 +132,7 @@ class TemplateRepository @Inject constructor(
             ),
             TemplateEntity(
                 id = "tpl_mood_checkin",
-                title = "Mood Check-In",
+                title = "Feelings Check-In",
                 description = "Understand how you're feeling",
                 prompts = gson.toJson(listOf(
                     "How am I feeling right now? (1-10)",

@@ -55,14 +55,6 @@ class WeeklyDigestWorker @AssistedInject constructor(
         val totalWords = entries.sumOf { it.wordCount }
         val streak = streakRepository.calculateWritingStreak()
 
-        // Dominant mood
-        val moods = entries.mapNotNull { it.mood }
-        val dominantMood = moods
-            .groupingBy { it }
-            .eachCount()
-            .maxByOrNull { it.value }
-            ?.key
-
         // Most written day
         val dayGroups = entries.groupBy { entry ->
             Instant.ofEpochMilli(entry.createdAt)
@@ -87,7 +79,7 @@ class WeeklyDigestWorker @AssistedInject constructor(
             entryCount = totalEntries,
             wordCount = totalWords,
             streak = streak,
-            dominantMood = dominantMood,
+            dominantMood = null,
             busiestDay = busiestDay,
             topLocation = topLocation
         )
@@ -144,11 +136,6 @@ class WeeklyDigestWorker @AssistedInject constructor(
         val wordLabel = if (digest.wordCount == 1) "word" else "words"
         val entryLabel = if (digest.entryCount == 1) "entry" else "entries"
         parts.add("${digest.entryCount} $entryLabel \u00B7 ${formatNumber(digest.wordCount)} $wordLabel")
-
-        // Mood
-        digest.dominantMood?.let {
-            parts.add("You felt mostly $it this week")
-        }
 
         // Streak
         if (digest.streak > 0) {

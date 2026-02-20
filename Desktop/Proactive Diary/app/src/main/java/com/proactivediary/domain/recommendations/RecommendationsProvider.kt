@@ -44,7 +44,7 @@ data class RecentEntry(
     val id: String,
     val title: String,
     val excerpt: String,
-    val mood: String?,
+    @Deprecated("Mood feature removed") val mood: String? = null,
     val createdAt: Long
 )
 
@@ -179,7 +179,7 @@ class RecommendationsProvider @Inject constructor(
                         id = entry.id,
                         title = entry.title.ifBlank { plain.take(40).trim() },
                         excerpt = plain.take(80).trim(),
-                        mood = entry.mood,
+                        mood = null,
                         createdAt = entry.createdAt
                     )
                 }

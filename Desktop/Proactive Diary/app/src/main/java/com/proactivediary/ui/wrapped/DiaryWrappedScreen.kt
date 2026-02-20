@@ -384,48 +384,6 @@ private fun WrappedCardView(card: WrappedCard) {
                     )
                 }
 
-                WrappedCardType.MOOD_SHIFT -> {
-                    Text(
-                        text = card.headline,
-                        style = TextStyle(
-                            fontFamily = CormorantGaramond,
-                            fontSize = 18.sp,
-                            color = subtextColor,
-                            textAlign = TextAlign.Center
-                        )
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        text = card.bigNumber,
-                        style = TextStyle(
-                            fontSize = 48.sp,
-                            textAlign = TextAlign.Center
-                        )
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = card.subtitle,
-                        style = TextStyle(
-                            fontFamily = CormorantGaramond,
-                            fontSize = 16.sp,
-                            color = subtextColor,
-                            textAlign = TextAlign.Center
-                        )
-                    )
-                    Spacer(Modifier.height(24.dp))
-                    Text(
-                        text = card.detail,
-                        style = TextStyle(
-                            fontFamily = CormorantGaramond,
-                            fontSize = 14.sp,
-                            fontStyle = FontStyle.Italic,
-                            color = subtextColor,
-                            textAlign = TextAlign.Center,
-                            lineHeight = 20.sp
-                        )
-                    )
-                }
-
                 else -> {
                     // Standard big-number card layout
                     Text(

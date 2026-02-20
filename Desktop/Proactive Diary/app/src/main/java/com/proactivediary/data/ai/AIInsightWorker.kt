@@ -84,12 +84,13 @@ class AIInsightWorker @AssistedInject constructor(
 
             val result = aiInsightService.generateInsight(entriesForAI)
             if (result != null) {
+                @Suppress("DEPRECATION")
                 val insight = InsightEntity(
                     id = UUID.randomUUID().toString(),
                     weekStart = weekStartMs,
                     summary = result.summary,
                     themes = gson.toJson(result.themes),
-                    moodTrend = result.moodTrend,
+                    moodTrend = "stable",
                     promptSuggestions = gson.toJson(result.promptSuggestions),
                     generatedAt = System.currentTimeMillis()
                 )

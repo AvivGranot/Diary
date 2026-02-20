@@ -25,8 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
-import com.proactivediary.ui.theme.DiaryColors
-import com.proactivediary.ui.theme.DynamicColors
+import com.proactivediary.ui.theme.DarkPalette
 import com.proactivediary.ui.theme.PlusJakartaSans
 import java.io.File
 import java.io.FileOutputStream
@@ -49,7 +48,6 @@ data class ShareCardData(
     val excerpt: String,
     val title: String = "",
     val dateFormatted: String = "",
-    val mood: String? = null,
     val colorKey: String = "indigo"
 )
 
@@ -82,15 +80,6 @@ fun ShareCardPreview(
     val textColor = textColorForStyle(style)
     val secondaryColor = secondaryTextForStyle(style)
 
-    val moodEmoji = when (data.mood) {
-        "great" -> "\uD83D\uDE04"
-        "good" -> "\uD83D\uDE0A"
-        "okay" -> "\uD83D\uDE10"
-        "bad" -> "\uD83D\uDE1E"
-        "awful" -> "\uD83D\uDE2D"
-        else -> null
-    }
-
     Box(
         modifier = modifier
             .width(aspectRatio.widthDp.dp)
@@ -103,14 +92,6 @@ fun ShareCardPreview(
                 .padding(32.dp)
                 .align(Alignment.Center)
         ) {
-            if (moodEmoji != null) {
-                Text(
-                    text = moodEmoji,
-                    fontSize = 32.sp,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-            }
-
             Text(
                 text = "\u201C",
                 style = TextStyle(
@@ -168,8 +149,7 @@ fun ShareCardPreview(
 
 data class StreakShareData(
     val streakCount: Int,
-    val milestone: String,
-    val mood: String? = null
+    val milestone: String
 )
 
 @Composable
@@ -177,8 +157,8 @@ fun StreakCardPreview(
     data: StreakShareData,
     modifier: Modifier = Modifier
 ) {
-    val gradient = data.mood?.let { DynamicColors.moodGradient(it) }
-        ?: listOf(DiaryColors.ElectricIndigo, DiaryColors.NeonPink)
+    // Use mint green gradient (mood feature removed)
+    val gradient = listOf(DarkPalette.primary, Color(0xFF22C55E))
 
     Box(
         modifier = modifier

@@ -32,8 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.proactivediary.ui.theme.DiaryColors
-import com.proactivediary.ui.theme.DynamicColors
+import com.proactivediary.ui.theme.DarkPalette
 import com.proactivediary.ui.theme.PlusJakartaSans
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -56,8 +55,8 @@ fun DiaryCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val moodAccent = data.mood?.let { DynamicColors.moodAccent(it) }
-        ?: DiaryColors.Pencil
+    // All entries use mint green accent (mood feature removed)
+    val accentColor = DarkPalette.primary
 
     val displayTitle = data.title.ifBlank {
         data.content.lines().firstOrNull()?.take(60) ?: ""
@@ -79,14 +78,8 @@ fun DiaryCard(
         sdf.format(Date(data.createdAt))
     } catch (_: Exception) { "" }
 
-    val moodEmoji = when (data.mood) {
-        "great" -> "\uD83D\uDE04"
-        "good" -> "\uD83D\uDE0A"
-        "okay" -> "\uD83D\uDE10"
-        "bad" -> "\uD83D\uDE1E"
-        "awful" -> "\uD83D\uDE2D"
-        else -> null
-    }
+    // Mood emoji removed — mood feature deleted
+    val moodEmoji: String? = null
 
     Surface(
         modifier = modifier
@@ -101,7 +94,7 @@ fun DiaryCard(
                 .clickable(onClick = onClick)
                 .height(IntrinsicSize.Min)
         ) {
-            // Mood accent strip
+            // Mint green accent strip (all entries)
             Box(
                 modifier = Modifier
                     .width(4.dp)
@@ -109,8 +102,7 @@ fun DiaryCard(
                     .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp))
                     .background(
                         brush = Brush.verticalGradient(
-                            colors = data.mood?.let { DynamicColors.moodGradient(it) }
-                                ?: listOf(moodAccent, moodAccent.copy(alpha = 0.5f))
+                            colors = listOf(accentColor, accentColor.copy(alpha = 0.5f))
                         )
                     )
             )
@@ -157,7 +149,7 @@ fun DiaryCard(
                             fontFamily = PlusJakartaSans,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
-                            color = moodAccent.copy(alpha = 0.7f)
+                            color = accentColor.copy(alpha = 0.7f)
                         ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,

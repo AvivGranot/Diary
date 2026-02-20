@@ -16,7 +16,6 @@ import javax.inject.Singleton
 data class AIInsightResult(
     val summary: String,
     val themes: List<String>,
-    val moodTrend: String,
     val promptSuggestions: List<String>
 )
 
@@ -57,14 +56,12 @@ class AIInsightService @Inject constructor(
 Given a week's journal entries, provide:
 1. A brief, warm summary of the week (2-3 sentences)
 2. Key themes (3-5 single words or short phrases)
-3. Mood trend: one of "improving", "stable", "declining", or "mixed"
-4. 3 personalized writing prompts for the upcoming week based on what the user wrote about
+3. 3 personalized writing prompts for the upcoming week based on what the user wrote about
 
 Respond ONLY with valid JSON in this exact format:
 {
   "summary": "...",
   "themes": ["...", "..."],
-  "moodTrend": "...",
   "promptSuggestions": ["...", "...", "..."]
 }
 
@@ -108,7 +105,6 @@ Be empathetic, supportive, and insightful. Never be judgmental."""
             AIInsightResult(
                 summary = insightJson.summary ?: "No summary available",
                 themes = insightJson.themes ?: emptyList(),
-                moodTrend = insightJson.moodTrend ?: "stable",
                 promptSuggestions = insightJson.promptSuggestions ?: emptyList()
             )
         } catch (_: Exception) {

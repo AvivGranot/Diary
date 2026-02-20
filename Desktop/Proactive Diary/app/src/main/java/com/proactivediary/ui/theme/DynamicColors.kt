@@ -6,6 +6,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import java.util.Calendar
 
+/**
+ * Time-of-day awareness for the Write canvas background.
+ * Mood and streak functions have been removed.
+ */
 object DynamicColors {
 
     enum class TimePeriod { MORNING, AFTERNOON, EVENING, NIGHT }
@@ -20,61 +24,34 @@ object DynamicColors {
         }
     }
 
+    /**
+     * Returns subtle dark gradient colors for the Write canvas based on time of day.
+     */
     fun backgroundGradient(timePeriod: TimePeriod = currentTimePeriod()): List<Color> {
-        return when (timePeriod) {
-            TimePeriod.MORNING -> listOf(Color(0xFFFFF7ED), Color(0xFFFEF3C7))
-            TimePeriod.AFTERNOON -> listOf(Color(0xFFEFF6FF), Color(0xFFDBEAFE))
-            TimePeriod.EVENING -> listOf(Color(0xFFFDF2F8), Color(0xFFFCE7F3))
-            TimePeriod.NIGHT -> listOf(Color(0xFF1E1B4B), Color(0xFF312E81))
-        }
+        return TimeGradients[timePeriod.name.lowercase()] ?: TimeGradients["night"]!!
     }
 
-    fun isNightMode(): Boolean = currentTimePeriod() == TimePeriod.NIGHT
+    /**
+     * @deprecated Use isSystemInDarkTheme() instead. Kept temporarily for migration.
+     */
+    @Deprecated("Use isSystemInDarkTheme() from Theme.kt", replaceWith = ReplaceWith("true"))
+    fun isNightMode(): Boolean = true // Always dark mode during migration
 
     fun accentForTime(timePeriod: TimePeriod = currentTimePeriod()): Color {
-        return when (timePeriod) {
-            TimePeriod.MORNING -> DiaryColors.SunsetOrange
-            TimePeriod.AFTERNOON -> DiaryColors.ElectricBlue
-            TimePeriod.EVENING -> DiaryColors.NeonPink
-            TimePeriod.NIGHT -> DiaryColors.VividPurple
-        }
+        // All time periods now return mint green accent
+        return Color(0xFF4ADE80)
     }
 
     fun textColorForTime(timePeriod: TimePeriod = currentTimePeriod()): Color {
-        return if (timePeriod == TimePeriod.NIGHT) Color(0xFFE8E7E5) else Color(0xFF1E293B)
+        return Color(0xFFE0E0E0) // Always light text on dark background
     }
 
     fun secondaryTextForTime(timePeriod: TimePeriod = currentTimePeriod()): Color {
-        return if (timePeriod == TimePeriod.NIGHT) Color(0xFFA0A09E) else Color(0xFF64748B)
+        return Color(0xFF888888) // Always muted text on dark background
     }
 
     fun surfaceForTime(timePeriod: TimePeriod = currentTimePeriod()): Color {
-        return if (timePeriod == TimePeriod.NIGHT) Color(0xFF1E1B4B).copy(alpha = 0.6f)
-        else Color.White.copy(alpha = 0.7f)
-    }
-
-    fun moodGradient(moodKey: String): List<Color> {
-        return MoodGradients[moodKey] ?: MoodGradients["okay"]!!
-    }
-
-    fun moodAccent(moodKey: String): Color {
-        return when (moodKey) {
-            "great" -> DiaryColors.ElectricIndigo
-            "good" -> DiaryColors.CyberTeal
-            "okay" -> DiaryColors.SunsetOrange
-            "bad" -> DiaryColors.VividPurple
-            "awful" -> Color(0xFF64748B)
-            else -> DiaryColors.ElectricIndigo
-        }
-    }
-
-    fun streakGlow(streakDays: Int): Color {
-        return when {
-            streakDays >= 30 -> DiaryColors.NeonPink.copy(alpha = 0.4f)
-            streakDays >= 14 -> DiaryColors.ElectricIndigo.copy(alpha = 0.3f)
-            streakDays >= 7 -> DiaryColors.CyberTeal.copy(alpha = 0.2f)
-            else -> Color.Transparent
-        }
+        return Color(0xFF111111).copy(alpha = 0.6f)
     }
 
     @Composable
