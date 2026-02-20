@@ -90,7 +90,7 @@ fun DiaryHomeScreen(
                 ),
                 style = TextStyle(
                     fontFamily = PlusJakartaSans,
-                    fontSize = 16.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -148,7 +148,7 @@ fun DiaryHomeScreen(
                         text = "Your diary awaits",
                         style = TextStyle(
                             fontFamily = CormorantGaramond,
-                            fontSize = 28.sp,
+                            fontSize = 22.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     )
@@ -188,7 +188,7 @@ fun DiaryHomeScreen(
                             text = dateGroup,
                             style = TextStyle(
                                 fontFamily = PlusJakartaSans,
-                                fontSize = 13.sp,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -305,10 +305,10 @@ private fun TodaysPromptCard(
                 text = prompt,
                 style = TextStyle(
                     fontFamily = CormorantGaramond,
-                    fontSize = 22.sp,
+                    fontSize = 18.sp,
                     fontWeight = FontWeight.Normal,
                     color = MaterialTheme.colorScheme.onSurface,
-                    lineHeight = 28.sp
+                    lineHeight = 24.sp
                 )
             )
 
@@ -322,7 +322,7 @@ private fun TodaysPromptCard(
                     containerColor = extendedColors.accent,
                     contentColor = MaterialTheme.colorScheme.background
                 ),
-                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
             ) {
                 Text(
                     text = "Write now",

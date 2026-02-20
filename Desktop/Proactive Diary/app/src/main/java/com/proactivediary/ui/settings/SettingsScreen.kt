@@ -407,7 +407,7 @@ fun SettingsScreen(
                     text = "Privacy Policy",
                     style = TextStyle(
                         fontFamily = CormorantGaramond,
-                        fontSize = 20.sp,
+                        fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 )
@@ -480,7 +480,7 @@ fun SettingsScreen(
                     text = "Terms of Service",
                     style = TextStyle(
                         fontFamily = CormorantGaramond,
-                        fontSize = 20.sp,
+                        fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 )
@@ -524,7 +524,7 @@ fun SettingsScreen(
                     text = "Delete All Data",
                     style = TextStyle(
                         fontFamily = CormorantGaramond,
-                        fontSize = 20.sp,
+                        fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 )
@@ -557,7 +557,7 @@ fun SettingsScreen(
                     text = "Type DELETE to confirm",
                     style = TextStyle(
                         fontFamily = CormorantGaramond,
-                        fontSize = 20.sp,
+                        fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 )

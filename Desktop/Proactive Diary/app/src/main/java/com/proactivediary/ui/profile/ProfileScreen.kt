@@ -108,14 +108,14 @@ fun ProfileScreen(
                     model = state.photoUrl,
                     contentDescription = "Profile picture",
                     modifier = Modifier
-                        .size(DiarySpacing.avatarSizeLarge)
+                        .size(64.dp)
                         .clip(CircleShape),
                     contentScale = ContentScale.Crop
                 )
             } else {
                 Box(
                     modifier = Modifier
-                        .size(DiarySpacing.avatarSizeLarge)
+                        .size(64.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center
@@ -123,20 +123,20 @@ fun ProfileScreen(
                     Icon(
                         imageVector = Icons.Outlined.Person,
                         contentDescription = "Profile",
-                        modifier = Modifier.size(40.dp),
+                        modifier = Modifier.size(28.dp),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(DiarySpacing.sm))
+            Spacer(modifier = Modifier.height(DiarySpacing.xs))
 
             // Display name in Instrument Serif
             Text(
                 text = state.displayName.ifBlank { "Writer" },
                 style = MaterialTheme.typography.headlineLarge.copy(
                     fontFamily = InstrumentSerif,
-                    fontSize = 32.sp
+                    fontSize = 24.sp
                 ),
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -153,7 +153,7 @@ fun ProfileScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(DiarySpacing.lg))
+        Spacer(modifier = Modifier.height(DiarySpacing.md))
 
         // ── Stats row ───────────────────────────────────────────────────
         Row(
@@ -177,17 +177,17 @@ fun ProfileScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(DiarySpacing.xl))
+        Spacer(modifier = Modifier.height(DiarySpacing.md))
 
         // ── Recap cards (2x2 grid) ──────────────────────────────────────
         Column(
             modifier = Modifier.padding(horizontal = DiarySpacing.screenHorizontal),
-            verticalArrangement = Arrangement.spacedBy(DiarySpacing.sm)
+            verticalArrangement = Arrangement.spacedBy(DiarySpacing.xs)
         ) {
             // Row 1: Entries this year + Total likes
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(DiarySpacing.sm)
+                horizontalArrangement = Arrangement.spacedBy(DiarySpacing.xs)
             ) {
                 RecapCard(
                     modifier = Modifier.weight(1f),
@@ -215,7 +215,7 @@ fun ProfileScreen(
             // Row 2: Words written + Best writing day
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(DiarySpacing.sm)
+                horizontalArrangement = Arrangement.spacedBy(DiarySpacing.xs)
             ) {
                 RecapCard(
                     modifier = Modifier.weight(1f),
@@ -245,7 +245,7 @@ fun ProfileScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(DiarySpacing.xl))
+        Spacer(modifier = Modifier.height(DiarySpacing.md))
 
         // ── Menu items ──────────────────────────────────────────────────
         Column(
@@ -298,7 +298,7 @@ private fun StatItem(
             style = MaterialTheme.typography.titleLarge.copy(
                 fontFamily = PlusJakartaSans,
                 fontWeight = FontWeight.Bold,
-                fontSize = 22.sp
+                fontSize = 18.sp
             ),
             color = valueColor
         )
@@ -325,9 +325,9 @@ private fun RecapCard(
     Box(
         modifier = modifier
             .aspectRatio(1f)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(14.dp))
             .background(gradient)
-            .padding(DiarySpacing.md)
+            .padding(12.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -339,7 +339,7 @@ private fun RecapCard(
                 style = MaterialTheme.typography.displaySmall.copy(
                     fontFamily = InstrumentSerif,
                     fontWeight = FontWeight.Normal,
-                    fontSize = 40.sp
+                    fontSize = 32.sp
                 ),
                 color = Color.White
             )
@@ -382,21 +382,21 @@ private fun ProfileMenuItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(10.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = DiarySpacing.md, vertical = DiarySpacing.sm),
+            .padding(horizontal = DiarySpacing.sm, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = icon,
             contentDescription = label,
-            modifier = Modifier.size(22.dp),
+            modifier = Modifier.size(20.dp),
             tint = extendedColors.accent
         )
-        Spacer(modifier = Modifier.width(DiarySpacing.sm))
+        Spacer(modifier = Modifier.width(DiarySpacing.xs))
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyLarge.copy(
+            style = MaterialTheme.typography.bodyMedium.copy(
                 fontFamily = PlusJakartaSans
             ),
             color = MaterialTheme.colorScheme.onSurface,

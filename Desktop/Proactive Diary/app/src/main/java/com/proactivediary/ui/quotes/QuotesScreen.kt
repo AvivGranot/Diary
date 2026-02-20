@@ -99,13 +99,13 @@ fun QuotesScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 16.dp),
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = "Quotes",
-                            style = MaterialTheme.typography.headlineLarge,
+                            style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onBackground
                         )
@@ -299,7 +299,7 @@ private fun StoriesRow(
 ) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 20.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp)
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         // "Your quote" button — first item
         item(key = "your_quote") {
@@ -309,7 +309,7 @@ private fun StoriesRow(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                         .background(brush = MintGradient)
                         .padding(2.dp)
@@ -325,18 +325,18 @@ private fun StoriesRow(
                             Icons.Default.Add,
                             contentDescription = "Your quote",
                             tint = MintGreen,
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                     }
                 }
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = "Your quote",
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
                     color = MaterialTheme.colorScheme.onBackground,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.width(56.dp),
+                    modifier = Modifier.width(48.dp),
                     textAlign = TextAlign.Center
                 )
             }
@@ -351,7 +351,7 @@ private fun StoriesRow(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(56.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                         .background(brush = RainbowGradient)
                         .padding(2.dp)
@@ -359,7 +359,7 @@ private fun StoriesRow(
                     AuthorAvatar(
                         photoUrl = quote.authorPhotoUrl,
                         authorName = quote.authorName,
-                        size = 52
+                        size = 44
                     )
                 }
                 Spacer(modifier = Modifier.height(4.dp))
@@ -369,7 +369,7 @@ private fun StoriesRow(
                     color = MaterialTheme.colorScheme.onBackground,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.width(56.dp),
+                    modifier = Modifier.width(48.dp),
                     textAlign = TextAlign.Center
                 )
             }
@@ -398,7 +398,7 @@ private fun LeaderboardCardsRow(
 
             Column(
                 modifier = Modifier
-                    .width(140.dp)
+                    .width(120.dp)
                     .clip(RoundedCornerShape(14.dp))
                     .then(
                         if (isFirst) Modifier
@@ -438,7 +438,7 @@ private fun LeaderboardCardsRow(
                 AuthorAvatar(
                     photoUrl = quote.authorPhotoUrl,
                     authorName = quote.authorName,
-                    size = 44
+                    size = 36
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -495,7 +495,7 @@ private fun FeedPostCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 10.dp)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
         // Header: avatar + name + timestamp
         Row(
@@ -505,9 +505,9 @@ private fun FeedPostCard(
             AuthorAvatar(
                 photoUrl = quote.authorPhotoUrl,
                 authorName = quote.authorName,
-                size = 36
+                size = 32
             )
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = quote.authorName,
@@ -531,8 +531,8 @@ private fun FeedPostCard(
             text = "\u201C${quote.content}\u201D",
             style = MaterialTheme.typography.bodyLarge.copy(
                 fontFamily = CormorantGaramond,
-                fontSize = 18.sp,
-                lineHeight = 25.sp
+                fontSize = 16.sp,
+                lineHeight = 22.sp
             ),
             fontStyle = FontStyle.Italic,
             color = MaterialTheme.colorScheme.onBackground
@@ -554,7 +554,7 @@ private fun FeedPostCard(
                     imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = "Like",
                     tint = if (isLiked) RedAccent else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
@@ -570,7 +570,7 @@ private fun FeedPostCard(
                     Icons.Default.ChatBubbleOutline,
                     contentDescription = "Comments",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(

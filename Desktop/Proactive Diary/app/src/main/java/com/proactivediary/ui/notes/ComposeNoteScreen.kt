@@ -91,7 +91,7 @@ fun ComposeNoteScreen(
             ) {
                 Text(
                     text = "Sealed & sent \u2728",
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.headlineSmall,
                     color = MaterialTheme.colorScheme.onBackground,
                     textAlign = TextAlign.Center
                 )

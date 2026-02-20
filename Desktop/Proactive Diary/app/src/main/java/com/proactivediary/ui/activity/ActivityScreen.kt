@@ -71,7 +71,7 @@ fun ActivityScreen(
         Text(
             text = "Activity",
             fontFamily = CormorantGaramond,
-            fontSize = 28.sp,
+            fontSize = 22.sp,
             fontWeight = FontWeight.Normal,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(
@@ -118,13 +118,13 @@ fun ActivityScreen(
                         imageVector = Icons.Default.FavoriteBorder,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                        modifier = Modifier.size(48.dp)
+                        modifier = Modifier.size(36.dp)
                     )
                     Spacer(modifier = Modifier.height(DiarySpacing.md))
                     Text(
                         text = "No activity yet",
                         fontFamily = CormorantGaramond,
-                        fontSize = 24.sp,
+                        fontSize = 20.sp,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(DiarySpacing.xs))
@@ -247,7 +247,7 @@ private fun ActivityItemRow(item: ActivityItem) {
             Text(
                 text = item.title,
                 fontFamily = PlusJakartaSans,
-                fontSize = 14.sp,
+                fontSize = 13.sp,
                 fontWeight = if (!item.isRead) FontWeight.SemiBold else FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
@@ -258,7 +258,7 @@ private fun ActivityItemRow(item: ActivityItem) {
                 Text(
                     text = item.subtitle,
                     fontFamily = PlusJakartaSans,
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 2,
@@ -331,7 +331,7 @@ private fun ActivityIcon(iconType: ActivityIconType) {
 
     Box(
         modifier = Modifier
-            .size(40.dp)
+            .size(36.dp)
             .clip(CircleShape)
             .background(config.backgroundColor),
         contentAlignment = Alignment.Center

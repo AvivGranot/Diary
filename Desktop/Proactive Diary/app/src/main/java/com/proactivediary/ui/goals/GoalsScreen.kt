@@ -265,7 +265,7 @@ private fun GoalRow(
             Text(
                 text = timeDisplay,
                 style = TextStyle(
-                    fontSize = 36.sp,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.Light,
                     color = inkColor
                 )

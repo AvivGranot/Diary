@@ -99,7 +99,7 @@ fun LayoutScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(DiarySpacing.lg))
+        Spacer(modifier = Modifier.height(DiarySpacing.md))
 
         // ── Appearance: Dark / Light visual cards ──
         Column(modifier = Modifier.padding(horizontal = DiarySpacing.screenHorizontal)) {
@@ -145,7 +145,7 @@ fun LayoutScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(DiarySpacing.xl))
+        Spacer(modifier = Modifier.height(DiarySpacing.lg))
 
         // ── Accent Color ──
         Column(modifier = Modifier.padding(horizontal = DiarySpacing.screenHorizontal)) {
@@ -168,7 +168,7 @@ fun LayoutScreen(
                 accentColorOptions.forEachIndexed { index, option ->
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(40.dp)
                             .clip(CircleShape)
                             .background(option.color)
                             .then(
@@ -200,7 +200,7 @@ fun LayoutScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(DiarySpacing.xl))
+        Spacer(modifier = Modifier.height(DiarySpacing.lg))
 
         // ── Font Size ──
         Column(modifier = Modifier.padding(horizontal = DiarySpacing.screenHorizontal)) {
@@ -277,7 +277,7 @@ private fun ThemeModeCard(
             )
             .background(cardBg)
             .clickable(onClick = onClick)
-            .padding(16.dp),
+            .padding(12.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
