@@ -137,7 +137,7 @@ fun EnvelopeRevealScreen(
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .height(60.dp)
+                                    .height(48.dp)
                                     .graphicsLayer {
                                         rotationX = flapRotation.value
                                         cameraDistance = 12f * density

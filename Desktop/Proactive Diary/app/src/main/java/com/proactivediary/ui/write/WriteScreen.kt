@@ -315,7 +315,7 @@ fun WriteScreen(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
             ) {
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
                 // Personalization mark — header position
                 if (state.markText.isNotBlank() && state.markPosition == "header") {

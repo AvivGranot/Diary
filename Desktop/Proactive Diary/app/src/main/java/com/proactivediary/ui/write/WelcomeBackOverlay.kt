@@ -76,7 +76,7 @@ fun WelcomeBackOverlay(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(horizontal = 40.dp)
+                modifier = Modifier.padding(horizontal = 24.dp)
             ) {
                 // Streak or welcome text
                 AnimatedVisibility(
@@ -87,7 +87,7 @@ fun WelcomeBackOverlay(
                         text = if (streak > 0) "Day $streak." else "Welcome back.",
                         style = TextStyle(
                             fontFamily = CormorantGaramond,
-                            fontSize = 36.sp,
+                            fontSize = 28.sp,
                             color = MaterialTheme.colorScheme.onBackground
                         )
                     )

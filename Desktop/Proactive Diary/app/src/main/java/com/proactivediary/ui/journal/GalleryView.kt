@@ -89,7 +89,7 @@ fun GalleryView(
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(48.dp)
+                modifier = Modifier.padding(24.dp)
             ) {
                 Text(
                     text = "No photos yet",

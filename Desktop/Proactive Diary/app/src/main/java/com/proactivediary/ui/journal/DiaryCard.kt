@@ -122,7 +122,7 @@ fun DiaryCard(
                             text = displayTitle,
                             style = TextStyle(
                                 fontFamily = PlusJakartaSans,
-                                fontSize = 17.sp,
+                                fontSize = 15.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurface
                             ),

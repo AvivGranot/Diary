@@ -106,12 +106,12 @@ fun GoalsScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(32.dp),
+                    .padding(20.dp),
                 contentAlignment = Alignment.TopCenter
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(top = 80.dp)
+                    modifier = Modifier.padding(top = 40.dp)
                 ) {
                     Text(
                         text = "No goals yet",

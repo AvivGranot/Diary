@@ -498,13 +498,13 @@ private fun EmptyState(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(top = 80.dp, start = 48.dp, end = 48.dp)
+            modifier = Modifier.padding(top = 40.dp, start = 24.dp, end = 24.dp)
         ) {
             Text(
                 text = title,
                 style = TextStyle(
                     fontFamily = CormorantGaramond,
-                    fontSize = 24.sp,
+                    fontSize = 20.sp,
                     color = MaterialTheme.colorScheme.onBackground
                 ),
                 textAlign = TextAlign.Center

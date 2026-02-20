@@ -162,7 +162,7 @@ fun OnboardingGoalsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp, vertical = 32.dp)
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
             // --- Section 01: Writing Reminders ---
             Text(

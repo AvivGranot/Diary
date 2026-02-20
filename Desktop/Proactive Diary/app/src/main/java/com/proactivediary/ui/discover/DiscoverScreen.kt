@@ -259,7 +259,7 @@ private fun DiscoverCard(
                 text = "\u201C",
                 style = TextStyle(
                     fontFamily = CormorantGaramond,
-                    fontSize = 36.sp,
+                    fontSize = 28.sp,
                     color = textColor.copy(alpha = 0.06f)
                 ),
                 modifier = Modifier.align(Alignment.TopStart)
