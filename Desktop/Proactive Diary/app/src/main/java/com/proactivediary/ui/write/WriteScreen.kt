@@ -630,17 +630,6 @@ fun WriteScreen(
 
     }
 
-    // Design Studio prompt after first entry save
-    if (state.showDesignStudioPrompt && onOpenDesignStudio != null) {
-        DesignStudioPrompt(
-            onOpenDesignStudio = {
-                viewModel.dismissDesignStudioPrompt()
-                onOpenDesignStudio()
-            },
-            onDismiss = { viewModel.dismissDesignStudioPrompt() }
-        )
-    }
-
     // Text tag dialog (moved from toolbar)
     if (showTagDialog) {
         TagInputDialog(

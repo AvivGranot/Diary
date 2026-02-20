@@ -40,7 +40,7 @@ data class EntryDetailUiState(
     val audioPath: String? = null,
     val wordCount: Int = 0,
     val dateHeader: String = "",
-    val colorKey: String = "cream",
+    val colorKey: String = "dark",
     val form: String = "focused",
     val canvas: String = "lined",
     val fontSize: Int = 16,
@@ -92,7 +92,7 @@ class EntryDetailViewModel @Inject constructor(
                 } else { defaultFeatures }
 
                 _uiState.value = _uiState.value.copy(
-                    colorKey = prefs["diary_color"] ?: "cream",
+                    colorKey = prefs["diary_color"] ?: "dark",
                     form = prefs["diary_form"] ?: "focused",
                     canvas = prefs["diary_canvas"] ?: "lined",
                     fontSize = when (prefs["font_size"]) {

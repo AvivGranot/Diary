@@ -22,15 +22,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Mail
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.AutoStories
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.MailOutline
-import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -64,8 +64,8 @@ data class DiaryTab(
 val diaryTabs = listOf(
     DiaryTab("Quotes", Icons.Filled.ChatBubble, Icons.Outlined.ChatBubbleOutline),
     DiaryTab("Notes", Icons.Filled.Mail, Icons.Outlined.MailOutline),
-    DiaryTab("Diary", Icons.Filled.AutoStories, Icons.Outlined.AutoStories, isCenter = true),
-    DiaryTab("Activity", Icons.Filled.Notifications, Icons.Outlined.Notifications),
+    DiaryTab("Diary", Icons.Filled.Edit, Icons.Outlined.EditNote, isCenter = true),
+    DiaryTab("Activity", Icons.Filled.Favorite, Icons.Outlined.FavoriteBorder),
     DiaryTab("Profile", Icons.Filled.Person, Icons.Outlined.PersonOutline),
 )
 

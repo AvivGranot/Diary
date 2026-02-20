@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,18 +33,28 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import com.proactivediary.ui.theme.DiarySpacing
+import com.proactivediary.ui.theme.InstrumentSerif
 import com.proactivediary.ui.theme.LocalDiaryExtendedColors
+import com.proactivediary.ui.theme.PlusJakartaSans
 
 /**
- * Profile tab — avatar, total likes, recap cards, settings navigation.
- * Replaces the old SettingsScreen as a tab.
+ * Profile tab -- V3 wireframe design.
+ * Serif display name, @handle, stats row, Spotify-style gradient recap cards, menu items.
  */
 @Composable
 fun ProfileScreen(
@@ -54,8 +65,10 @@ fun ProfileScreen(
     onNavigateToSupport: () -> Unit = {},
     onNavigateToThemeEvolution: () -> Unit = {},
     onNavigateToJournal: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: ProfileViewModel = hiltViewModel()
 ) {
+    val state by viewModel.uiState.collectAsState()
     val extendedColors = LocalDiaryExtendedColors.current
     val scrollState = rememberScrollState()
 
@@ -66,71 +79,175 @@ fun ProfileScreen(
             .statusBarsPadding()
             .verticalScroll(scrollState)
     ) {
-        // Top bar with settings gear
+        // ── Top bar with settings gear ──────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = DiarySpacing.screenHorizontal, vertical = DiarySpacing.sm),
+                .padding(horizontal = DiarySpacing.screenHorizontal, vertical = DiarySpacing.xs),
             horizontalArrangement = Arrangement.End
         ) {
             IconButton(onClick = onNavigateToSettings) {
                 Icon(
                     imageVector = Icons.Outlined.Settings,
                     contentDescription = "Settings",
-                    tint = MaterialTheme.colorScheme.onSurface
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
-        // Avatar + name section
+        // ── Avatar + Name + Handle ──────────────────────────────────────
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = DiarySpacing.screenHorizontal),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Avatar placeholder
-            Box(
-                modifier = Modifier
-                    .size(DiarySpacing.avatarSizeLarge)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Person,
-                    contentDescription = "Profile",
-                    modifier = Modifier.size(40.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+            // Profile picture
+            if (state.photoUrl != null) {
+                AsyncImage(
+                    model = state.photoUrl,
+                    contentDescription = "Profile picture",
+                    modifier = Modifier
+                        .size(DiarySpacing.avatarSizeLarge)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
                 )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(DiarySpacing.avatarSizeLarge)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Person,
+                        contentDescription = "Profile",
+                        modifier = Modifier.size(40.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(DiarySpacing.sm))
 
+            // Display name in Instrument Serif
             Text(
-                text = "Your Profile",
-                style = MaterialTheme.typography.titleLarge,
+                text = state.displayName.ifBlank { "Writer" },
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    fontFamily = InstrumentSerif,
+                    fontSize = 32.sp
+                ),
                 color = MaterialTheme.colorScheme.onSurface
             )
+
+            // @handle
+            if (state.handle.isNotBlank()) {
+                Text(
+                    text = state.handle,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontFamily = PlusJakartaSans
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(DiarySpacing.lg))
 
-        // Stats row — total entries, total likes, days active
+        // ── Stats row ───────────────────────────────────────────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = DiarySpacing.screenHorizontal),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            StatItem(value = "0", label = "Entries")
-            StatItem(value = "0", label = "Likes")
-            StatItem(value = "0", label = "Days")
+            StatItem(
+                value = "${state.totalEntries}",
+                label = "entries"
+            )
+            StatItem(
+                value = "${state.totalLikesReceived}",
+                label = "likes",
+                valueColor = Color(0xFFEF4444) // Red for likes
+            )
+            StatItem(
+                value = "${state.totalQuotes}",
+                label = "quotes"
+            )
         }
 
         Spacer(modifier = Modifier.height(DiarySpacing.xl))
 
-        // Menu items
+        // ── Recap cards (2x2 grid) ──────────────────────────────────────
+        Column(
+            modifier = Modifier.padding(horizontal = DiarySpacing.screenHorizontal),
+            verticalArrangement = Arrangement.spacedBy(DiarySpacing.sm)
+        ) {
+            // Row 1: Entries this year + Total likes
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(DiarySpacing.sm)
+            ) {
+                RecapCard(
+                    modifier = Modifier.weight(1f),
+                    gradient = Brush.linearGradient(
+                        colors = listOf(Color(0xFF065F46), Color(0xFF059669), Color(0xFF34D399))
+                    ),
+                    bigText = "${state.entriesThisYear}",
+                    label = "Entries this year",
+                    subtitle = if (state.entriesThisYear > 20) "Top 5% of writers"
+                    else if (state.entriesThisYear > 5) "Top 20% of writers"
+                    else "Keep going!"
+                )
+                RecapCard(
+                    modifier = Modifier.weight(1f),
+                    gradient = Brush.linearGradient(
+                        colors = listOf(Color(0xFF9F1239), Color(0xFFE11D48), Color(0xFFFB7185))
+                    ),
+                    bigText = "${state.totalLikesReceived}",
+                    label = "Total likes received",
+                    subtitle = if (state.totalLikesReceived > 0) "People love your words"
+                    else "Share your first quote"
+                )
+            }
+
+            // Row 2: Words written + Best writing day
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(DiarySpacing.sm)
+            ) {
+                RecapCard(
+                    modifier = Modifier.weight(1f),
+                    gradient = Brush.linearGradient(
+                        colors = listOf(Color(0xFF78350F), Color(0xFFD97706), Color(0xFFFBBF24))
+                    ),
+                    bigText = formatWordCount(state.totalWords),
+                    label = "Words written",
+                    subtitle = when {
+                        state.totalWords >= 50_000 -> "That's a short novel"
+                        state.totalWords >= 10_000 -> "That's a novella"
+                        state.totalWords >= 1_000 -> "That's a short story"
+                        else -> "Every word counts"
+                    }
+                )
+                RecapCard(
+                    modifier = Modifier.weight(1f),
+                    gradient = Brush.linearGradient(
+                        colors = listOf(Color(0xFF1E3A5F), Color(0xFF3B82F6), Color(0xFF93C5FD))
+                    ),
+                    bigText = state.bestWritingDay.take(3).ifBlank { "--" },
+                    label = "Best writing day",
+                    subtitle = if (state.bestWritingDay.isNotBlank())
+                        "You wrote ${state.bestWritingDayPercent}% of entries on ${state.bestWritingDay}s"
+                    else "Write more to discover"
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(DiarySpacing.xl))
+
+        // ── Menu items ──────────────────────────────────────────────────
         Column(
             modifier = Modifier.padding(horizontal = DiarySpacing.screenHorizontal),
             verticalArrangement = Arrangement.spacedBy(DiarySpacing.xxs)
@@ -167,22 +284,92 @@ fun ProfileScreen(
     }
 }
 
+// ── Stats item ──────────────────────────────────────────────────────────
+
 @Composable
-private fun StatItem(value: String, label: String) {
+private fun StatItem(
+    value: String,
+    label: String,
+    valueColor: Color = MaterialTheme.colorScheme.onSurface
+) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = value,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            fontWeight = FontWeight.Bold
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontFamily = PlusJakartaSans,
+                fontWeight = FontWeight.Bold,
+                fontSize = 22.sp
+            ),
+            color = valueColor
         )
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelSmall.copy(
+                fontFamily = PlusJakartaSans
+            ),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
+
+// ── Spotify-style gradient recap card ───────────────────────────────────
+
+@Composable
+private fun RecapCard(
+    modifier: Modifier = Modifier,
+    gradient: Brush,
+    bigText: String,
+    label: String,
+    subtitle: String
+) {
+    Box(
+        modifier = modifier
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(16.dp))
+            .background(gradient)
+            .padding(DiarySpacing.md)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Top: big number
+            Text(
+                text = bigText,
+                style = MaterialTheme.typography.displaySmall.copy(
+                    fontFamily = InstrumentSerif,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 40.sp
+                ),
+                color = Color.White
+            )
+
+            // Bottom: label + subtitle
+            Column {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontFamily = PlusJakartaSans,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = Color.White.copy(alpha = 0.9f)
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontFamily = PlusJakartaSans,
+                        fontSize = 10.sp,
+                        lineHeight = 13.sp
+                    ),
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+            }
+        }
+    }
+}
+
+// ── Menu item row ───────────────────────────────────────────────────────
 
 @Composable
 private fun ProfileMenuItem(
@@ -209,7 +396,9 @@ private fun ProfileMenuItem(
         Spacer(modifier = Modifier.width(DiarySpacing.sm))
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyLarge.copy(
+                fontFamily = PlusJakartaSans
+            ),
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)
         )
@@ -219,5 +408,15 @@ private fun ProfileMenuItem(
             modifier = Modifier.size(20.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
+    }
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────────
+
+private fun formatWordCount(words: Int): String {
+    return when {
+        words >= 1_000_000 -> "${words / 1_000_000}.${(words % 1_000_000) / 100_000}M"
+        words >= 1_000 -> "${words / 1_000}.${(words % 1_000) / 100}k"
+        else -> "$words"
     }
 }

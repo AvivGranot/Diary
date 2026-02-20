@@ -21,7 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -36,8 +36,8 @@ fun SearchBar(
     onClear: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val parchment = Color(0xFFFAF9F5)
-    val pencilColor = Color(0xFF585858)
+    val parchment = MaterialTheme.colorScheme.surface
+    val pencilColor = MaterialTheme.colorScheme.onSurfaceVariant
 
     Box(
         modifier = modifier
@@ -69,7 +69,7 @@ fun SearchBar(
                 textStyle = TextStyle(
                     fontFamily = FontFamily.Default,
                     fontSize = 14.sp,
-                    color = Color(0xFF313131)
+                    color = MaterialTheme.colorScheme.onBackground
                 ),
                 cursorBrush = SolidColor(pencilColor),
                 singleLine = true,

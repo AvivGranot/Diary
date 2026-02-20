@@ -100,9 +100,9 @@ data class WriteUiState(
     val isLoaded: Boolean = false,
     val dateHeader: String = "",
     val dailyPrompt: String = WritingPrompts.dailyPrompt(),
-    val colorKey: String = "cream",
+    val colorKey: String = "dark",
     val form: String = "focused",
-    val texture: String = "paper",
+    val texture: String = "dark",
     val canvas: String = "lined",
     val fontSize: Int = 16,
     val features: List<String> = listOf("auto_save", "word_count", "date_header", "daily_quote"),
@@ -273,9 +273,9 @@ class WriteViewModel @Inject constructor(
                 } else { defaultFeatures }
 
                 _uiState.value = _uiState.value.copy(
-                    colorKey = prefs["diary_color"] ?: "cream",
+                    colorKey = prefs["diary_color"] ?: "dark",
                     form = prefs["diary_form"] ?: "focused",
-                    texture = prefs["diary_texture"] ?: "paper",
+                    texture = prefs["diary_texture"] ?: "dark",
                     canvas = prefs["diary_canvas"] ?: "lined",
                     fontSize = when (prefs["font_size"]) {
                         "small" -> 14; "large" -> 18; else -> 16

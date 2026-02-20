@@ -117,7 +117,7 @@ class BookExportViewModel @Inject constructor(
                     .sortedBy { it.createdAt }
 
                 val colorKey = withContext(Dispatchers.IO) {
-                    preferenceDao.get("diary_color")?.value ?: "cream"
+                    preferenceDao.get("diary_color")?.value ?: "dark"
                 }
                 val userName = withContext(Dispatchers.IO) {
                     preferenceDao.get("diary_mark_text")?.value ?: ""

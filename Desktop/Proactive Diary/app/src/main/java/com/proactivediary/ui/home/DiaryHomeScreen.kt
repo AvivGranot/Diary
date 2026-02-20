@@ -5,24 +5,31 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -30,22 +37,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.proactivediary.ui.journal.DiaryCardData
-import com.proactivediary.ui.journal.JournalViewModel
+import com.proactivediary.ui.journal.DiaryCard
+import com.proactivediary.ui.theme.CormorantGaramond
 import com.proactivediary.ui.theme.DiarySpacing
 import com.proactivediary.ui.theme.LocalDiaryExtendedColors
-import java.text.SimpleDateFormat
+import com.proactivediary.ui.theme.PlusJakartaSans
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.Date
 import java.util.Locale
 
 /**
- * Diary home tab — shows recent entries with search and write icons in top-right.
- * No "My Diary" header, no streak, no mood colors.
+ * V3 Diary home tab -- date header, today's prompt card, date-grouped entries,
+ * AI insight card at the bottom.
  */
 @Composable
 fun DiaryHomeScreen(
@@ -53,12 +63,10 @@ fun DiaryHomeScreen(
     onWriteClick: () -> Unit = {},
     onEntryClick: (String) -> Unit = {},
     onNavigateToJournal: () -> Unit = {},
-    journalViewModel: JournalViewModel = hiltViewModel()
+    viewModel: DiaryHomeViewModel = hiltViewModel()
 ) {
-    val uiState by journalViewModel.uiState.collectAsState()
-    val entries = uiState.entries
+    val uiState by viewModel.uiState.collectAsState()
     val extendedColors = LocalDiaryExtendedColors.current
-    val dateFormat = SimpleDateFormat("MMM d", Locale.getDefault())
 
     Column(
         modifier = Modifier
@@ -66,18 +74,26 @@ fun DiaryHomeScreen(
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
     ) {
-        // Top bar — today's date + search + write icons
+        // ── Top bar: date left, search + write icons right ──────────────
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = DiarySpacing.screenHorizontal, vertical = DiarySpacing.sm),
-            horizontalArrangement = Arrangement.End,
+                .padding(
+                    horizontal = DiarySpacing.screenHorizontal,
+                    vertical = DiarySpacing.sm
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, MMM d")),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                text = LocalDate.now().format(
+                    DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.getDefault())
+                ),
+                style = TextStyle(
+                    fontFamily = PlusJakartaSans,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -99,8 +115,28 @@ fun DiaryHomeScreen(
             }
         }
 
-        // Entry list
-        if (entries.isEmpty()) {
+        // ── Scrollable content ──────────────────────────────────────────
+        if (uiState.isLoading) {
+            // Skeleton placeholder
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = DiarySpacing.screenHorizontal),
+                verticalArrangement = Arrangement.spacedBy(DiarySpacing.sm)
+            ) {
+                Spacer(modifier = Modifier.height(DiarySpacing.md))
+                repeat(4) {
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(88.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.04f)
+                    ) {}
+                }
+            }
+        } else if (uiState.isEmpty) {
+            // Empty state
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -110,8 +146,11 @@ fun DiaryHomeScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "Your diary awaits",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onSurface
+                        style = TextStyle(
+                            fontFamily = CormorantGaramond,
+                            fontSize = 28.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
                     )
                     Spacer(modifier = Modifier.height(DiarySpacing.xs))
                     Text(
@@ -124,98 +163,243 @@ fun DiaryHomeScreen(
         } else {
             LazyColumn(
                 contentPadding = PaddingValues(
-                    horizontal = DiarySpacing.screenHorizontal,
-                    vertical = DiarySpacing.xs
+                    top = DiarySpacing.xs,
+                    bottom = 96.dp // clearance for bottom nav
                 ),
-                verticalArrangement = Arrangement.spacedBy(DiarySpacing.sm)
+                verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
-                items(
-                    items = entries.take(30),
-                    key = { entry: DiaryCardData -> entry.id }
-                ) { entry: DiaryCardData ->
-                    DiaryEntryRow(
-                        entry = entry,
-                        dateFormat = dateFormat,
-                        onClick = { onEntryClick(entry.id) }
+                // ── Today's Prompt card ─────────────────────────────────
+                item(key = "todays_prompt") {
+                    TodaysPromptCard(
+                        prompt = uiState.todayPrompt,
+                        onWriteNow = onWriteClick,
+                        modifier = Modifier.padding(
+                            horizontal = DiarySpacing.screenHorizontal,
+                            vertical = DiarySpacing.xs
+                        )
                     )
                 }
 
-                // View all link
-                if (entries.size > 30) {
-                    item {
+                // ── Date-grouped entries ────────────────────────────────
+                uiState.groupedEntries.forEach { (dateGroup, entries) ->
+                    // Section header
+                    item(key = "header_$dateGroup") {
                         Text(
-                            text = "View all entries",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = extendedColors.accent,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onNavigateToJournal() }
-                                .padding(vertical = DiarySpacing.md)
+                            text = dateGroup,
+                            style = TextStyle(
+                                fontFamily = PlusJakartaSans,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            modifier = Modifier.padding(
+                                start = DiarySpacing.screenHorizontal,
+                                top = DiarySpacing.lg,
+                                bottom = DiarySpacing.xs
+                            )
+                        )
+                    }
+
+                    // Entry cards
+                    items(
+                        items = entries,
+                        key = { it.id }
+                    ) { cardData ->
+                        DiaryCard(
+                            data = cardData,
+                            onClick = { onEntryClick(cardData.id) },
+                            modifier = Modifier.padding(
+                                horizontal = DiarySpacing.md,
+                                vertical = 4.dp
+                            )
                         )
                     }
                 }
 
-                // Bottom spacing for nav bar
-                item { Spacer(modifier = Modifier.height(80.dp)) }
+                // ── View all link ───────────────────────────────────────
+                val totalEntries = uiState.groupedEntries.values.sumOf { it.size }
+                if (totalEntries > 20) {
+                    item(key = "view_all") {
+                        Text(
+                            text = "View all entries",
+                            style = TextStyle(
+                                fontFamily = PlusJakartaSans,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = extendedColors.accent
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onNavigateToJournal() }
+                                .padding(
+                                    horizontal = DiarySpacing.screenHorizontal,
+                                    vertical = DiarySpacing.md
+                                )
+                        )
+                    }
+                }
+
+                // ── AI Insight card ─────────────────────────────────────
+                if (uiState.aiInsight.isAvailable) {
+                    item(key = "ai_insight") {
+                        AiInsightHomeCard(
+                            summary = uiState.aiInsight.summary,
+                            modifier = Modifier.padding(
+                                horizontal = DiarySpacing.screenHorizontal,
+                                vertical = DiarySpacing.sm
+                            )
+                        )
+                    }
+                }
             }
         }
     }
 }
 
+// ── Today's Prompt Card ─────────────────────────────────────────────────────
 @Composable
-private fun DiaryEntryRow(
-    entry: DiaryCardData,
-    dateFormat: SimpleDateFormat,
-    onClick: () -> Unit
+private fun TodaysPromptCard(
+    prompt: String,
+    onWriteNow: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val extendedColors = LocalDiaryExtendedColors.current
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .clickable(onClick = onClick)
-            .padding(DiarySpacing.cardPadding)
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 2.dp
     ) {
-        // Mint green side line
-        Box(
-            modifier = Modifier
-                .width(DiarySpacing.sideLineWidth)
-                .height(48.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(extendedColors.cardSideLine)
-        )
+        Column(
+            modifier = Modifier.padding(DiarySpacing.md)
+        ) {
+            // Label row: sparkle + "TODAY'S PROMPT"
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.AutoAwesome,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = extendedColors.accent
+                )
+                Text(
+                    text = "TODAY'S PROMPT",
+                    style = TextStyle(
+                        fontFamily = PlusJakartaSans,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp,
+                        color = extendedColors.accent
+                    )
+                )
+            }
 
-        Spacer(modifier = Modifier.width(DiarySpacing.sm))
+            Spacer(modifier = Modifier.height(DiarySpacing.sm))
 
-        Column(modifier = Modifier.weight(1f)) {
+            // Prompt question text in serif
             Text(
-                text = entry.title.ifBlank { "Untitled" },
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                text = prompt,
+                style = TextStyle(
+                    fontFamily = CormorantGaramond,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    lineHeight = 28.sp
+                )
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(DiarySpacing.md))
 
-            Text(
-                text = entry.content,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
+            // "Write now" CTA button
+            Button(
+                onClick = onWriteNow,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = extendedColors.accent,
+                    contentColor = MaterialTheme.colorScheme.background
+                ),
+                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
+            ) {
+                Text(
+                    text = "Write now",
+                    style = TextStyle(
+                        fontFamily = PlusJakartaSans,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
+            }
         }
+    }
+}
 
-        Spacer(modifier = Modifier.width(DiarySpacing.xs))
+// ── AI Insight Home Card ────────────────────────────────────────────────────
+@Composable
+private fun AiInsightHomeCard(
+    summary: String,
+    modifier: Modifier = Modifier
+) {
+    val extendedColors = LocalDiaryExtendedColors.current
 
-        // Date
-        Text(
-            text = dateFormat.format(Date(entry.createdAt)),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 1.dp
+    ) {
+        Row(
+            modifier = Modifier.height(IntrinsicSize.Min)
+        ) {
+            // Mint green left accent border
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(topStart = 16.dp, bottomStart = 16.dp))
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                extendedColors.accent,
+                                extendedColors.accent.copy(alpha = 0.5f)
+                            )
+                        )
+                    )
+            )
+
+            Column(
+                modifier = Modifier.padding(DiarySpacing.md)
+            ) {
+                // "AI INSIGHT" label
+                Text(
+                    text = "AI INSIGHT",
+                    style = TextStyle(
+                        fontFamily = PlusJakartaSans,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp,
+                        color = extendedColors.accent
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(DiarySpacing.xs))
+
+                // Insight summary text
+                Text(
+                    text = summary,
+                    style = TextStyle(
+                        fontFamily = PlusJakartaSans,
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f),
+                        lineHeight = 20.sp
+                    ),
+                    maxLines = 4,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
     }
 }

@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-enum class QuotesTab { TRENDING, NEW, MY_QUOTES }
+enum class QuotesTab { TRENDING, NEW, FOLLOWING }
 
 data class QuotesState(
     val selectedTab: QuotesTab = QuotesTab.TRENDING,

@@ -199,8 +199,7 @@ fun ProactiveDiaryNavHost(
         // Settings (standalone, pushed from Profile tab gear icon)
         composable(Routes.Settings.route) {
             com.proactivediary.ui.settings.SettingsScreen(
-                onOpenDesignStudio = {
-                    // Redirect to Layout screen
+                onNavigateToLayout = {
                     navController.navigate(Routes.Layout.route)
                 },
                 onNavigateToGoals = {
@@ -213,19 +212,6 @@ fun ProactiveDiaryNavHost(
                     navController.navigate(Routes.Typewriter.route) {
                         popUpTo(Routes.Main.route) { inclusive = true }
                     }
-                },
-                onNavigateToSupport = {
-                    navController.navigate(Routes.ContactSupport.createRoute("support"))
-                },
-                onNavigateToDiaryWrapped = {
-                    // Wrapped removed — navigate to Theme Evolution instead
-                    navController.navigate(Routes.ThemeEvolution.route)
-                },
-                onNavigateToThemeEvolution = {
-                    navController.navigate(Routes.ThemeEvolution.route)
-                },
-                onNavigateToJournal = {
-                    navController.navigate(Routes.Journal.route)
                 }
             )
         }

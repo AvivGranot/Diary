@@ -24,14 +24,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -40,24 +40,32 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.proactivediary.ui.theme.CormorantGaramond
 import com.proactivediary.ui.theme.DiarySpacing
 import com.proactivediary.ui.theme.LocalDiaryExtendedColors
+import com.proactivediary.ui.theme.PlusJakartaSans
 import com.proactivediary.ui.theme.accentColorOptions
 
 /**
  * Layout page — replaces Design Studio.
- * Simple: dark/light toggle, accent color picker, font size.
+ * Dark/light toggle, accent color picker, font size.
+ * State is persisted via LayoutViewModel → PreferenceDao.
  */
-@OptIn(ExperimentalLayoutApi::class, androidx.compose.material3.ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LayoutScreen(
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    viewModel: LayoutViewModel = hiltViewModel()
 ) {
     val extendedColors = LocalDiaryExtendedColors.current
-    var selectedThemeIndex by remember { mutableIntStateOf(0) } // 0 = Dark, 1 = Light
-    var selectedAccentIndex by remember { mutableIntStateOf(0) } // 0 = Mint (default)
-    var selectedFontSize by remember { mutableIntStateOf(1) } // 0 = Small, 1 = Medium, 2 = Large
+    val state = viewModel.uiState
 
     Column(
         modifier = Modifier
@@ -82,43 +90,74 @@ fun LayoutScreen(
             }
             Text(
                 text = "Layout",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                style = TextStyle(
+                    fontFamily = CormorantGaramond,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             )
         }
 
         Spacer(modifier = Modifier.height(DiarySpacing.lg))
 
-        // Theme Mode
+        // ── Appearance: Dark / Light visual cards ──
         Column(modifier = Modifier.padding(horizontal = DiarySpacing.screenHorizontal)) {
             Text(
-                text = "Appearance",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                text = "APPEARANCE",
+                style = TextStyle(
+                    fontFamily = PlusJakartaSans,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 1.5.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
             Spacer(modifier = Modifier.height(DiarySpacing.sm))
 
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                listOf("Dark", "Light").forEachIndexed { index, label ->
-                    SegmentedButton(
-                        selected = selectedThemeIndex == index,
-                        onClick = { selectedThemeIndex = index },
-                        shape = SegmentedButtonDefaults.itemShape(index = index, count = 2)
-                    ) {
-                        Text(label)
-                    }
-                }
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Dark mode card
+                ThemeModeCard(
+                    label = "Dark",
+                    icon = Icons.Outlined.DarkMode,
+                    isSelected = state.themeMode == "dark",
+                    cardBg = Color(0xFF111111),
+                    contentColor = Color.White,
+                    accentColor = extendedColors.accent,
+                    modifier = Modifier.weight(1f),
+                    onClick = { viewModel.setThemeMode("dark") }
+                )
+
+                // Light mode card
+                ThemeModeCard(
+                    label = "Light",
+                    icon = Icons.Outlined.LightMode,
+                    isSelected = state.themeMode == "light",
+                    cardBg = Color(0xFFF5F5F5),
+                    contentColor = Color(0xFF1A1A1A),
+                    accentColor = extendedColors.accent,
+                    modifier = Modifier.weight(1f),
+                    onClick = { viewModel.setThemeMode("light") }
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(DiarySpacing.xl))
 
-        // Accent Color
+        // ── Accent Color ──
         Column(modifier = Modifier.padding(horizontal = DiarySpacing.screenHorizontal)) {
             Text(
-                text = "Accent Color",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                text = "ACCENT COLOR",
+                style = TextStyle(
+                    fontFamily = PlusJakartaSans,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 1.5.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
             Spacer(modifier = Modifier.height(DiarySpacing.sm))
 
@@ -133,14 +172,14 @@ fun LayoutScreen(
                             .clip(CircleShape)
                             .background(option.color)
                             .then(
-                                if (selectedAccentIndex == index)
+                                if (state.accentIndex == index)
                                     Modifier.border(3.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
                                 else Modifier
                             )
-                            .clickable { selectedAccentIndex = index },
+                            .clickable { viewModel.setAccentColor(index, option.key) },
                         contentAlignment = Alignment.Center
                     ) {
-                        if (selectedAccentIndex == index) {
+                        if (state.accentIndex == index) {
                             Icon(
                                 imageVector = Icons.Outlined.Check,
                                 contentDescription = "Selected",
@@ -155,7 +194,7 @@ fun LayoutScreen(
             Spacer(modifier = Modifier.height(DiarySpacing.xxs))
 
             Text(
-                text = accentColorOptions.getOrNull(selectedAccentIndex)?.name ?: "Mint",
+                text = accentColorOptions.getOrNull(state.accentIndex)?.name ?: "Mint",
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -163,28 +202,125 @@ fun LayoutScreen(
 
         Spacer(modifier = Modifier.height(DiarySpacing.xl))
 
-        // Font Size
+        // ── Font Size ──
         Column(modifier = Modifier.padding(horizontal = DiarySpacing.screenHorizontal)) {
             Text(
-                text = "Font Size",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface
+                text = "FONT SIZE",
+                style = TextStyle(
+                    fontFamily = PlusJakartaSans,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 1.5.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
             Spacer(modifier = Modifier.height(DiarySpacing.sm))
 
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                listOf("Small", "Medium", "Large").forEachIndexed { index, label ->
-                    SegmentedButton(
-                        selected = selectedFontSize == index,
-                        onClick = { selectedFontSize = index },
-                        shape = SegmentedButtonDefaults.itemShape(index = index, count = 3)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                listOf("Small" to 0, "Medium" to 1, "Large" to 2).forEach { (label, index) ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                if (state.fontSizeIndex == index) extendedColors.accent.copy(alpha = 0.15f)
+                                else MaterialTheme.colorScheme.surface
+                            )
+                            .then(
+                                if (state.fontSizeIndex == index)
+                                    Modifier.border(1.5.dp, extendedColors.accent, RoundedCornerShape(12.dp))
+                                else Modifier
+                            )
+                            .clickable { viewModel.setFontSize(index) }
+                            .padding(vertical = 14.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(label)
+                        Text(
+                            text = label,
+                            style = TextStyle(
+                                fontFamily = PlusJakartaSans,
+                                fontSize = when (index) { 0 -> 13.sp; 2 -> 17.sp; else -> 15.sp },
+                                fontWeight = if (state.fontSizeIndex == index) FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (state.fontSizeIndex == index) extendedColors.accent
+                                else MaterialTheme.colorScheme.onSurface
+                            )
+                        )
                     }
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(100.dp))
+    }
+}
+
+@Composable
+private fun ThemeModeCard(
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    isSelected: Boolean,
+    cardBg: Color,
+    contentColor: Color,
+    accentColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .then(
+                if (isSelected) Modifier.border(2.dp, accentColor, RoundedCornerShape(16.dp))
+                else Modifier
+            )
+            .background(cardBg)
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            // Mini phone preview
+            Box(
+                modifier = Modifier
+                    .size(width = 48.dp, height = 72.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(cardBg)
+                    .border(1.dp, contentColor.copy(alpha = 0.2f), RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = label,
+                    tint = contentColor.copy(alpha = 0.6f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            Text(
+                text = label,
+                style = TextStyle(
+                    fontFamily = PlusJakartaSans,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = contentColor
+                )
+            )
+
+            if (isSelected) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "Active",
+                    style = TextStyle(
+                        fontFamily = PlusJakartaSans,
+                        fontSize = 11.sp,
+                        color = accentColor
+                    )
+                )
+            }
+        }
     }
 }

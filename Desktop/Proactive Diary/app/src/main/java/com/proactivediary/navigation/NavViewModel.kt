@@ -32,9 +32,9 @@ class NavViewModel @Inject constructor(
             // Set beautiful defaults for first-time users so Write tab looks great immediately
             if (!typewriterCompleted) {
                 val defaults = listOf(
-                    "diary_color" to "cream",
+                    "diary_color" to "dark",
                     "diary_form" to "focused",
-                    "diary_texture" to "paper",
+                    "diary_texture" to "dark",
                     "diary_canvas" to "lined",
                     "diary_details" to "[\"auto_save\",\"word_count\",\"date_header\",\"daily_quote\"]"
                 )

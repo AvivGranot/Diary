@@ -30,6 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.ui.activity.ActivityScreen
+import com.proactivediary.ui.activity.ActivityViewModel
 import com.proactivediary.ui.components.DiaryBottomNav
 import com.proactivediary.ui.components.FeatureDiscoveryViewModel
 import com.proactivediary.ui.components.SwipeHint
@@ -65,7 +66,8 @@ fun MainScreen(
     billingViewModel: BillingViewModel = hiltViewModel(),
     mainScreenViewModel: MainScreenViewModel = hiltViewModel(),
     discoveryViewModel: FeatureDiscoveryViewModel = hiltViewModel(),
-    noteInboxViewModel: NoteInboxViewModel = hiltViewModel()
+    noteInboxViewModel: NoteInboxViewModel = hiltViewModel(),
+    activityViewModel: ActivityViewModel = hiltViewModel()
 ) {
     val subscriptionState by billingViewModel.subscriptionState.collectAsState()
     val isFirstPaywallView by billingViewModel.isFirstPaywallView.collectAsState()
@@ -75,6 +77,7 @@ fun MainScreen(
     val context = LocalContext.current
     val activity = context as? Activity
     val unreadNoteCount by noteInboxViewModel.unreadCount.collectAsState(initial = 0)
+    val activityBadgeCount by activityViewModel.unreadCount.collectAsState()
 
     // Coach mark
     val showSwipeHint by discoveryViewModel.showSwipeHint.collectAsState()
@@ -310,7 +313,7 @@ fun MainScreen(
                         pagerState.animateScrollToPage(index)
                     }
                 },
-                activityBadgeCount = 0, // TODO: wire up activity notifications
+                activityBadgeCount = activityBadgeCount,
                 notesBadgeCount = unreadNoteCount,
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
