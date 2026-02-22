@@ -186,6 +186,7 @@ fun WriteScreen(
     var showImagePicker by remember { mutableStateOf(false) }
     var viewingImageId by remember { mutableStateOf<String?>(null) }
     var showTemplatePicker by remember { mutableStateOf(false) }
+    var showDrawingCanvas by remember { mutableStateOf(false) }
     var dictationSeconds by remember { mutableStateOf(0) }
 
     // Auto-show template picker for first-ever write
@@ -298,6 +299,12 @@ fun WriteScreen(
     val bgColor = DiaryThemeConfig.colorForKey(state.colorKey)
     val textColor = DiaryThemeConfig.textColorFor(state.colorKey)
     val secondaryTextColor = DiaryThemeConfig.secondaryTextColorFor(state.colorKey)
+
+    // Resolve custom font color (per-entry) or fall back to theme color
+    val resolvedTextColor = if (state.fontColor != null) {
+        try { Color(android.graphics.Color.parseColor(state.fontColor)) }
+        catch (_: Exception) { textColor }
+    } else textColor
 
     val showDateHeader = viewModel.hasFeature("date_header")
     val showAutoSave = viewModel.hasFeature("auto_save")
@@ -430,9 +437,9 @@ fun WriteScreen(
                         fontFamily = InstrumentSerif,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Normal,
-                        color = textColor
+                        color = resolvedTextColor
                     ),
-                    cursorBrush = SolidColor(textColor),
+                    cursorBrush = SolidColor(resolvedTextColor),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = horizontalPadding),
@@ -526,7 +533,7 @@ fun WriteScreen(
                     onContentChanged = { viewModel.onContentChanged(it) },
                     richTextState = richTextState,
                     canvas = state.canvas,
-                    textColor = textColor,
+                    textColor = resolvedTextColor,
                     secondaryTextColor = secondaryTextColor,
                     horizontalPadding = horizontalPadding,
                     fontSizeSp = state.fontSize,
@@ -612,6 +619,8 @@ fun WriteScreen(
                 showWordCount = showWordCount,
                 colorKey = state.colorKey,
                 richTextState = richTextState,
+                fontColor = state.fontColor,
+                onFontColorChanged = { viewModel.updateFontColor(it) },
                 onPhotoClick = { showImagePicker = true },
                 onDictateClick = {
                     val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -630,6 +639,7 @@ fun WriteScreen(
                 },
                 onTemplatesClick = { showTemplatePicker = true },
                 onShareClick = { contactPickerLauncher.launch(null) },
+                onDrawClick = { showDrawingCanvas = true },
                 isDictating = state.isDictating,
                 dictationSeconds = dictationSeconds,
                 onStopDictation = { viewModel.stopDictation() }
@@ -796,6 +806,17 @@ fun WriteScreen(
                 welcomeBackPrompt = null
                 onNotificationPromptConsumed?.invoke()
             }
+        )
+    }
+
+    // Drawing canvas overlay — full screen
+    if (showDrawingCanvas) {
+        DrawingCanvas(
+            onSave = { bitmap ->
+                viewModel.addDrawingBitmap(bitmap)
+                showDrawingCanvas = false
+            },
+            onDismiss = { showDrawingCanvas = false }
         )
     }
 }

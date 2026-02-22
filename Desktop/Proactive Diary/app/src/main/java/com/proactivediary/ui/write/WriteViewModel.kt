@@ -133,7 +133,8 @@ data class WriteUiState(
     val isDictating: Boolean = false,
     val partialTranscript: String = "",
     val speechAvailable: Boolean = false,
-    val isFirstEverWrite: Boolean = false
+    val isFirstEverWrite: Boolean = false,
+    val fontColor: String? = null
 )
 
 @OptIn(FlowPreview::class)
@@ -267,6 +268,7 @@ class WriteViewModel @Inject constructor(
                     weatherIcon = state.weatherIcon,
                     templateId = state.templateId,
                     audioPath = state.audioPath,
+                    fontColor = state.fontColor,
                     wordCount = state.wordCount,
                     createdAt = entryRepository.getByIdSync(state.entryId)?.createdAt
                         ?: now,
@@ -334,6 +336,7 @@ class WriteViewModel @Inject constructor(
                         weatherCondition = entry.weatherCondition,
                         weatherIcon = entry.weatherIcon,
                         audioPath = entry.audioPath,
+                        fontColor = entry.fontColor,
                         wordCount = computeWordCount(entry.content),
                         isLoaded = true,
                         isNewEntry = false
@@ -370,6 +373,7 @@ class WriteViewModel @Inject constructor(
                         weatherCondition = todayEntry.weatherCondition,
                         weatherIcon = todayEntry.weatherIcon,
                         audioPath = todayEntry.audioPath,
+                        fontColor = todayEntry.fontColor,
                         wordCount = computeWordCount(todayEntry.content),
                         isLoaded = true,
                         isNewEntry = false
@@ -553,6 +557,7 @@ class WriteViewModel @Inject constructor(
                     weatherIcon = state.weatherIcon,
                     templateId = state.templateId,
                     audioPath = state.audioPath,
+                    fontColor = state.fontColor,
                     wordCount = computeWordCount(text),
                     createdAt = if (state.isNewEntry) now else {
                         entryRepository.getByIdSync(state.entryId)?.createdAt ?: now
@@ -667,6 +672,43 @@ class WriteViewModel @Inject constructor(
             // Trigger save to persist images JSON
             saveEntry(_uiState.value.content)
             analyticsService.logFeatureUsed("photo_removed")
+        }
+    }
+
+    fun updateFontColor(hex: String?) {
+        _uiState.update { it.copy(fontColor = hex) }
+        if (_uiState.value.content.isNotBlank() || _uiState.value.title.isNotBlank()) {
+            viewModelScope.launch { saveEntry(_uiState.value.content) }
+        }
+    }
+
+    fun addDrawingBitmap(bitmap: android.graphics.Bitmap) {
+        viewModelScope.launch {
+            try {
+                val state = _uiState.value
+                val drawingId = UUID.randomUUID().toString()
+                val filename = "drawing_$drawingId.png"
+                val dir = imageStorageManager.getEntryImagesDir(state.entryId)
+                withContext(Dispatchers.IO) {
+                    dir.mkdirs()
+                    val file = java.io.File(dir, filename)
+                    java.io.FileOutputStream(file).use { out ->
+                        bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
+                    }
+                }
+                val metadata = ImageMetadata(
+                    id = drawingId,
+                    filename = filename,
+                    width = bitmap.width,
+                    height = bitmap.height,
+                    addedAt = System.currentTimeMillis()
+                )
+                _uiState.update { it.copy(images = it.images + metadata) }
+                saveEntry(_uiState.value.content)
+                analyticsService.logFeatureUsed("drawing_added")
+            } catch (e: Exception) {
+                _uiState.update { it.copy(saveError = "Failed to save drawing.") }
+            }
         }
     }
 

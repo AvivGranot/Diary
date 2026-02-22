@@ -41,7 +41,9 @@ import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Mic
+import androidx.compose.material.icons.outlined.Brush
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.filled.FormatColorText
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -79,11 +81,14 @@ fun WriteToolbar(
     showWordCount: Boolean,
     colorKey: String,
     richTextState: RichTextState? = null,
+    fontColor: String? = null,
+    onFontColorChanged: ((String?) -> Unit)? = null,
     onAttachmentClick: (() -> Unit)? = null,
     onPhotoClick: (() -> Unit)? = null,
     onDictateClick: (() -> Unit)? = null,
     onTemplatesClick: (() -> Unit)? = null,
     onShareClick: (() -> Unit)? = null,
+    onDrawClick: (() -> Unit)? = null,
     isDictating: Boolean = false,
     dictationSeconds: Int = 0,
     onStopDictation: (() -> Unit)? = null,
@@ -95,6 +100,8 @@ fun WriteToolbar(
 
     // Expanded state for Row 1 features
     var isExpanded by remember { mutableStateOf(false) }
+    // Font color picker visibility
+    var showFontColorRow by remember { mutableStateOf(false) }
 
     // + icon rotation
     val plusRotation by animateFloatAsState(
@@ -189,6 +196,15 @@ fun WriteToolbar(
                                     isExpanded = false
                                 }
                             )
+                            InlineFeatureButton(
+                                icon = Icons.Outlined.Brush,
+                                label = "Draw",
+                                color = textColor,
+                                onClick = {
+                                    onDrawClick?.invoke()
+                                    isExpanded = false
+                                }
+                            )
                         }
                     }
 
@@ -239,6 +255,30 @@ fun WriteToolbar(
                 .height(0.5.dp)
                 .background(secondaryColor.copy(alpha = 0.1f))
         )
+
+        // ── Row 2.5: Font color picker (conditional) ──
+        AnimatedVisibility(visible = showFontColorRow && onFontColorChanged != null) {
+            Column {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(0.5.dp)
+                        .background(secondaryColor.copy(alpha = 0.1f))
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(bgColor)
+                ) {
+                    FontColorPicker(
+                        selectedColor = fontColor,
+                        onColorSelected = { hex ->
+                            onFontColorChanged?.invoke(hex)
+                        }
+                    )
+                }
+            }
+        }
 
         // ── Row 2: Formatting buttons ──
         Box(
@@ -339,6 +379,32 @@ fun WriteToolbar(
                         inactiveColor = textColor,
                         onClick = { richTextState.toggleOrderedList() }
                     )
+
+                    // Font color separator + button
+                    if (onFontColorChanged != null) {
+                        Spacer(Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .width(0.5.dp)
+                                .height(20.dp)
+                                .background(secondaryColor.copy(alpha = 0.15f))
+                        )
+                        Spacer(Modifier.width(8.dp))
+
+                        // Font color indicator button
+                        val indicatorColor = if (fontColor != null) {
+                            try { Color(android.graphics.Color.parseColor(fontColor)) }
+                            catch (_: Exception) { textColor }
+                        } else textColor
+                        FormatButton(
+                            icon = Icons.Filled.FormatColorText,
+                            contentDescription = "Font color",
+                            isActive = showFontColorRow,
+                            activeColor = indicatorColor,
+                            inactiveColor = indicatorColor,
+                            onClick = { showFontColorRow = !showFontColorRow }
+                        )
+                    }
                 }
 
                 Spacer(Modifier.weight(1f))
