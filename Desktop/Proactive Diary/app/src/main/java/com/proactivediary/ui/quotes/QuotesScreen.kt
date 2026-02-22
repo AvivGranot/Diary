@@ -1,5 +1,6 @@
 package com.proactivediary.ui.quotes
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,16 +16,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -52,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.quotes.components.AuthorAvatar
 import com.proactivediary.ui.theme.CormorantGaramond
@@ -86,6 +88,7 @@ fun QuotesScreen(
     viewModel: QuotesViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -186,6 +189,7 @@ fun QuotesScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
                             .padding(horizontal = 20.dp),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
@@ -254,7 +258,15 @@ fun QuotesScreen(
                             quote = quote,
                             isLiked = state.likedQuoteIds.contains(quote.id),
                             onLike = { viewModel.toggleLike(quote.id) },
-                            onClick = { onQuoteClick(quote.id) }
+                            onClick = { onQuoteClick(quote.id) },
+                            onShare = {
+                                val shareText = "\u201C${quote.content}\u201D\n\u2014 ${quote.authorName}\n\nShared from Proactive Diary"
+                                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                    putExtra(Intent.EXTRA_TEXT, shareText)
+                                    type = "text/plain"
+                                }
+                                context.startActivity(Intent.createChooser(sendIntent, "Share quote"))
+                            }
                         )
                     }
 
@@ -489,7 +501,8 @@ private fun FeedPostCard(
     quote: com.proactivediary.data.social.Quote,
     isLiked: Boolean,
     onLike: () -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onShare: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -513,7 +526,9 @@ private fun FeedPostCard(
                     text = quote.authorName,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
                 val dateFormat = SimpleDateFormat("MMM d", Locale.getDefault())
                 Text(
@@ -543,7 +558,7 @@ private fun FeedPostCard(
         // Actions row: heart, comment, share, bookmark
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(20.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Like
             Row(
@@ -585,18 +600,12 @@ private fun FeedPostCard(
                 Icons.Default.Share,
                 contentDescription = "Share",
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier
+                    .size(18.dp)
+                    .clickable(onClick = onShare)
             )
 
             Spacer(modifier = Modifier.weight(1f))
-
-            // Bookmark
-            Icon(
-                Icons.Default.BookmarkBorder,
-                contentDescription = "Bookmark",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(18.dp)
-            )
         }
 
         // Divider

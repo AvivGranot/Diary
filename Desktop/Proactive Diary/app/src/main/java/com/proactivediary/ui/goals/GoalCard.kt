@@ -53,7 +53,7 @@ fun GoalCard(
             .clip(RoundedCornerShape(8.dp))
             .background(parchmentColor)
             .combinedClickable(
-                onClick = {},
+                onClick = onCheckIn,
                 onLongClick = onLongPress
             )
             .padding(16.dp)

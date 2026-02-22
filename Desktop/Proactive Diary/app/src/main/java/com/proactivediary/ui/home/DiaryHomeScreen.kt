@@ -136,28 +136,50 @@ fun DiaryHomeScreen(
                 }
             }
         } else if (uiState.isEmpty) {
-            // Empty state
+            // Empty state — elevated to top third, not dead center
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(DiarySpacing.screenHorizontal),
-                contentAlignment = Alignment.Center
+                    .padding(horizontal = DiarySpacing.screenHorizontal),
+                contentAlignment = Alignment.TopCenter
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(top = 120.dp)
+                ) {
                     Text(
                         text = "Your diary awaits",
                         style = TextStyle(
                             fontFamily = CormorantGaramond,
-                            fontSize = 22.sp,
+                            fontSize = 26.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     )
                     Spacer(modifier = Modifier.height(DiarySpacing.xs))
                     Text(
-                        text = "Tap the pencil to write your first entry",
+                        text = "Start writing — your story matters",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
+                    Spacer(modifier = Modifier.height(DiarySpacing.lg))
+                    Button(
+                        onClick = onWriteClick,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = extendedColors.accent,
+                            contentColor = MaterialTheme.colorScheme.background
+                        ),
+                        contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
+                    ) {
+                        Text(
+                            text = "Write your first entry",
+                            style = TextStyle(
+                                fontFamily = PlusJakartaSans,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                    }
                 }
             }
         } else {

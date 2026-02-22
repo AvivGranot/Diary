@@ -92,6 +92,9 @@ class SettingsViewModel @Inject constructor(
     private val _isAIEnabled = MutableStateFlow(false)
     val isAIEnabled: StateFlow<Boolean> = _isAIEnabled
 
+    private val _isSydneyEnabled = MutableStateFlow(false)
+    val isSydneyEnabled: StateFlow<Boolean> = _isSydneyEnabled
+
     // Notification health
     private val _notificationHealth = MutableStateFlow<NotificationHealth>(NotificationHealth.Healthy)
     val notificationHealth: StateFlow<NotificationHealth> = _notificationHealth
@@ -112,6 +115,7 @@ class SettingsViewModel @Inject constructor(
         loadAIPref()
         loadEntryCount()
         refreshNotificationHealth()
+        refreshSydneyState()
     }
 
     private fun loadEntryCount() {
@@ -151,6 +155,25 @@ class SettingsViewModel @Inject constructor(
         _isAIEnabled.value = enabled
         viewModelScope.launch {
             preferenceDao.insert(PreferenceEntity("ai_insights_enabled", if (enabled) "true" else "false"))
+        }
+    }
+
+    fun refreshSydneyState() {
+        _isSydneyEnabled.value = com.proactivediary.service.SydneyListenerService.isRunning(context)
+    }
+
+    fun toggleSydney(enabled: Boolean) {
+        _isSydneyEnabled.value = enabled
+        val intent = android.content.Intent(context, com.proactivediary.service.SydneyListenerService::class.java)
+        if (enabled) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
+        } else {
+            intent.action = com.proactivediary.service.SydneyListenerService.ACTION_STOP
+            context.startService(intent)
         }
     }
 

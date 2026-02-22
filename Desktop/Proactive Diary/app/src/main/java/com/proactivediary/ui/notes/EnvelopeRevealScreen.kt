@@ -41,6 +41,8 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import com.proactivediary.ui.notes.components.NoteContentCard
 import kotlinx.coroutines.delay
 
@@ -48,6 +50,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun EnvelopeRevealScreen(
     onBack: () -> Unit,
+    onSendOneBack: () -> Unit = {},
     viewModel: EnvelopeRevealViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -184,10 +187,27 @@ fun EnvelopeRevealScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    Button(
+                        onClick = onSendOneBack,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
+                        modifier = Modifier.fillMaxWidth(0.7f)
+                    ) {
+                        Text(
+                            text = "Send one back",
+                            fontStyle = FontStyle.Normal
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
                     Text(
-                        text = "Spread the kindness \u2014 send one back",
+                        text = "Spread the kindness",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                         fontStyle = FontStyle.Italic,
                         textAlign = TextAlign.Center
                     )

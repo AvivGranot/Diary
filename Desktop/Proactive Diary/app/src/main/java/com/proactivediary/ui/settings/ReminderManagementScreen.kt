@@ -312,7 +312,7 @@ private fun ReminderRow(
 }
 
 @Composable
-private fun ReminderDialog(
+internal fun ReminderDialog(
     existingReminder: WritingReminderEntity? = null,
     onDismiss: () -> Unit,
     onSave: (time: String, days: String, fallbackEnabled: Boolean) -> Unit

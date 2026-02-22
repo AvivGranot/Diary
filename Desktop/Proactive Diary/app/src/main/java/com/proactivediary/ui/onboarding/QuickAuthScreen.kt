@@ -81,11 +81,11 @@ fun QuickAuthScreen(
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(horizontal = 28.dp),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // ── Top breathing room ──
-        Spacer(modifier = Modifier.weight(1.2f))
+        Spacer(modifier = Modifier.weight(0.6f))
 
         // ── App name — big serif, the hero ──
         Text(
@@ -107,16 +107,16 @@ fun QuickAuthScreen(
             text = "Your private space to think, write, and grow.",
             style = TextStyle(
                 fontFamily = PlusJakartaSans,
-                fontSize = 14.sp,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Normal,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 20.sp
+                color = MaterialTheme.colorScheme.onBackground,
+                lineHeight = 22.sp
             ),
             textAlign = TextAlign.Center
         )
 
         // ── Feature bullets ──
-        Spacer(modifier = Modifier.weight(0.8f))
+        Spacer(modifier = Modifier.weight(0.4f))
 
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -237,7 +237,7 @@ private fun FeatureRow(
             text = text,
             style = TextStyle(
                 fontFamily = PlusJakartaSans,
-                fontSize = 14.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onBackground
             )

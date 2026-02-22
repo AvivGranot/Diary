@@ -1,10 +1,12 @@
 package com.proactivediary.ui.profile
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.proactivediary.data.repository.EntryRepository
+import com.proactivediary.data.social.ProfileImageRepository
 import com.proactivediary.data.social.QuotesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +26,7 @@ data class ProfileUiState(
     val displayName: String = "",
     val handle: String = "",
     val photoUrl: String? = null,
+    val isSignedIn: Boolean = false,
     val totalEntries: Int = 0,
     val totalLikesReceived: Int = 0,
     val totalQuotes: Int = 0,
@@ -38,6 +41,7 @@ data class ProfileUiState(
 class ProfileViewModel @Inject constructor(
     private val entryRepository: EntryRepository,
     private val quotesRepository: QuotesRepository,
+    private val profileImageRepository: ProfileImageRepository,
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore
 ) : ViewModel() {
@@ -61,7 +65,8 @@ class ProfileViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(
             displayName = name,
             handle = handle,
-            photoUrl = photoUrl
+            photoUrl = photoUrl,
+            isSignedIn = user != null
         )
 
         // Also try to get photoUrl from Firestore (may be updated via profile picture upload)
@@ -130,6 +135,15 @@ class ProfileViewModel @Inject constructor(
                 )
             } catch (_: Exception) {
                 _uiState.value = _uiState.value.copy(isLoading = false)
+            }
+        }
+    }
+
+    fun uploadProfilePhoto(uri: Uri) {
+        viewModelScope.launch {
+            val result = profileImageRepository.uploadAvatar(uri)
+            result.onSuccess { url ->
+                _uiState.value = _uiState.value.copy(photoUrl = url)
             }
         }
     }

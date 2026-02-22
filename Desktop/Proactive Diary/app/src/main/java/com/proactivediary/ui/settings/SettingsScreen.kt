@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -18,12 +19,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -47,10 +46,12 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.content.Intent
@@ -62,13 +63,12 @@ import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.paywall.Plan
 import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.DiarySpacing
 import com.proactivediary.ui.theme.PlusJakartaSans
 
 @Composable
 fun SettingsScreen(
-    onNavigateToLayout: () -> Unit = {},
-    onNavigateToGoals: () -> Unit = {},
-    onNavigateToReminders: () -> Unit = {},
+    onBack: () -> Unit = {},
     onNavigateToTypewriter: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel(),
     billingViewModel: BillingViewModel = hiltViewModel(),
@@ -77,9 +77,8 @@ fun SettingsScreen(
 
     val isStreakEnabled by viewModel.isStreakEnabled.collectAsState()
     val isAIEnabled by viewModel.isAIEnabled.collectAsState()
+    val isSydneyEnabled by viewModel.isSydneyEnabled.collectAsState()
     val entryCount by viewModel.entryCount.collectAsState()
-    val activeReminderCount by viewModel.activeReminderCount.collectAsState()
-    val activeGoalCount by viewModel.activeGoalCount.collectAsState()
     val exportMessage by viewModel.exportMessage.collectAsState()
     val exportUri by viewModel.exportUri.collectAsState()
     val deleteStep by viewModel.deleteStep.collectAsState()
@@ -89,7 +88,6 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showPaywall by remember { mutableStateOf(false) }
     var showAuthDialog by remember { mutableStateOf(false) }
-    var showExportOptions by remember { mutableStateOf(false) }
     var showPrivacyPolicy by remember { mutableStateOf(false) }
     var showTermsOfService by remember { mutableStateOf(false) }
     var deleteConfirmText by remember { mutableStateOf("") }
@@ -136,22 +134,26 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
+                .statusBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 24.dp)
+                .padding(horizontal = 20.dp, vertical = DiarySpacing.xs)
         ) {
-            // Header with settings icon and title
+            // Header with back button
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings",
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.size(22.dp)
-                )
-                Spacer(Modifier.width(10.dp))
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .graphicsLayer(rotationZ = 180f)
+                    )
+                }
                 Text(
-                    text = "Settings",
+                    text = "Account & Privacy",
                     style = TextStyle(
                         fontFamily = CormorantGaramond,
                         fontSize = 24.sp,
@@ -161,29 +163,6 @@ fun SettingsScreen(
             }
 
             Spacer(Modifier.height(28.dp))
-
-            // -- Layout --
-            SettingsRow(
-                label = "Layout",
-                onClick = onNavigateToLayout
-            )
-            SettingsDivider()
-
-            // -- My Goals --
-            SettingsRow(
-                label = "My Goals",
-                value = "$activeGoalCount goals",
-                onClick = onNavigateToGoals
-            )
-            SettingsDivider()
-
-            // -- Reminders --
-            SettingsRow(
-                label = "Reminders",
-                value = "$activeReminderCount active",
-                onClick = onNavigateToReminders
-            )
-            SettingsDivider()
 
             // -- AI Insights toggle --
             Row(
@@ -236,6 +215,45 @@ fun SettingsScreen(
             }
             SettingsDivider()
 
+            // -- Sydney Voice Capture --
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Sydney Voice Capture",
+                        style = TextStyle(
+                            fontFamily = PlusJakartaSans,
+                            fontSize = 15.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    )
+                    Text(
+                        text = "Say \u201CHi Sydney\u201D to capture thoughts hands-free",
+                        style = TextStyle(
+                            fontFamily = PlusJakartaSans,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                }
+                Switch(
+                    checked = isSydneyEnabled,
+                    onCheckedChange = { viewModel.toggleSydney(it) },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = MaterialTheme.colorScheme.primary,
+                        checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                )
+            }
+            SettingsDivider()
+
             // -- Subscription --
             SettingsRow(
                 label = "Subscription",
@@ -247,35 +265,6 @@ fun SettingsScreen(
                 },
                 onClick = { showPaywall = true }
             )
-            SettingsDivider()
-
-            // -- Export Data --
-            Box {
-                SettingsRow(
-                    label = "Export Data",
-                    value = "JSON / PDF",
-                    onClick = { showExportOptions = true }
-                )
-                DropdownMenu(
-                    expanded = showExportOptions,
-                    onDismissRequest = { showExportOptions = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Export as JSON", color = MaterialTheme.colorScheme.onSurface) },
-                        onClick = {
-                            viewModel.exportJson()
-                            showExportOptions = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Export as PDF", color = MaterialTheme.colorScheme.onSurface) },
-                        onClick = {
-                            viewModel.exportPdf()
-                            showExportOptions = false
-                        }
-                    )
-                }
-            }
             SettingsDivider()
 
             // -- Privacy Policy --
@@ -302,14 +291,16 @@ fun SettingsScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Column {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = authState.userDisplayName ?: "Signed in",
                             style = TextStyle(
                                 fontFamily = PlusJakartaSans,
                                 fontSize = 15.sp,
                                 color = MaterialTheme.colorScheme.onSurface
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         if (authState.userEmail != null) {
                             Text(
@@ -318,7 +309,9 @@ fun SettingsScreen(
                                     fontFamily = PlusJakartaSans,
                                     fontSize = 12.sp,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -348,7 +341,7 @@ fun SettingsScreen(
 
             // Version number at bottom
             Text(
-                text = "Version 1.0.0",
+                text = "Version ${com.proactivediary.BuildConfig.VERSION_NAME}",
                 style = TextStyle(
                     fontFamily = PlusJakartaSans,
                     fontSize = 12.sp,
@@ -358,7 +351,8 @@ fun SettingsScreen(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(Modifier.height(32.dp))
+            // Clearance for persistent bottom nav
+            Spacer(Modifier.height(80.dp))
         }
 
         // Snackbar host
@@ -493,16 +487,12 @@ fun SettingsScreen(
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "Read full terms online",
+                        text = "Last updated February 2026",
                         style = TextStyle(
                             fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                             fontStyle = FontStyle.Italic
-                        ),
-                        modifier = Modifier.clickable {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://proactivediary.com/terms-of-service"))
-                            context.startActivity(intent)
-                        }
+                        )
                     )
                 }
             },

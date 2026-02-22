@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
@@ -72,169 +74,168 @@ fun ProfilePictureScreen(
         }
     }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center
+            .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
-        Column(
+        Spacer(modifier = Modifier.weight(1f))
+
+        Text(
+            text = "Add a profile photo",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+            lineHeight = 36.sp
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = "Show up on the leaderboard with a face, not just a name.",
+            style = MaterialTheme.typography.bodyMedium,
+            fontStyle = FontStyle.Italic,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Avatar preview — 120dp circle
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(40.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .size(120.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surface),
+            contentAlignment = Alignment.Center
+        ) {
+            when {
+                state.selectedImageUri != null -> {
+                    AsyncImage(
+                        model = state.selectedImageUri,
+                        contentDescription = "Selected photo",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                state.googlePhotoUrl != null -> {
+                    AsyncImage(
+                        model = state.googlePhotoUrl,
+                        contentDescription = "Google photo",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                else -> {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Placeholder",
+                        modifier = Modifier.size(56.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Choose Photo button
+        OutlinedButton(
+            onClick = { galleryLauncher.launch("image/*") },
+            modifier = Modifier.fillMaxWidth().height(48.dp),
+            shape = RoundedCornerShape(16.dp),
+            enabled = !state.isUploading
         ) {
             Text(
-                text = "Add a profile photo",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.SemiBold,
+                text = if (state.selectedImageUri != null) "Change Photo" else "Choose Photo",
                 color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center,
-                lineHeight = 36.sp
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = "Show up on the leaderboard with a face,\nnot just a name.",
-                style = MaterialTheme.typography.bodyMedium,
-                fontStyle = FontStyle.Italic,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Avatar preview — 120dp circle
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surface),
-                contentAlignment = Alignment.Center
-            ) {
-                when {
-                    state.selectedImageUri != null -> {
-                        AsyncImage(
-                            model = state.selectedImageUri,
-                            contentDescription = "Selected photo",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-                    state.googlePhotoUrl != null -> {
-                        AsyncImage(
-                            model = state.googlePhotoUrl,
-                            contentDescription = "Google photo",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-                    else -> {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Placeholder",
-                            modifier = Modifier.size(56.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Choose Photo button
-            OutlinedButton(
-                onClick = { galleryLauncher.launch("image/*") },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
-                shape = RoundedCornerShape(16.dp),
-                enabled = !state.isUploading
-            ) {
-                Text(
-                    text = if (state.selectedImageUri != null) "Change Photo" else "Choose Photo",
-                    color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 16.sp
-                )
-            }
-
-            // Use Google Photo button (if available)
-            if (state.googlePhotoUrl != null && state.selectedImageUri == null) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Button(
-                    onClick = { viewModel.useGooglePhoto() },
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    enabled = !state.isUploading,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    ),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    if (state.isUploading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text("Use Google Photo", fontSize = 16.sp)
-                    }
-                }
-            }
-
-            // Upload Photo button (after image selection)
-            if (state.selectedImageUri != null) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Button(
-                    onClick = { viewModel.uploadSelectedPhoto() },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    enabled = !state.isUploading,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    ),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    if (state.isUploading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = Color.White,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text("Upload Photo", fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                    }
-                }
-            }
-
-            // Error
-            if (state.error != null) {
-                Text(
-                    text = state.error!!,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 12.dp),
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Skip for now
-            Text(
-                text = "Skip for now",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                modifier = Modifier
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = {
-                            analyticsService.logProfilePictureSkipped()
-                            onSkip()
-                        }
-                    )
-                    .padding(vertical = 8.dp)
+                fontSize = 16.sp
             )
         }
+
+        // Use Google Photo button (if available)
+        if (state.googlePhotoUrl != null && state.selectedImageUri == null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
+                onClick = { viewModel.useGooglePhoto() },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                enabled = !state.isUploading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                if (state.isUploading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Use Google Photo", fontSize = 16.sp)
+                }
+            }
+        }
+
+        // Upload Photo button (after image selection)
+        if (state.selectedImageUri != null) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
+                onClick = { viewModel.uploadSelectedPhoto() },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                enabled = !state.isUploading,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                ),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                if (state.isUploading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Upload Photo", fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                }
+            }
+        }
+
+        // Error
+        if (state.error != null) {
+            Text(
+                text = state.error!!,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 12.dp),
+                textAlign = TextAlign.Center
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Skip for now
+        Text(
+            text = "Skip for now",
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            modifier = Modifier
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {
+                        analyticsService.logProfilePictureSkipped()
+                        onSkip()
+                    }
+                )
+                .padding(vertical = 8.dp)
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
     }
 }

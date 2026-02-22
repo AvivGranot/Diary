@@ -43,12 +43,18 @@ class SpeechToTextService @Inject constructor(
     private val _isListening = MutableStateFlow(false)
     val isListening: StateFlow<Boolean> = _isListening.asStateFlow()
 
+    private val _error = MutableSharedFlow<String>(extraBufferCapacity = 5)
+    val error: SharedFlow<String> = _error.asSharedFlow()
+
     fun checkAvailability() {
         _isAvailable.value = SpeechRecognizer.isRecognitionAvailable(context)
     }
 
     fun startListening() {
-        if (!_isAvailable.value) return
+        if (!_isAvailable.value) {
+            _error.tryEmit("Speech recognition not available on this device")
+            return
+        }
         isActive = true
         _isListening.value = true
         _partialText.value = ""
@@ -119,6 +125,7 @@ class SpeechToTextService @Inject constructor(
                     isActive = false
                     _isListening.value = false
                     _partialText.value = ""
+                    _error.tryEmit("Microphone error. Please try again.")
                 }
                 SpeechRecognizer.ERROR_CLIENT -> {
                     // Client-side error, try to restart

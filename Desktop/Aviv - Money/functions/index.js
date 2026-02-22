@@ -280,6 +280,21 @@ exports.createUserProfile = onCall(async (request) => {
     { merge: true }
   );
 
+  // Send welcome note to new user
+  try {
+    await db.collection("notes").add({
+      senderId: "system",
+      senderName: "Proactive Diary",
+      recipientId: uid,
+      content: "Welcome. Someone out there is glad you\u2019re here. This is your space to think, write, and grow. \u2728",
+      status: "delivered",
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      readAt: null,
+    });
+  } catch (e) {
+    console.warn("Failed to send welcome note:", e);
+  }
+
   await logEvent("user_created", uid, {
     method: phoneHash ? "phone" : emailHash ? "email" : "anonymous",
     hasContacts: !!(phoneHash || emailHash),
@@ -899,4 +914,104 @@ exports.cleanupDeletedSyncData = onSchedule("every 24 hours", async () => {
       }
     }
   }
+});
+
+/**
+ * One-time seed function: populates the quotes collection with curated
+ * public-domain inspiring quotes. Run once via Firebase console or CLI.
+ * Idempotent: checks for existing seed marker before inserting.
+ */
+exports.seedQuotes = onCall(async (request) => {
+  // Check if already seeded
+  const markerRef = db.collection("counters").doc("seed_status");
+  const marker = await markerRef.get();
+  if (marker.exists && marker.data().quotesSeeded) {
+    return { success: true, message: "Already seeded", count: 0 };
+  }
+
+  const seedQuotes = [
+    { content: "The unexamined life is not worth living.", author: "Socrates" },
+    { content: "We suffer more in imagination than in reality.", author: "Seneca" },
+    { content: "Waste no more time arguing what a good person should be. Be one.", author: "Marcus Aurelius" },
+    { content: "The best time to plant a tree was 20 years ago. The second best time is now.", author: "Chinese Proverb" },
+    { content: "What you do today can improve all your tomorrows.", author: "Ralph Marston" },
+    { content: "Start where you are. Use what you have. Do what you can.", author: "Arthur Ashe" },
+    { content: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+    { content: "It is never too late to be what you might have been.", author: "George Eliot" },
+    { content: "Happiness is not something ready-made. It comes from your own actions.", author: "Dalai Lama" },
+    { content: "In the middle of difficulty lies opportunity.", author: "Albert Einstein" },
+    { content: "You must be the change you wish to see in the world.", author: "Mahatma Gandhi" },
+    { content: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+    { content: "Everything you can imagine is real.", author: "Pablo Picasso" },
+    { content: "Do what you can, with what you have, where you are.", author: "Theodore Roosevelt" },
+    { content: "Life is what happens when you're busy making other plans.", author: "John Lennon" },
+    { content: "The purpose of our lives is to be happy.", author: "Dalai Lama" },
+    { content: "You only live once, but if you do it right, once is enough.", author: "Mae West" },
+    { content: "If you want to lift yourself up, lift up someone else.", author: "Booker T. Washington" },
+    { content: "The mind is everything. What you think, you become.", author: "Buddha" },
+    { content: "Strive not to be a success, but rather to be of value.", author: "Albert Einstein" },
+    { content: "The best revenge is massive success.", author: "Frank Sinatra" },
+    { content: "I have not failed. I've just found 10,000 ways that won't work.", author: "Thomas Edison" },
+    { content: "If you look at what you have in life, you'll always have more.", author: "Oprah Winfrey" },
+    { content: "The greatest glory in living lies not in never falling, but in rising every time we fall.", author: "Nelson Mandela" },
+    { content: "Your time is limited. Don't waste it living someone else's life.", author: "Steve Jobs" },
+    { content: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+    { content: "It does not matter how slowly you go as long as you do not stop.", author: "Confucius" },
+    { content: "Act as if what you do makes a difference. It does.", author: "William James" },
+    { content: "What lies behind us and what lies before us are tiny matters compared to what lies within us.", author: "Ralph Waldo Emerson" },
+    { content: "The only impossible journey is the one you never begin.", author: "Tony Robbins" },
+    { content: "Life is really simple, but we insist on making it complicated.", author: "Confucius" },
+    { content: "Knowing is not enough; we must apply. Wishing is not enough; we must do.", author: "Johann Wolfgang von Goethe" },
+    { content: "The way to get started is to quit talking and begin doing.", author: "Walt Disney" },
+    { content: "If life were predictable it would cease to be life and be without flavor.", author: "Eleanor Roosevelt" },
+    { content: "Spread love everywhere you go. Let no one ever come to you without leaving happier.", author: "Mother Teresa" },
+    { content: "When you reach the end of your rope, tie a knot in it and hang on.", author: "Franklin D. Roosevelt" },
+    { content: "Always remember that you are absolutely unique. Just like everyone else.", author: "Margaret Mead" },
+    { content: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
+    { content: "It is during our darkest moments that we must focus to see the light.", author: "Aristotle" },
+    { content: "Whoever is happy will make others happy too.", author: "Anne Frank" },
+    { content: "Tell me and I forget. Teach me and I remember. Involve me and I learn.", author: "Benjamin Franklin" },
+    { content: "The best and most beautiful things in the world cannot be seen or even touched \u2014 they must be felt with the heart.", author: "Helen Keller" },
+    { content: "You are never too old to set another goal or to dream a new dream.", author: "C.S. Lewis" },
+    { content: "In three words I can sum up everything I've learned about life: it goes on.", author: "Robert Frost" },
+    { content: "Only a life lived for others is a life worthwhile.", author: "Albert Einstein" },
+    { content: "We must let go of the life we have planned, so as to accept the one that is waiting for us.", author: "Joseph Campbell" },
+    { content: "The greatest wealth is to live content with little.", author: "Plato" },
+    { content: "No act of kindness, no matter how small, is ever wasted.", author: "Aesop" },
+    { content: "Nothing is impossible. The word itself says I'm possible.", author: "Audrey Hepburn" },
+    { content: "Turn your wounds into wisdom.", author: "Oprah Winfrey" },
+  ];
+
+  const batch = db.batch();
+  let count = 0;
+
+  for (const q of seedQuotes) {
+    const ref = db.collection("quotes").doc();
+    batch.set(ref, {
+      authorId: "system",
+      authorName: q.author,
+      authorPhotoUrl: null,
+      content: q.content,
+      likeCount: Math.floor(Math.random() * 15) + 1, // 1-15 seed likes
+      commentCount: 0,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      reported: false,
+      isSeeded: true,
+    });
+    count++;
+  }
+
+  // Update global quote counter
+  batch.set(
+    db.collection("counters").doc("global"),
+    { quoteCount: admin.firestore.FieldValue.increment(count) },
+    { merge: true }
+  );
+
+  // Mark as seeded
+  batch.set(markerRef, { quotesSeeded: true, seededAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
+
+  await batch.commit();
+  console.log(`Seeded ${count} quotes`);
+  return { success: true, count };
 });

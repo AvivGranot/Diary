@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
@@ -131,7 +132,8 @@ data class WriteUiState(
     val audioPath: String? = null,
     val isDictating: Boolean = false,
     val partialTranscript: String = "",
-    val speechAvailable: Boolean = false
+    val speechAvailable: Boolean = false,
+    val isFirstEverWrite: Boolean = false
 )
 
 @OptIn(FlowPreview::class)
@@ -195,6 +197,17 @@ class WriteViewModel @Inject constructor(
             fetchLocationAndWeather()
         }
 
+        // Check if this is the user's very first write (for auto-showing templates)
+        if (entryIdArg == null) {
+            viewModelScope.launch {
+                val logged = preferenceDao.get("first_entry_logged")?.value
+                val templateShown = preferenceDao.get("template_prompt_shown")?.value
+                if (logged == null && templateShown == null) {
+                    _uiState.value = _uiState.value.copy(isFirstEverWrite = true)
+                }
+            }
+        }
+
         // Speech-to-text setup
         speechToTextService.checkAvailability()
         viewModelScope.launch {
@@ -212,7 +225,16 @@ class WriteViewModel @Inject constructor(
                 _transcribedTextFlow.emit(text)
             }
         }
+        viewModelScope.launch {
+            speechToTextService.error.collect { errorMsg ->
+                _uiState.update { it.copy(isDictating = false) }
+                _speechError.emit(errorMsg)
+            }
+        }
     }
+
+    private val _speechError = MutableSharedFlow<String>(extraBufferCapacity = 5)
+    val speechError: SharedFlow<String> = _speechError.asSharedFlow()
 
     override fun onCleared() {
         super.onCleared()
@@ -729,6 +751,13 @@ class WriteViewModel @Inject constructor(
             if (progress != null) {
                 _uiState.value = _uiState.value.copy(weeklyGoalProgress = progress)
             }
+        }
+    }
+
+    fun markTemplatePromptShown() {
+        viewModelScope.launch {
+            preferenceDao.insert(PreferenceEntity("template_prompt_shown", "true"))
+            _uiState.value = _uiState.value.copy(isFirstEverWrite = false)
         }
     }
 

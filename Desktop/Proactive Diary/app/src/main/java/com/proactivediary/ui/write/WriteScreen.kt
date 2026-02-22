@@ -188,6 +188,21 @@ fun WriteScreen(
     var showTemplatePicker by remember { mutableStateOf(false) }
     var dictationSeconds by remember { mutableStateOf(0) }
 
+    // Auto-show template picker for first-ever write
+    LaunchedEffect(state.isFirstEverWrite) {
+        if (state.isFirstEverWrite) {
+            showTemplatePicker = true
+            viewModel.markTemplatePromptShown()
+        }
+    }
+
+    // Speech error feedback — show toast when dictation fails
+    LaunchedEffect(Unit) {
+        viewModel.speechError.collect { errorMsg ->
+            android.widget.Toast.makeText(context, errorMsg, android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
     // Track dictation duration
     LaunchedEffect(state.isDictating) {
         if (state.isDictating) {
@@ -315,7 +330,7 @@ fun WriteScreen(
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
             ) {
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 // Personalization mark — header position
                 if (state.markText.isNotBlank() && state.markPosition == "header") {
@@ -382,7 +397,29 @@ fun WriteScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
+                }
+
+                // Apple Journal-style recommendations — show ABOVE editor for new entries
+                val isNewEmptyEntry = state.title.isBlank() && state.content.isBlank() && state.isNewEntry
+                if (isNewEmptyEntry) {
+                    RecommendationsPanel(
+                        state = recommendationsState,
+                        colorKey = state.colorKey,
+                        onNearbyPlaceTapped = { viewModel.onNearbyPlaceTapped(it) },
+                        onPhotoTapped = { viewModel.addImage(it.uri) },
+                        onLocationTapped = { viewModel.onLocationSuggestionTapped(it) },
+                        onRecentEntryTapped = { entryId -> onNavigateToEntry?.invoke(entryId) },
+                        onRequestPhotoPermission = {
+                            val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                Manifest.permission.READ_MEDIA_IMAGES
+                            } else {
+                                Manifest.permission.READ_EXTERNAL_STORAGE
+                            }
+                            photoPermissionLauncher.launch(permission)
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
 
                 // Title field — always visible, clean placeholder
@@ -391,7 +428,7 @@ fun WriteScreen(
                     onValueChange = { viewModel.onTitleChanged(it) },
                     textStyle = TextStyle(
                         fontFamily = CormorantGaramond,
-                        fontSize = 20.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Normal,
                         color = textColor
                     ),
@@ -406,9 +443,9 @@ fun WriteScreen(
                                     text = "Title",
                                     style = TextStyle(
                                         fontFamily = CormorantGaramond,
-                                        fontSize = 20.sp,
+                                        fontSize = 18.sp,
                                         fontStyle = FontStyle.Italic,
-                                        color = secondaryTextColor.copy(alpha = 0.35f)
+                                        color = secondaryTextColor.copy(alpha = 0.5f)
                                     )
                                 )
                             }
@@ -422,8 +459,9 @@ fun WriteScreen(
                 if (state.images.isNotEmpty()) {
                     Spacer(Modifier.height(16.dp))
                     state.images.forEach { image ->
-                        val thumbnailFile = viewModel.imageStorageManager
-                            .getThumbnailFile(state.entryId, image.filename)
+                        // Use full-quality image for inline display (not 200px thumbnail)
+                        val imageFile = viewModel.imageStorageManager
+                            .getImageFile(state.entryId, image.filename)
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -432,7 +470,7 @@ fun WriteScreen(
                         ) {
                             Box {
                                 AsyncImage(
-                                    model = thumbnailFile,
+                                    model = imageFile,
                                     contentDescription = "Photo",
                                     modifier = Modifier
                                         .then(
@@ -547,26 +585,28 @@ fun WriteScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // Apple Journal-style recommendations — scroll down to discover
-                RecommendationsPanel(
-                    state = recommendationsState,
-                    colorKey = state.colorKey,
-                    onNearbyPlaceTapped = { viewModel.onNearbyPlaceTapped(it) },
-                    onPhotoTapped = { viewModel.addImage(it.uri) },
-                    onLocationTapped = { viewModel.onLocationSuggestionTapped(it) },
-                    onRecentEntryTapped = { entryId -> onNavigateToEntry?.invoke(entryId) },
-                    onRequestPhotoPermission = {
-                        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            Manifest.permission.READ_MEDIA_IMAGES
-                        } else {
-                            Manifest.permission.READ_EXTERNAL_STORAGE
+                // Recommendations at bottom — only when entry has content (panel shown above for empty entries)
+                if (!isNewEmptyEntry) {
+                    RecommendationsPanel(
+                        state = recommendationsState,
+                        colorKey = state.colorKey,
+                        onNearbyPlaceTapped = { viewModel.onNearbyPlaceTapped(it) },
+                        onPhotoTapped = { viewModel.addImage(it.uri) },
+                        onLocationTapped = { viewModel.onLocationSuggestionTapped(it) },
+                        onRecentEntryTapped = { entryId -> onNavigateToEntry?.invoke(entryId) },
+                        onRequestPhotoPermission = {
+                            val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                Manifest.permission.READ_MEDIA_IMAGES
+                            } else {
+                                Manifest.permission.READ_EXTERNAL_STORAGE
+                            }
+                            photoPermissionLauncher.launch(permission)
                         }
-                        photoPermissionLauncher.launch(permission)
-                    }
-                )
+                    )
+                }
             }
 
-            // Bottom toolbar — always visible
+            // Bottom toolbar — always visible, with clearance for persistent bottom nav
             WriteToolbar(
                 wordCount = state.wordCount,
                 showWordCount = showWordCount,
@@ -594,6 +634,9 @@ fun WriteScreen(
                 dictationSeconds = dictationSeconds,
                 onStopDictation = { viewModel.stopDictation() }
             )
+
+            // Clearance for persistent bottom nav (64dp height)
+            Spacer(modifier = Modifier.height(64.dp))
         }
 
         // Auto-save "Saved" indicator (top-right)
@@ -603,7 +646,7 @@ fun WriteScreen(
                 color = secondaryTextColor.copy(alpha = 0.5f),
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(top = 20.dp, end = 16.dp)
+                    .padding(top = 10.dp, end = 16.dp)
             )
         }
 
@@ -624,7 +667,7 @@ fun WriteScreen(
                 ),
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(start = horizontalPadding, top = 20.dp)
+                    .padding(start = horizontalPadding, top = 10.dp)
             )
         }
 
@@ -986,7 +1029,7 @@ private fun WriteArea(
                             fontFamily = CormorantGaramond,
                             fontStyle = FontStyle.Italic,
                             fontSize = fontSize,
-                            color = secondaryTextColor.copy(alpha = 0.35f),
+                            color = secondaryTextColor.copy(alpha = 0.5f),
                             lineHeight = lineHeightSp
                         )
                     )
@@ -1033,7 +1076,7 @@ private fun WriteArea(
                                     fontFamily = CormorantGaramond,
                                     fontStyle = FontStyle.Italic,
                                     fontSize = fontSize,
-                                    color = secondaryTextColor.copy(alpha = 0.35f),
+                                    color = secondaryTextColor.copy(alpha = 0.5f),
                                     lineHeight = lineHeightSp
                                 )
                             )

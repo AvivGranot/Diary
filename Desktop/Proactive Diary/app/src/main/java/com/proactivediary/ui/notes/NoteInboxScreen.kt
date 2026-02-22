@@ -63,7 +63,8 @@ fun NoteInboxScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onComposeNote,
-                containerColor = MaterialTheme.colorScheme.primary
+                containerColor = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 72.dp)
             ) {
                 Icon(Icons.Default.Add, "Send a note", tint = MaterialTheme.colorScheme.onPrimary)
             }
@@ -75,9 +76,12 @@ fun NoteInboxScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.TopCenter
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(top = 120.dp)
+                ) {
                     Text(
                         text = "Your inbox is waiting",
                         style = MaterialTheme.typography.headlineSmall,
@@ -85,10 +89,10 @@ fun NoteInboxScreen(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Send a note first \u2014 kindness comes back.",
+                        text = "Kindness starts with you. Send your first note.",
                         style = MaterialTheme.typography.bodyMedium,
                         fontStyle = FontStyle.Italic,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center
                     )
                 }
@@ -98,7 +102,7 @@ fun NoteInboxScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(notes, key = { it.id }) { note ->

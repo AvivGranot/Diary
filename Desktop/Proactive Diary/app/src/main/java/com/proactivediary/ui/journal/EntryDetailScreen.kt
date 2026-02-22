@@ -481,7 +481,8 @@ fun EntryDetailScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            // Clearance for persistent bottom nav
+            Spacer(modifier = Modifier.height(80.dp))
         }
     }
 

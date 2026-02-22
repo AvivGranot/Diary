@@ -114,7 +114,20 @@ class MainActivity : ComponentActivity() {
             val deepLink by _deepLinkDestination.collectAsState()
             val deepLinkPrompt by _deepLinkPrompt.collectAsState()
             val deepLinkGoalId by _deepLinkGoalId.collectAsState()
-            ProactiveDiaryTheme {
+
+            // Observe theme preferences reactively (auto-recomposes on change)
+            val themePref by preferenceDao.observe("theme_mode")
+                .collectAsState(initial = null)
+            val accentPref by preferenceDao.observe("accent_color")
+                .collectAsState(initial = null)
+
+            val isDarkTheme = themePref?.value != "light" // default dark
+            val accentKey = accentPref?.value ?: "mint"
+
+            ProactiveDiaryTheme(
+                darkTheme = isDarkTheme,
+                accentColorKey = accentKey
+            ) {
                 ProactiveDiaryNavHost(
                     analyticsService = analyticsService,
                     deepLinkDestination = deepLink,

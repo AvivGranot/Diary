@@ -378,8 +378,8 @@ fun JournalScreen(
                         }
                     }
 
-                            // Bottom spacing
-                            item { Spacer(modifier = Modifier.height(16.dp)) }
+                            // Bottom spacing (clearance for persistent bottom nav)
+                            item { Spacer(modifier = Modifier.height(80.dp)) }
                         }
                     }
                 }

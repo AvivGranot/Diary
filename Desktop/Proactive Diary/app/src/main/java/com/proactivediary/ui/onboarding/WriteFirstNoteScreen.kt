@@ -100,10 +100,10 @@ fun WriteFirstNoteScreen(
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(40.dp)
+                modifier = Modifier.padding(24.dp)
             ) {
                 Text(
-                    text = "You just made\nsomeone's day!",
+                    text = "You just made someone's day!",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onBackground,

@@ -391,6 +391,18 @@ class AnalyticsService @Inject constructor() {
         })
     }
 
+    // ─── Sydney ───
+    fun logSydneyCapture(wordCount: Int, durationMs: Long) {
+        log("sydney_capture", bundleOf(
+            "word_count" to wordCount,
+            "duration_ms" to durationMs
+        ))
+    }
+
+    fun logSydneyListenerToggled(enabled: Boolean) {
+        log("sydney_listener_toggled", bundleOf("enabled" to enabled))
+    }
+
     // ─── Helpers ───
     private fun log(event: String, params: Bundle? = null) {
         analytics.logEvent(event, params)

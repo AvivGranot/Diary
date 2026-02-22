@@ -117,10 +117,26 @@ private val LightExtendedColors = DiaryExtendedColors(
 @Composable
 fun ProactiveDiaryTheme(
     darkTheme: Boolean = true, // V3: dark mode by default
+    accentColorKey: String = "mint",
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-    val extendedColors = if (darkTheme) DarkExtendedColors else LightExtendedColors
+    val baseExtendedColors = if (darkTheme) DarkExtendedColors else LightExtendedColors
+
+    // Apply user-chosen accent color globally
+    val accentOption = accentColorOptions.firstOrNull { it.key == accentColorKey }
+    val extendedColors = if (accentOption != null && accentOption.key != "mint") {
+        baseExtendedColors.copy(
+            accent = accentOption.color,
+            accentDark = accentOption.color,
+            cardSideLine = accentOption.color,
+            bottomNavIndicator = accentOption.color,
+            success = accentOption.color,
+            gradientStart = accentOption.color.copy(alpha = 0.15f)
+        )
+    } else {
+        baseExtendedColors
+    }
 
     // Set status bar color to match background
     val view = LocalView.current

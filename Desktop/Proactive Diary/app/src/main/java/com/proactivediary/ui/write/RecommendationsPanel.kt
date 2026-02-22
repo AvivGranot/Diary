@@ -137,7 +137,7 @@ fun RecommendationsPanel(
                 )
             }
 
-            Spacer(Modifier.height(80.dp)) // Space above toolbar
+            Spacer(Modifier.height(24.dp)) // Space above toolbar
         }
     }
 }

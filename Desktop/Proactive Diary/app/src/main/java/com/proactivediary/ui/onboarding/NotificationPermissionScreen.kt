@@ -64,7 +64,7 @@ fun NotificationPermissionScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 32.dp),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -92,7 +92,7 @@ fun NotificationPermissionScreen(
 
         // Body text
         Text(
-            text = "Get gentle reminders to write, plus\npersonalized suggestions based on\nyour routine and surroundings.",
+            text = "Get gentle reminders to write, plus personalized suggestions based on your routine and surroundings.",
             style = TextStyle(
                 fontFamily = FontFamily.Default,
                 fontSize = 15.sp,
@@ -102,7 +102,7 @@ fun NotificationPermissionScreen(
             )
         )
 
-        Spacer(modifier = Modifier.weight(0.25f))
+        Spacer(modifier = Modifier.weight(0.15f))
 
         // Primary button: "Turn On Notifications"
         Box(

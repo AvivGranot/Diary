@@ -79,6 +79,16 @@
             android:textColor="#66585858"
             android:fontFamily="serif" />
 
+        <ImageView
+            android:id="@+id/widget_mic"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_sydney_mic"
+            android:contentDescription="Quick note"
+            android:scaleType="centerInside"
+            android:background="?android:attr/selectableItemBackgroundBorderless" />
+
     </LinearLayout>
 
 </LinearLayout>

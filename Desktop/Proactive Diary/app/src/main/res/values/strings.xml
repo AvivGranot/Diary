@@ -95,4 +95,9 @@
     <string name="book_subtitle">A beautiful PDF of your year\'s writing</string>
     <string name="no_entries_for_year">No entries for %d</string>
     <string name="widget_tap_to_write">Tap to write</string>
+
+    <!-- Sydney -->
+    <string name="shortcut_quick_note">Quick Note</string>
+    <string name="shortcut_quick_note_long">Capture a thought with Sydney</string>
+    <string name="sydney_tile_label">Sydney</string>
 </resources>

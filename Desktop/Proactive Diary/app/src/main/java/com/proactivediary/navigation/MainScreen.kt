@@ -22,7 +22,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -31,10 +30,6 @@ import androidx.navigation.NavHostController
 import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.ui.activity.ActivityScreen
 import com.proactivediary.ui.activity.ActivityViewModel
-import com.proactivediary.ui.components.DiaryBottomNav
-import com.proactivediary.ui.components.FeatureDiscoveryViewModel
-import com.proactivediary.ui.components.SwipeHint
-import com.proactivediary.ui.goals.GoalsScreen
 import com.proactivediary.ui.home.DiaryHomeScreen
 import com.proactivediary.ui.notes.NoteInboxScreen
 import com.proactivediary.ui.notes.NoteInboxViewModel
@@ -43,7 +38,7 @@ import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.paywall.PurchaseResult
 import com.proactivediary.ui.profile.ProfileScreen
 import com.proactivediary.ui.quotes.QuotesScreen
-import com.proactivediary.ui.settings.ReminderManagementScreen
+import com.proactivediary.ui.settings.GoalsAndRemindersScreen
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
@@ -63,9 +58,9 @@ fun MainScreen(
     deepLinkPrompt: String? = null,
     deepLinkGoalId: String? = null,
     onDeepLinkConsumed: () -> Unit = {},
+    onTabChanged: (Int) -> Unit = {},
     billingViewModel: BillingViewModel = hiltViewModel(),
     mainScreenViewModel: MainScreenViewModel = hiltViewModel(),
-    discoveryViewModel: FeatureDiscoveryViewModel = hiltViewModel(),
     noteInboxViewModel: NoteInboxViewModel = hiltViewModel(),
     activityViewModel: ActivityViewModel = hiltViewModel()
 ) {
@@ -79,26 +74,22 @@ fun MainScreen(
     val unreadNoteCount by noteInboxViewModel.unreadCount.collectAsState(initial = 0)
     val activityBadgeCount by activityViewModel.unreadCount.collectAsState()
 
-    // Coach mark
-    val showSwipeHint by discoveryViewModel.showSwipeHint.collectAsState()
-
-    // Overlay sub-screens (Goals, Reminders) — shown on top of pager
-    var showGoals by remember { mutableStateOf(false) }
-    var showReminders by remember { mutableStateOf(false) }
+    // Overlay sub-screen (Goals & Reminders) — shown on top of pager
+    var showGoalsAndReminders by remember { mutableStateOf(false) }
 
     // Notification prompt carried through deep link
     var activeNotificationPrompt by remember { mutableStateOf<String?>(null) }
 
-    // 5-page pager — starts on Diary tab (center)
+    // 5-page pager — starts on Quotes tab (social first)
     val pagerState = rememberPagerState(
-        initialPage = PAGE_DIARY,
+        initialPage = PAGE_QUOTES,
         pageCount = { 5 }
     )
 
     // Track last valid page for paywall bounce
-    var lastValidPage by remember { mutableStateOf(PAGE_DIARY) }
+    var lastValidPage by remember { mutableStateOf(PAGE_QUOTES) }
 
-    // Observe savedStateHandle for tab navigation requests
+    // Observe savedStateHandle for tab navigation requests (from NavGraph bottom nav)
     LaunchedEffect(Unit) {
         val handle = rootNavController.currentBackStackEntry?.savedStateHandle ?: return@LaunchedEffect
         handle.getStateFlow("navigateToTab", -1).collect { tab ->
@@ -109,12 +100,13 @@ fun MainScreen(
         }
     }
 
-    // Sync pager → analytics; no paywall on diary tab (paywall stays on Write route only)
+    // Sync pager → analytics + notify parent of tab changes
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }
             .distinctUntilChanged()
             .collect { page ->
                 lastValidPage = page
+                onTabChanged(page)
                 val tabName = when (page) {
                     PAGE_QUOTES -> "quotes"
                     PAGE_NOTES -> "notes"
@@ -143,14 +135,13 @@ fun MainScreen(
                 "write" -> {
                     if (subscriptionState.isActive) {
                         activeNotificationPrompt = deepLinkPrompt
-                        // Navigate to diary tab, then the write button opens WriteScreen
                         pagerState.animateScrollToPage(PAGE_DIARY)
                     } else {
                         showPaywall = true
                     }
                 }
                 "goals" -> {
-                    showGoals = true
+                    showGoalsAndReminders = true
                 }
                 "note_inbox" -> {
                     rootNavController.navigate(Routes.NoteInbox.route)
@@ -166,7 +157,7 @@ fun MainScreen(
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
-                beyondViewportPageCount = 1,
+                beyondViewportPageCount = 2,
                 key = { it }
             ) { page ->
                 when (page) {
@@ -224,7 +215,7 @@ fun MainScreen(
                             onNavigateToSettings = {
                                 rootNavController.navigate(Routes.Settings.route)
                             },
-                            onNavigateToGoals = { showGoals = true },
+                            onNavigateToGoals = { showGoalsAndReminders = true },
                             onNavigateToLayout = {
                                 rootNavController.navigate(Routes.Layout.route)
                             },
@@ -239,15 +230,18 @@ fun MainScreen(
                             },
                             onNavigateToJournal = {
                                 rootNavController.navigate(Routes.Journal.route)
+                            },
+                            onSignOut = {
+                                com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
                             }
                         )
                     }
                 }
             }
 
-            // Goals overlay
+            // Goals & Reminders overlay
             AnimatedVisibility(
-                visible = showGoals,
+                visible = showGoalsAndReminders,
                 enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
                 exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
             ) {
@@ -260,63 +254,19 @@ fun MainScreen(
                             onHorizontalDrag = { _, dragAmount ->
                                 totalDrag += dragAmount
                                 if (totalDrag > 200f) {
-                                    showGoals = false
+                                    showGoalsAndReminders = false
                                     totalDrag = 0f
                                 }
                             }
                         )
                     }) {
-                    GoalsScreen(
-                        onBack = { showGoals = false }
+                    GoalsAndRemindersScreen(
+                        onBack = { showGoalsAndReminders = false }
                     )
                 }
             }
 
-            // Reminders overlay
-            AnimatedVisibility(
-                visible = showReminders,
-                enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
-                exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut()
-            ) {
-                Box(modifier = Modifier
-                    .fillMaxSize()
-                    .pointerInput(Unit) {
-                        var totalDrag = 0f
-                        detectHorizontalDragGestures(
-                            onDragStart = { totalDrag = 0f },
-                            onHorizontalDrag = { _, dragAmount ->
-                                totalDrag += dragAmount
-                                if (totalDrag > 200f) {
-                                    showReminders = false
-                                    totalDrag = 0f
-                                }
-                            }
-                        )
-                    }) {
-                    ReminderManagementScreen(
-                        onBack = { showReminders = false }
-                    )
-                }
-            }
-
-            // Coach mark
-            SwipeHint(
-                visible = showSwipeHint && pagerState.currentPage == PAGE_QUOTES,
-                onDismiss = { discoveryViewModel.dismissSwipeHint() }
-            )
-
-            // 5-tab bottom navigation
-            DiaryBottomNav(
-                selectedIndex = pagerState.currentPage,
-                onTabSelected = { index ->
-                    scope.launch {
-                        pagerState.animateScrollToPage(index)
-                    }
-                },
-                activityBadgeCount = activityBadgeCount,
-                notesBadgeCount = unreadNoteCount,
-                modifier = Modifier.align(Alignment.BottomCenter)
-            )
+            // Bottom nav is now at NavGraph level (persistent across all screens)
         }
     }
 

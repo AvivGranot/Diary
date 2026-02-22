@@ -191,13 +191,59 @@ fun LayoutScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(DiarySpacing.xxs))
+            Spacer(modifier = Modifier.height(DiarySpacing.sm))
 
-            Text(
-                text = accentColorOptions.getOrNull(state.accentIndex)?.name ?: "Mint",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            // Accent color preview card
+            val selectedAccent = accentColorOptions.getOrNull(state.accentIndex)
+            if (selectedAccent != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Color name
+                    Text(
+                        text = selectedAccent.name,
+                        style = TextStyle(
+                            fontFamily = PlusJakartaSans,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        ),
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Sample button
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(selectedAccent.color)
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            text = "Button",
+                            style = TextStyle(
+                                fontFamily = PlusJakartaSans,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.Black
+                            )
+                        )
+                    }
+
+                    // Sample nav dot
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(selectedAccent.color)
+                    )
+                }
+            }
         }
 
         Spacer(modifier = Modifier.height(DiarySpacing.lg))
@@ -252,6 +298,20 @@ fun LayoutScreen(
                 }
             }
         }
+
+        // Auto-save indicator
+        Text(
+            text = "Changes auto-saved",
+            style = TextStyle(
+                fontFamily = PlusJakartaSans,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            ),
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = DiarySpacing.lg)
+        )
 
         Spacer(modifier = Modifier.height(100.dp))
     }

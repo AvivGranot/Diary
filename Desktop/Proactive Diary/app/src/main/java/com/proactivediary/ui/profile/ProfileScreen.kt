@@ -1,5 +1,9 @@
 package com.proactivediary.ui.profile
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +15,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -20,6 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.ContactSupport
 import androidx.compose.material.icons.outlined.Download
@@ -43,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -65,12 +72,23 @@ fun ProfileScreen(
     onNavigateToSupport: () -> Unit = {},
     onNavigateToThemeEvolution: () -> Unit = {},
     onNavigateToJournal: () -> Unit = {},
+    onNavigateToSubscription: () -> Unit = {},
+    onSignOut: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
     val extendedColors = LocalDiaryExtendedColors.current
     val scrollState = rememberScrollState()
+
+    // Photo picker for profile image upload
+    val photoPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            viewModel.uploadProfilePhoto(uri)
+        }
+    }
 
     Column(
         modifier = modifier
@@ -79,21 +97,8 @@ fun ProfileScreen(
             .statusBarsPadding()
             .verticalScroll(scrollState)
     ) {
-        // ── Top bar with settings gear ──────────────────────────────────
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = DiarySpacing.screenHorizontal, vertical = DiarySpacing.xs),
-            horizontalArrangement = Arrangement.End
-        ) {
-            IconButton(onClick = onNavigateToSettings) {
-                Icon(
-                    imageVector = Icons.Outlined.Settings,
-                    contentDescription = "Settings",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        // Top spacing
+        Spacer(modifier = Modifier.height(DiarySpacing.sm))
 
         // ── Avatar + Name + Handle ──────────────────────────────────────
         Column(
@@ -102,29 +107,63 @@ fun ProfileScreen(
                 .padding(horizontal = DiarySpacing.screenHorizontal),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Profile picture
-            if (state.photoUrl != null) {
-                AsyncImage(
-                    model = state.photoUrl,
-                    contentDescription = "Profile picture",
-                    modifier = Modifier
-                        .size(64.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
+            // Profile picture — clickable to change
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .clickable {
+                        photoPicker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                if (state.photoUrl != null) {
+                    AsyncImage(
+                        model = state.photoUrl,
+                        contentDescription = "Profile picture",
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    // Initial-letter avatar (not generic person icon)
+                    val initial = state.displayName.firstOrNull()?.uppercase() ?: "?"
+                    Box(
+                        modifier = Modifier
+                            .size(72.dp)
+                            .clip(CircleShape)
+                            .background(extendedColors.accent),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = initial,
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontFamily = InstrumentSerif,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 28.sp
+                            ),
+                            color = Color.Black,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+                // Camera icon overlay (bottom-right)
                 Box(
                     modifier = Modifier
-                        .size(64.dp)
+                        .size(24.dp)
+                        .align(Alignment.BottomEnd)
+                        .offset(x = 2.dp, y = 2.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                        .background(MaterialTheme.colorScheme.surface),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.Person,
-                        contentDescription = "Profile",
-                        modifier = Modifier.size(28.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        imageVector = Icons.Filled.CameraAlt,
+                        contentDescription = "Change photo",
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
@@ -254,7 +293,7 @@ fun ProfileScreen(
         ) {
             ProfileMenuItem(
                 icon = Icons.Outlined.Star,
-                label = "Goals",
+                label = "Goals & Reminders",
                 onClick = onNavigateToGoals
             )
             ProfileMenuItem(
@@ -276,6 +315,30 @@ fun ProfileScreen(
                 icon = Icons.Outlined.ContactSupport,
                 label = "Contact Support",
                 onClick = onNavigateToSupport
+            )
+            ProfileMenuItem(
+                icon = Icons.Outlined.Settings,
+                label = "Account & Privacy",
+                onClick = onNavigateToSettings
+            )
+        }
+
+        Spacer(modifier = Modifier.height(DiarySpacing.sm))
+
+        // ── Sign Out ──────────────────────────────────────────────────
+        if (state.isSignedIn) {
+            Text(
+                text = "Sign Out",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontFamily = PlusJakartaSans,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = DiarySpacing.screenHorizontal)
+                    .clickable(onClick = onSignOut)
+                    .padding(vertical = 10.dp),
+                textAlign = TextAlign.Center
             )
         }
 

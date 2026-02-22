@@ -1,7 +1,6 @@
 package com.proactivediary.navigation
 
 sealed class Routes(val route: String) {
-    object Discover : Routes("discover")
     object Typewriter : Routes("typewriter")
     object OnboardingGoals : Routes("onboarding_goals")
     object NotificationPermission : Routes("notification_permission")

@@ -8,6 +8,7 @@ import android.content.Intent
 import android.widget.RemoteViews
 import com.proactivediary.MainActivity
 import com.proactivediary.R
+import com.proactivediary.ui.sydney.SydneyVoiceCaptureActivity
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -56,6 +57,18 @@ class WriteWidgetProvider : AppWidgetProvider() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
+
+        // Mic button → Sydney voice capture
+        val sydneyIntent = Intent(context, SydneyVoiceCaptureActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        val sydneyPendingIntent = PendingIntent.getActivity(
+            context,
+            appWidgetId + 10000, // unique request code
+            sydneyIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        views.setOnClickPendingIntent(R.id.widget_mic, sydneyPendingIntent)
 
         appWidgetManager.updateAppWidget(appWidgetId, views)
     }

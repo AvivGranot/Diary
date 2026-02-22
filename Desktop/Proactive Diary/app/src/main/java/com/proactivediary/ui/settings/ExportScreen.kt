@@ -1,5 +1,6 @@
 package com.proactivediary.ui.settings
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,87 +23,131 @@ import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.theme.DiarySpacing
 import com.proactivediary.ui.theme.LocalDiaryExtendedColors
 
 /**
  * Export data page — PDF, Plain Text, JSON export options.
+ * Wired to SettingsViewModel which has the actual export logic.
  */
 @Composable
 fun ExportScreen(
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val extendedColors = LocalDiaryExtendedColors.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val exportMessage by viewModel.exportMessage.collectAsState()
+    val exportUri by viewModel.exportUri.collectAsState()
+    val context = LocalContext.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
-    ) {
-        // Top bar
-        Row(
+    LaunchedEffect(exportMessage) {
+        exportMessage?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearExportMessage()
+        }
+    }
+
+    LaunchedEffect(exportUri) {
+        exportUri?.let { uri ->
+            try {
+                val mimeType = context.contentResolver.getType(uri) ?: "*/*"
+                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                    type = mimeType
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                context.startActivity(Intent.createChooser(shareIntent, "Share export"))
+            } catch (_: Exception) { }
+            viewModel.clearExportUri()
+        }
+    }
+
+    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = DiarySpacing.xs, vertical = DiarySpacing.xs),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .statusBarsPadding()
         ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.Outlined.ArrowBack,
-                    contentDescription = "Back",
-                    tint = MaterialTheme.colorScheme.onSurface
+            // Top bar
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = DiarySpacing.xs, vertical = DiarySpacing.xs),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.Outlined.ArrowBack,
+                        contentDescription = "Back",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                Text(
+                    text = "Export Data",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            Text(
-                text = "Export Data",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+
+            Spacer(modifier = Modifier.height(DiarySpacing.lg))
+
+            Column(
+                modifier = Modifier.padding(horizontal = DiarySpacing.screenHorizontal),
+                verticalArrangement = Arrangement.spacedBy(DiarySpacing.sm)
+            ) {
+                Text(
+                    text = "Choose a format to export your diary entries",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Spacer(modifier = Modifier.height(DiarySpacing.xs))
+
+                ExportOption(
+                    icon = Icons.Outlined.PictureAsPdf,
+                    title = "PDF",
+                    description = "Formatted document with styling",
+                    onClick = { viewModel.exportPdf() }
+                )
+
+                ExportOption(
+                    icon = Icons.Outlined.Description,
+                    title = "Plain Text",
+                    description = "Simple text file, easy to read anywhere",
+                    onClick = { viewModel.exportText() }
+                )
+
+                ExportOption(
+                    icon = Icons.Outlined.Code,
+                    title = "JSON",
+                    description = "Structured data for developers",
+                    onClick = { viewModel.exportJson() }
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(DiarySpacing.lg))
-
-        Column(
-            modifier = Modifier.padding(horizontal = DiarySpacing.screenHorizontal),
-            verticalArrangement = Arrangement.spacedBy(DiarySpacing.sm)
-        ) {
-            Text(
-                text = "Choose a format to export your diary entries",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(DiarySpacing.xs))
-
-            ExportOption(
-                icon = Icons.Outlined.PictureAsPdf,
-                title = "PDF",
-                description = "Formatted document with styling",
-                onClick = { /* TODO: implement PDF export */ }
-            )
-
-            ExportOption(
-                icon = Icons.Outlined.Description,
-                title = "Plain Text",
-                description = "Simple text file, easy to read anywhere",
-                onClick = { /* TODO: implement text export */ }
-            )
-
-            ExportOption(
-                icon = Icons.Outlined.Code,
-                title = "JSON",
-                description = "Structured data for developers",
-                onClick = { /* TODO: implement JSON export */ }
-            )
-        }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 16.dp)
+        )
     }
 }
 

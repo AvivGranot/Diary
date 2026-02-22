@@ -10,6 +10,7 @@ object NotificationChannels {
     const val CHANNEL_LAPSED = "lapsed_user"
     const val CHANNEL_DIGEST = "weekly_digest"
     const val CHANNEL_NOTES = "anonymous_notes"
+    const val CHANNEL_SYDNEY = "sydney_listener"
 
     fun createChannels(context: Context) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -63,5 +64,14 @@ object NotificationChannels {
         notificationManager.createNotificationChannel(lapsedChannel)
         notificationManager.createNotificationChannel(digestChannel)
         notificationManager.createNotificationChannel(notesChannel)
+
+        val sydneyChannel = NotificationChannel(
+            CHANNEL_SYDNEY,
+            "Sydney Voice Capture",
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = "Persistent notification while Sydney is listening"
+        }
+        notificationManager.createNotificationChannel(sydneyChannel)
     }
 }
