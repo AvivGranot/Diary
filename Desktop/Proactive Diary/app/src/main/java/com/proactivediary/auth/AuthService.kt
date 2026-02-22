@@ -10,6 +10,7 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.social.UserProfileRepository
 import com.proactivediary.data.sync.RestoreService
 import com.proactivediary.data.sync.SyncWorker
@@ -33,7 +34,8 @@ import javax.inject.Singleton
 class AuthService @Inject constructor(
     @ApplicationContext private val context: Context,
     private val userProfileRepository: UserProfileRepository,
-    private val restoreService: RestoreService
+    private val restoreService: RestoreService,
+    private val analyticsService: AnalyticsService
 ) {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val credentialManager = CredentialManager.create(context)
@@ -61,6 +63,7 @@ class AuthService @Inject constructor(
      * Requires a valid WEB_CLIENT_ID from Firebase Console.
      */
     suspend fun signInWithGoogle(activityContext: Context): Result<FirebaseUser> {
+        val t0 = System.currentTimeMillis()
         return try {
             val googleIdOption = GetGoogleIdOption.Builder()
                 .setFilterByAuthorizedAccounts(false)
@@ -75,6 +78,7 @@ class AuthService @Inject constructor(
                 request = request,
                 context = activityContext
             )
+            analyticsService.logSignInTiming("credential_manager", System.currentTimeMillis() - t0)
 
             val credential = result.credential
             if (credential is CustomCredential &&
@@ -85,11 +89,13 @@ class AuthService @Inject constructor(
                     googleIdTokenCredential.idToken, null
                 )
                 val authResult = auth.signInWithCredential(firebaseCredential).await()
+                analyticsService.logSignInTiming("firebase_auth", System.currentTimeMillis() - t0)
                 val user = authResult.user
                     ?: return Result.failure(Exception("Sign-in succeeded but user is null"))
                 _currentUser.value = user
                 syncUserProfile(user)
                 triggerCloudSync()
+                analyticsService.logSignInTiming("total_sign_in", System.currentTimeMillis() - t0)
                 Result.success(user)
             } else {
                 Result.failure(Exception("Unexpected credential type"))
@@ -143,19 +149,28 @@ class AuthService @Inject constructor(
     }
 
     /**
-     * Sync user profile to Firestore after sign-in (creates if new, updates FCM token if existing).
+     * Sync user profile to Firestore after sign-in.
+     * Fast path: client-side doc creation (~100ms) so ProfilePictureScreen never hits a missing doc.
+     * Slow path: Cloud Function for counters, welcome note, FCM (fire-and-forget).
      */
     private fun syncUserProfile(user: FirebaseUser) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
+                // Fast: ensure doc exists via direct Firestore write (~100ms)
+                userProfileRepository.ensureMinimalProfile(
+                    displayName = user.displayName,
+                    email = user.email,
+                    photoUrl = user.photoUrl?.toString()
+                )
+            } catch (_: Exception) { }
+            try {
+                // Slow: Cloud Function for FCM, counters, welcome note
                 userProfileRepository.createOrUpdateProfile(
                     displayName = user.displayName,
                     email = user.email,
                     photoUrl = user.photoUrl?.toString()
                 )
-            } catch (e: Exception) {
-                // Non-fatal: profile sync failure shouldn't block sign-in
-            }
+            } catch (_: Exception) { }
         }
     }
 

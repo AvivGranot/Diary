@@ -44,6 +44,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import coil.request.CachePolicy
+import coil.request.ImageRequest
+import androidx.compose.ui.platform.LocalContext
 import com.proactivediary.analytics.AnalyticsService
 
 @Composable
@@ -125,7 +128,12 @@ fun ProfilePictureScreen(
                 }
                 state.googlePhotoUrl != null -> {
                     AsyncImage(
-                        model = state.googlePhotoUrl,
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(state.googlePhotoUrl)
+                            .crossfade(200)
+                            .size(256)
+                            .memoryCachePolicy(CachePolicy.ENABLED)
+                            .build(),
                         contentDescription = "Google photo",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop

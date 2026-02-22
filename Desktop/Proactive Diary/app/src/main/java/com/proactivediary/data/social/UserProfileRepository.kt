@@ -2,8 +2,12 @@ package com.proactivediary.data.social
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.security.MessageDigest
 import javax.inject.Inject
@@ -16,6 +20,28 @@ class UserProfileRepository @Inject constructor(
     private val auth: FirebaseAuth
 ) {
 
+    /**
+     * Fast client-side write: guarantee the user doc exists (~100ms).
+     * Called before the slow Cloud Function path so downstream .set(merge) calls never fail.
+     */
+    suspend fun ensureMinimalProfile(
+        displayName: String?,
+        email: String?,
+        photoUrl: String?
+    ) {
+        val uid = auth.currentUser?.uid ?: return
+        firestore.collection("users").document(uid)
+            .set(
+                mapOf(
+                    "displayName" to (displayName ?: "Anonymous"),
+                    "photoUrl" to photoUrl,
+                    "emailHash" to email?.let { hashValue(it.lowercase().trim()) }
+                ),
+                SetOptions.merge()
+            )
+            .await()
+    }
+
     suspend fun createOrUpdateProfile(
         displayName: String?,
         phone: String? = null,
@@ -23,23 +49,20 @@ class UserProfileRepository @Inject constructor(
         photoUrl: String? = null
     ): Result<Boolean> {
         return try {
-            val fcmToken = try {
-                FirebaseMessaging.getInstance().token.await()
-            } catch (e: Exception) {
-                null
-            }
-
             val data = hashMapOf<String, Any?>(
                 "displayName" to (displayName ?: "Anonymous"),
                 "phoneHash" to phone?.let { hashValue(normalizePhone(it)) },
                 "emailHash" to email?.let { hashValue(it.lowercase().trim()) },
-                "fcmToken" to fcmToken,
+                "fcmToken" to null,
                 "photoUrl" to photoUrl
             )
 
             val result = functions.getHttpsCallable("createUserProfile")
                 .call(data)
                 .await()
+
+            // Update FCM token in background — not needed during onboarding
+            CoroutineScope(Dispatchers.IO).launch { updateFcmToken() }
 
             @Suppress("UNCHECKED_CAST")
             val resultData = result.data as? Map<String, Any>

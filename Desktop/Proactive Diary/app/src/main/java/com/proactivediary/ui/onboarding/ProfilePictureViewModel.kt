@@ -32,10 +32,13 @@ class ProfilePictureViewModel @Inject constructor(
     val state: StateFlow<ProfilePictureState> = _state.asStateFlow()
 
     init {
-        // Pre-populate Google photo if available
+        // Pre-populate Google photo if available, with optimized size
         val googlePhoto = auth.currentUser?.photoUrl?.toString()
         if (!googlePhoto.isNullOrBlank()) {
-            _state.value = _state.value.copy(googlePhotoUrl = googlePhoto)
+            val optimizedUrl = if (googlePhoto.contains("googleusercontent.com")) {
+                googlePhoto.replace(Regex("=s\\d+(-c)?"), "") + "=s256"
+            } else googlePhoto
+            _state.value = _state.value.copy(googlePhotoUrl = optimizedUrl)
         }
     }
 

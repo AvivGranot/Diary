@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.storage.FirebaseStorage
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -74,9 +75,9 @@ class ProfileImageRepository @Inject constructor(
             ref.putBytes(data).await()
             val downloadUrl = ref.downloadUrl.await().toString()
 
-            // Update Firestore user doc
+            // Update Firestore user doc (merge: doc may not exist yet if Cloud Function is still running)
             firestore.collection("users").document(uid)
-                .update("photoUrl", downloadUrl)
+                .set(mapOf("photoUrl" to downloadUrl), SetOptions.merge())
                 .await()
 
             Result.success(downloadUrl)
@@ -94,7 +95,7 @@ class ProfileImageRepository @Inject constructor(
                 ?: return Result.failure(Exception("Not signed in"))
 
             firestore.collection("users").document(uid)
-                .update("photoUrl", googlePhotoUrl)
+                .set(mapOf("photoUrl" to googlePhotoUrl), SetOptions.merge())
                 .await()
 
             Result.success(googlePhotoUrl)

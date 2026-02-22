@@ -331,6 +331,11 @@ class AnalyticsService @Inject constructor() {
         log("leaderboard_period_changed", bundleOf("period" to period))
     }
 
+    // ─── Sign-In Performance ───
+    fun logSignInTiming(phase: String, durationMs: Long) {
+        log("sign_in_timing", bundleOf("phase" to phase, "duration_ms" to durationMs))
+    }
+
     // ─── Profile Picture ───
     fun logProfilePictureScreenShown() = log("profile_picture_shown")
     fun logProfilePictureSkipped() = log("profile_picture_skipped")

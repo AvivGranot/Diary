@@ -240,7 +240,7 @@ Respond with exactly one word: POSITIVE or NEGATIVE`;
 // USER PROFILE — created on first sign-in
 // ──────────────────────────────────────────────
 
-exports.createUserProfile = onCall(async (request) => {
+exports.createUserProfile = onCall({ minInstances: 1 }, async (request) => {
   if (!request.auth) {
     throw new HttpsError("unauthenticated", "Must be signed in");
   }
@@ -251,18 +251,21 @@ exports.createUserProfile = onCall(async (request) => {
   const userRef = db.collection("users").doc(uid);
   const existing = await userRef.get();
 
-  if (existing.exists) {
-    // Update FCM token + photo if profile already exists
+  if (existing.exists && existing.data().createdAt) {
+    // Full profile already exists — just update mutable fields
     const updates = {};
     if (request.data.fcmToken) updates.fcmToken = request.data.fcmToken;
     if (displayName) updates.displayName = displayName;
     if (photoUrl) updates.photoUrl = photoUrl;
     if (Object.keys(updates).length > 0) await userRef.update(updates);
-    await logEvent("user_returned", uid, { hadToken: !!existing.data().fcmToken });
+    logEvent("user_returned", uid, { hadToken: !!existing.data().fcmToken });
     return { success: true, created: false };
   }
 
-  await userRef.set({
+  // New user (or minimal doc from ensureMinimalProfile) — batch all writes
+  const batch = db.batch();
+
+  batch.set(userRef, {
     displayName: displayName || "Anonymous",
     phoneHash: phoneHash || null,
     emailHash: emailHash || null,
@@ -271,31 +274,29 @@ exports.createUserProfile = onCall(async (request) => {
     noteCount: 0,
     quoteCount: 0,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
+  }, { merge: true });
 
-  // Increment global user counter for social proof
   const counterRef = db.collection("counters").doc("global");
-  await counterRef.set(
+  batch.set(counterRef,
     { userCount: admin.firestore.FieldValue.increment(1) },
     { merge: true }
   );
 
-  // Send welcome note to new user
-  try {
-    await db.collection("notes").add({
-      senderId: "system",
-      senderName: "Proactive Diary",
-      recipientId: uid,
-      content: "Welcome. Someone out there is glad you\u2019re here. This is your space to think, write, and grow. \u2728",
-      status: "delivered",
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      readAt: null,
-    });
-  } catch (e) {
-    console.warn("Failed to send welcome note:", e);
-  }
+  const welcomeNoteRef = db.collection("notes").doc();
+  batch.set(welcomeNoteRef, {
+    senderId: "system",
+    senderName: "Proactive Diary",
+    recipientId: uid,
+    content: "Welcome. Someone out there is glad you\u2019re here. This is your space to think, write, and grow. \u2728",
+    status: "delivered",
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    readAt: null,
+  });
 
-  await logEvent("user_created", uid, {
+  await batch.commit();
+
+  // Fire-and-forget: analytics doesn't need to block the response
+  logEvent("user_created", uid, {
     method: phoneHash ? "phone" : emailHash ? "email" : "anonymous",
     hasContacts: !!(phoneHash || emailHash),
   });
