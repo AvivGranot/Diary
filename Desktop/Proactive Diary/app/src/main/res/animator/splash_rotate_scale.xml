@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:ordering="together">
+
+    <!-- Half-spin: pen swings in counter-clockwise -->
+    <objectAnimator
+        android:propertyName="rotation"
+        android:valueFrom="-180"
+        android:valueTo="0"
+        android:valueType="floatType"
+        android:duration="800"
+        android:interpolator="@android:interpolator/decelerate_cubic" />
+
+    <!-- Scale X: flying toward you -->
+    <objectAnimator
+        android:propertyName="scaleX"
+        android:valueFrom="0.3"
+        android:valueTo="1.0"
+        android:valueType="floatType"
+        android:duration="800"
+        android:interpolator="@android:interpolator/decelerate_cubic" />
+
+    <!-- Scale Y: flying toward you -->
+    <objectAnimator
+        android:propertyName="scaleY"
+        android:valueFrom="0.3"
+        android:valueTo="1.0"
+        android:valueType="floatType"
+        android:duration="800"
+        android:interpolator="@android:interpolator/decelerate_cubic" />
+
+</set>
