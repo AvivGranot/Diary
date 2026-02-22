@@ -13,9 +13,9 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class LayoutUiState(
-    val themeMode: String = "dark",
-    val accentIndex: Int = 0,
-    val accentKey: String = "mint",
+    val themeMode: String = "light",
+    val accentIndex: Int = 6,
+    val accentKey: String = "blue",
     val fontSizeIndex: Int = 1 // 0=small, 1=medium, 2=large
 )
 
@@ -29,8 +29,8 @@ class LayoutViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val themeMode = preferenceDao.get("theme_mode")?.value ?: "dark"
-            val accentKey = preferenceDao.get("accent_color")?.value ?: "mint"
+            val themeMode = preferenceDao.get("theme_mode")?.value ?: "light"
+            val accentKey = preferenceDao.get("accent_color")?.value ?: "blue"
             val fontSizePref = preferenceDao.get("font_size")?.value ?: "medium"
 
             val accentIndex = accentColorOptions.indexOfFirst { it.key == accentKey }

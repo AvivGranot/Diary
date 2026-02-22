@@ -17,7 +17,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 
 /**
  * Canvas-based composable that renders the typewriter quote character by character.
@@ -43,7 +43,7 @@ fun TypewriterCanvas(
     val cursorColor = Color.White
 
     val textStyle = TextStyle(
-        fontFamily = CormorantGaramond,
+        fontFamily = InstrumentSerif,
         fontSize = 18.sp,
         fontStyle = FontStyle.Italic,
         lineHeight = 28.sp,

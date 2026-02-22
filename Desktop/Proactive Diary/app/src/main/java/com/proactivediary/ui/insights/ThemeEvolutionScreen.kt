@@ -50,7 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.material3.MaterialTheme
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 
 private enum class EvolutionPage {
     OVERVIEW, WRITING_TIME, TOPICS, LOCATIONS
@@ -78,7 +78,7 @@ fun ThemeEvolutionScreen(
                 Text(
                     text = "Preparing\u2026",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 16.sp,
                         fontStyle = FontStyle.Italic,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -104,7 +104,7 @@ fun ThemeEvolutionScreen(
                 Text(
                     text = "Not enough data yet",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 22.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
@@ -113,7 +113,7 @@ fun ThemeEvolutionScreen(
                 Text(
                     text = "Every entry adds a brushstroke.\nStart writing and watch your patterns unfold.",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 14.sp,
                         fontStyle = FontStyle.Italic,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -124,7 +124,7 @@ fun ThemeEvolutionScreen(
                 Text(
                     text = "\u2190 Back",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     ),
@@ -172,7 +172,7 @@ fun ThemeEvolutionScreen(
             Text(
                 text = "Theme Evolution",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 22.sp,
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -231,7 +231,7 @@ fun ThemeEvolutionScreen(
             Text(
                 text = "Swipe to explore \u2192",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 13.sp,
                     fontStyle = FontStyle.Italic,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -267,7 +267,7 @@ private fun OverviewPage(state: ThemeEvolutionUiState) {
             Text(
                 text = "Your Patterns",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 18.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
@@ -280,7 +280,7 @@ private fun OverviewPage(state: ThemeEvolutionUiState) {
             Text(
                 text = state.totalEntries.toString(),
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 64.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -289,7 +289,7 @@ private fun OverviewPage(state: ThemeEvolutionUiState) {
             Text(
                 text = "entries",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 16.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -301,7 +301,7 @@ private fun OverviewPage(state: ThemeEvolutionUiState) {
             Text(
                 text = String.format(java.util.Locale.US, "%,d", state.totalWords),
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -334,7 +334,7 @@ private fun WritingTimePage(patterns: List<TimePattern>, totalEntries: Int) {
             Text(
                 text = "When You Write",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 18.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
@@ -380,7 +380,7 @@ private fun TopicsPage(topics: List<TopicWord>) {
             Text(
                 text = "What You Write About",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 18.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
@@ -423,7 +423,7 @@ private fun LocationsPage(locations: List<LocationMood>) {
             Text(
                 text = "Where You Write",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 18.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
@@ -517,7 +517,7 @@ private fun TopicWordChip(topic: TopicWord) {
     Text(
         text = topic.word,
         style = TextStyle(
-            fontFamily = CormorantGaramond,
+            fontFamily = InstrumentSerif,
             fontSize = fontSize,
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = alpha)
         ),

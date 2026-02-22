@@ -2,6 +2,7 @@ package com.proactivediary.ui.profile
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.material.icons.outlined.Share
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -42,6 +43,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -80,6 +82,7 @@ fun ProfileScreen(
     val state by viewModel.uiState.collectAsState()
     val extendedColors = LocalDiaryExtendedColors.current
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
 
     // Photo picker for profile image upload
     val photoPicker = rememberLauncherForActivityResult(
@@ -282,6 +285,47 @@ fun ProfileScreen(
                     else "Write more to discover"
                 )
             }
+        }
+
+        // ── Share your year button ─────────────────────────────────────
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = DiarySpacing.screenHorizontal)
+                .padding(top = DiarySpacing.sm)
+                .clip(RoundedCornerShape(10.dp))
+                .clickable {
+                    ShareableRecapCard.shareRecap(
+                        context = context,
+                        data = ShareableRecapCard.RecapData(
+                            displayName = state.displayName,
+                            entriesThisYear = state.entriesThisYear,
+                            totalLikesReceived = state.totalLikesReceived,
+                            totalWords = state.totalWords,
+                            bestWritingDay = state.bestWritingDay,
+                            bestWritingDayPercent = state.bestWritingDayPercent
+                        )
+                    )
+                }
+                .padding(vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Share,
+                contentDescription = "Share your year",
+                modifier = Modifier.size(16.dp),
+                tint = extendedColors.accent
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Share your year",
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontFamily = PlusJakartaSans,
+                    fontWeight = FontWeight.SemiBold
+                ),
+                color = extendedColors.accent
+            )
         }
 
         Spacer(modifier = Modifier.height(DiarySpacing.md))

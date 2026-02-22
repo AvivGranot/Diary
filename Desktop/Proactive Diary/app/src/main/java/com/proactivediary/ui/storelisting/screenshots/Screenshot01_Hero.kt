@@ -23,7 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.proactivediary.ui.storelisting.ScreenshotFrame
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import com.proactivediary.ui.theme.ProactiveDiaryTheme
 
 @Composable
@@ -49,7 +49,7 @@ private fun HeroContent() {
         Text(
             text = "Wednesday, February 11, 2026",
             style = TextStyle(
-                fontFamily = CormorantGaramond,
+                fontFamily = InstrumentSerif,
                 fontSize = 14.sp,
                 fontStyle = FontStyle.Italic,
                 color = pencilColor
@@ -62,7 +62,7 @@ private fun HeroContent() {
         Text(
             text = "Morning reflections",
             style = TextStyle(
-                fontFamily = CormorantGaramond,
+                fontFamily = InstrumentSerif,
                 fontSize = 24.sp,
                 color = inkColor
             )

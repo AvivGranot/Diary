@@ -70,7 +70,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mohamedrejeb.richeditor.model.RichTextState
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import com.proactivediary.domain.model.DiaryThemeConfig
 
 @Composable

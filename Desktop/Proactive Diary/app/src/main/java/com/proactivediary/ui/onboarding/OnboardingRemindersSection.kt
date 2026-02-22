@@ -40,7 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.proactivediary.ui.components.WheelTimePicker
 import com.proactivediary.ui.components.formatTime
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 
 @Composable
 fun OnboardingRemindersSection(
@@ -74,7 +74,7 @@ fun OnboardingRemindersSection(
             Text(
                 text = "+ Add custom time",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 14.sp,
                     fontStyle = FontStyle.Italic
                 ),
@@ -187,7 +187,7 @@ private fun ReminderRow(
                 Text(
                     text = "Set Time",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 20.sp,
                         color = inkColor
                     )

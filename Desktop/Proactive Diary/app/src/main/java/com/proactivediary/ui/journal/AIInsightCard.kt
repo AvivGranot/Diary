@@ -29,7 +29,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 
 data class AIInsightData(
     val summary: String = "",
@@ -76,7 +76,7 @@ fun AIInsightCard(
                 Text(
                     text = "Weekly Insight",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Normal,
                         color = MaterialTheme.colorScheme.onSurface
@@ -165,7 +165,7 @@ fun AIInsightCard(
                     Text(
                         text = "Upgrade to unlock AI Insights",
                         style = TextStyle(
-                            fontFamily = CormorantGaramond,
+                            fontFamily = InstrumentSerif,
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.surface
                         ),

@@ -246,7 +246,7 @@ class NotificationService @Inject constructor(
             val parts = time.split(":")
             Pair(parts[0].toInt(), parts[1].toInt())
         } catch (e: Exception) {
-            Pair(8, 0)
+            Pair(20, 30) // default 8:30 PM
         }
     }
 

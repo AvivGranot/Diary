@@ -23,7 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.proactivediary.ui.storelisting.ScreenshotFrame
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import com.proactivediary.ui.theme.ProactiveDiaryTheme
 
 @Composable
@@ -60,7 +60,7 @@ private fun PrivacyContent() {
             Text(
                 text = "All your data stays\non this device",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 24.sp,
                     color = inkColor
                 ),
@@ -94,7 +94,7 @@ private fun PrivacyContent() {
             Text(
                 text = "Proactive Diary",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 20.sp,
                     color = inkColor
                 )

@@ -36,7 +36,7 @@ import com.proactivediary.data.db.entities.EntryEntity
 import com.proactivediary.data.media.ImageMetadata
 import com.proactivediary.data.media.ImageStorageManager
 import com.proactivediary.data.repository.EntryRepository
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -94,7 +94,7 @@ fun GalleryView(
                 Text(
                     text = "No photos yet",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 20.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     ),

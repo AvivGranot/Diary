@@ -299,20 +299,6 @@ fun WriteFirstNoteScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Skip option
-            TextButton(onClick = {
-                analyticsService.logOnboardingFirstNoteSkip()
-                onContinue()
-            }) {
-                Text(
-                    "Skip for now",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 14.sp
-                )
-            }
-
             Spacer(modifier = Modifier.height(32.dp))
         }
     }

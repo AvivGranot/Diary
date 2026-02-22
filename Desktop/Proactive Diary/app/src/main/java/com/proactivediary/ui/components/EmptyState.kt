@@ -16,7 +16,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 
 @Composable
 fun EmptyState(
@@ -34,7 +34,7 @@ fun EmptyState(
         Text(
             text = title,
             style = TextStyle(
-                fontFamily = CormorantGaramond,
+                fontFamily = InstrumentSerif,
                 fontSize = 20.sp,
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -43,7 +43,7 @@ fun EmptyState(
         Text(
             text = subtitle,
             style = TextStyle(
-                fontFamily = CormorantGaramond,
+                fontFamily = InstrumentSerif,
                 fontStyle = FontStyle.Italic,
                 fontSize = 16.sp,
                 color = MaterialTheme.colorScheme.secondary

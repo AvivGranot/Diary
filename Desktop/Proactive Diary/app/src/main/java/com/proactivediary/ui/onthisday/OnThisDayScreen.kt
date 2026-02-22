@@ -46,7 +46,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.proactivediary.data.media.ImageMetadata
 import androidx.compose.material3.MaterialTheme
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,7 +68,7 @@ fun OnThisDayScreen(
                 Text(
                     text = "On This Day",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 20.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
@@ -91,7 +91,7 @@ fun OnThisDayScreen(
                 Text(
                     text = "Looking through your memories\u2026",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 16.sp,
                         fontStyle = FontStyle.Italic,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -108,7 +108,7 @@ fun OnThisDayScreen(
                     Text(
                         text = "No memories for today",
                         style = TextStyle(
-                            fontFamily = CormorantGaramond,
+                            fontFamily = InstrumentSerif,
                             fontSize = 20.sp,
                             color = MaterialTheme.colorScheme.onBackground
                         )
@@ -117,7 +117,7 @@ fun OnThisDayScreen(
                     Text(
                         text = "Keep writing \u2014 your future self will thank you",
                         style = TextStyle(
-                            fontFamily = CormorantGaramond,
+                            fontFamily = InstrumentSerif,
                             fontSize = 14.sp,
                             fontStyle = FontStyle.Italic,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -137,7 +137,7 @@ fun OnThisDayScreen(
                     Text(
                         text = state.todayFormatted.uppercase(),
                         style = TextStyle(
-                            fontFamily = CormorantGaramond,
+                            fontFamily = InstrumentSerif,
                             fontSize = 12.sp,
                             letterSpacing = 2.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
@@ -179,7 +179,7 @@ private fun MemoryCard(
         Text(
             text = entry.dateFormatted,
             style = TextStyle(
-                fontFamily = CormorantGaramond,
+                fontFamily = InstrumentSerif,
                 fontSize = 12.sp,
                 letterSpacing = 1.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
@@ -193,7 +193,7 @@ private fun MemoryCard(
             Text(
                 text = entry.title,
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 18.sp,
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -205,7 +205,7 @@ private fun MemoryCard(
         Text(
             text = entry.preview,
             style = TextStyle(
-                fontFamily = CormorantGaramond,
+                fontFamily = InstrumentSerif,
                 fontSize = 15.sp,
                 fontStyle = FontStyle.Italic,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

@@ -55,7 +55,7 @@ import com.proactivediary.ui.components.parseStoredTime
 import com.proactivediary.ui.goals.AddGoalDialog
 import com.proactivediary.ui.goals.GoalUiState
 import com.proactivediary.ui.goals.GoalsViewModel
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import com.proactivediary.ui.theme.PlusJakartaSans
 
 /**
@@ -106,7 +106,7 @@ fun GoalsAndRemindersScreen(
             Text(
                 text = "Goals & Reminders",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 24.sp,
                     color = inkColor
                 ),
@@ -402,7 +402,7 @@ private fun EmptyHint(text: String, hint: String) {
         Text(
             text = text,
             style = TextStyle(
-                fontFamily = CormorantGaramond,
+                fontFamily = InstrumentSerif,
                 fontSize = 18.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             ),
@@ -472,8 +472,8 @@ private fun ReminderRow(
     val pencilColor = MaterialTheme.colorScheme.onSurfaceVariant
     val activeColor = if (reminder.isActive) inkColor else pencilColor.copy(alpha = 0.4f)
 
-    val hour = reminder.time.split(":").getOrNull(0)?.toIntOrNull() ?: 8
-    val minute = reminder.time.split(":").getOrNull(1)?.toIntOrNull() ?: 0
+    val hour = reminder.time.split(":").getOrNull(0)?.toIntOrNull() ?: 20
+    val minute = reminder.time.split(":").getOrNull(1)?.toIntOrNull() ?: 30
     val timeDisplay = formatTime(hour, minute)
 
     val days = try {

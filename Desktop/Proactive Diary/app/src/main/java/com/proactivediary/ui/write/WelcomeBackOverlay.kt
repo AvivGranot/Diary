@@ -29,7 +29,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import kotlinx.coroutines.delay
 
 /**
@@ -86,7 +86,7 @@ fun WelcomeBackOverlay(
                     Text(
                         text = if (streak > 0) "Day $streak." else "Welcome back.",
                         style = TextStyle(
-                            fontFamily = CormorantGaramond,
+                            fontFamily = InstrumentSerif,
                             fontSize = 28.sp,
                             color = MaterialTheme.colorScheme.onBackground
                         )
@@ -103,7 +103,7 @@ fun WelcomeBackOverlay(
                     Text(
                         text = "\u201C$prompt\u201D",
                         style = TextStyle(
-                            fontFamily = CormorantGaramond,
+                            fontFamily = InstrumentSerif,
                             fontSize = 20.sp,
                             fontStyle = FontStyle.Italic,
                             color = MaterialTheme.colorScheme.secondary,

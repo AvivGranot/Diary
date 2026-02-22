@@ -37,7 +37,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 
 @Composable
 fun YearInReviewScreen(
@@ -70,7 +70,7 @@ fun YearInReviewScreen(
             Text(
                 text = "Year in Review",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 24.sp,
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -261,7 +261,7 @@ private fun StatsCard(state: BookExportUiState) {
             Text(
                 text = state.totalEntries.toString(),
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 48.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -280,7 +280,7 @@ private fun StatsCard(state: BookExportUiState) {
             Text(
                 text = formatDisplayNumber(state.totalWords),
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 48.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -336,7 +336,7 @@ private fun StatItem(number: String, label: String, modifier: Modifier = Modifie
         Text(
             text = number,
             style = TextStyle(
-                fontFamily = CormorantGaramond,
+                fontFamily = InstrumentSerif,
                 fontSize = 24.sp,
                 color = MaterialTheme.colorScheme.onSurface
             )

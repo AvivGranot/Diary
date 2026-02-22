@@ -54,7 +54,7 @@ import com.google.gson.Gson
 import com.proactivediary.data.db.entities.WritingReminderEntity
 import com.proactivediary.ui.components.WheelTimePicker
 import com.proactivediary.ui.components.formatTime
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import androidx.compose.foundation.layout.statusBarsPadding
 
 @Composable
@@ -93,7 +93,7 @@ fun ReminderManagementScreen(
             Text(
                 text = "Reminders",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 24.sp,
                     color = inkColor
                 ),
@@ -122,7 +122,7 @@ fun ReminderManagementScreen(
                     Text(
                         text = "No reminders yet",
                         style = TextStyle(
-                            fontFamily = CormorantGaramond,
+                            fontFamily = InstrumentSerif,
                             fontSize = 20.sp,
                             color = pencilColor
                         )
@@ -339,7 +339,7 @@ internal fun ReminderDialog(
             Text(
                 text = if (existingReminder != null) "Edit Reminder" else "Add Reminder",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 20.sp,
                     color = MaterialTheme.colorScheme.onBackground
                 )

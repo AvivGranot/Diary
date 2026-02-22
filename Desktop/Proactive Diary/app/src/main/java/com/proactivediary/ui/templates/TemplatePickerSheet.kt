@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 
 @Composable
 fun TemplatePickerDialog(
@@ -61,7 +61,7 @@ fun TemplatePickerDialog(
                 Text(
                     text = "Choose a template",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 22.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
@@ -180,7 +180,7 @@ private fun TemplateCard(
             Text(
                 text = template.title,
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 18.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 )

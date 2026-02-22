@@ -186,6 +186,10 @@ class AnalyticsService @Inject constructor() {
         analytics.setUserProperty("design_customized", designCustomized.toString())
     }
 
+    fun setNotesSentTotal(count: Int) {
+        analytics.setUserProperty("notes_sent_total", count.toString())
+    }
+
     private fun bucketEntries(count: Int): String = when {
         count == 0 -> "0"
         count <= 5 -> "1-5"
@@ -281,6 +285,27 @@ class AnalyticsService @Inject constructor() {
     }
 
     fun logNoteInviteSent() = log("note_invite_sent")
+
+    // ─── K-Factor / Viral Loop Tracking ───
+    fun logNoteViralSend(recipientOnApp: Boolean) {
+        log("note_viral_send", bundleOf("recipient_on_app" to recipientOnApp))
+    }
+
+    fun logNoteViralInstall(referrerNoteId: String) {
+        log("note_viral_install", bundleOf("referrer_note_id" to referrerNoteId))
+    }
+
+    fun logViralLoopComplete(senderUid: String, recipientUid: String) {
+        log("viral_loop_complete", bundleOf("sender_uid" to senderUid, "recipient_uid" to recipientUid))
+    }
+
+    fun logKFactorSnapshot(notesSent: Int, installsGenerated: Int, kFactor: Float) {
+        log("k_factor_snapshot", bundleOf(
+            "notes_sent" to notesSent,
+            "installs_generated" to installsGenerated,
+            "k_factor" to kFactor
+        ))
+    }
 
     // ─── Social — Quotes (Engagement Loop) ───
     fun logQuotesTabViewed() = log("quotes_tab_viewed")

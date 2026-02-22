@@ -54,7 +54,7 @@ import com.proactivediary.domain.recommendations.LocationSuggestion
 import com.proactivediary.domain.recommendations.NearbyPlace
 import com.proactivediary.domain.recommendations.RecentEntry
 import com.proactivediary.domain.recommendations.RecommendationsState
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 
 private const val TAB_RECOMMENDED = 0
 private const val TAB_RECENT = 1
@@ -282,7 +282,7 @@ private fun SectionHeader(text: String, color: Color) {
     Text(
         text = text,
         style = TextStyle(
-            fontFamily = CormorantGaramond,
+            fontFamily = InstrumentSerif,
             fontSize = 15.sp,
             fontStyle = FontStyle.Italic,
             color = color.copy(alpha = 0.5f)

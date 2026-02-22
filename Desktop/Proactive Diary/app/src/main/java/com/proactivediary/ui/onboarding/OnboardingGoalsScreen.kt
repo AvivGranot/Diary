@@ -57,14 +57,14 @@ import com.proactivediary.domain.model.GoalFrequency
 import com.proactivediary.ui.components.DaySelector
 import com.proactivediary.ui.components.FrequencySelector
 import com.proactivediary.ui.components.WheelTimePicker
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import kotlinx.coroutines.launch
 
 data class GoalInput(
     val title: String = "",
     val frequency: GoalFrequency = GoalFrequency.DAILY,
-    val hour: Int = 6,
-    val minute: Int = 0,
+    val hour: Int = 20,
+    val minute: Int = 30,
     val selectedDays: Set<Int> = (0..6).toSet()
 )
 
@@ -180,7 +180,7 @@ fun OnboardingGoalsScreen(
             Text(
                 text = "Build the habit. We\u2019ll gently nudge you.",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 16.sp,
                     fontStyle = FontStyle.Italic
                 ),
@@ -224,7 +224,7 @@ fun OnboardingGoalsScreen(
             Text(
                 text = "Set intentions that matter to you.",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 16.sp,
                     fontStyle = FontStyle.Italic
                 ),
@@ -254,7 +254,7 @@ fun OnboardingGoalsScreen(
                 Text(
                     text = "+ Add another goal",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 14.sp,
                         fontStyle = FontStyle.Italic
                     ),

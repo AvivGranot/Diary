@@ -19,7 +19,7 @@ import com.proactivediary.domain.model.GoalFrequency
 import com.proactivediary.ui.goals.GoalCard
 import com.proactivediary.ui.goals.GoalUiState
 import com.proactivediary.ui.storelisting.ScreenshotFrame
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import com.proactivediary.ui.theme.ProactiveDiaryTheme
 
 @Composable
@@ -41,7 +41,7 @@ private fun GoalsContent() {
         Text(
             text = "Your Goals",
             style = TextStyle(
-                fontFamily = CormorantGaramond,
+                fontFamily = InstrumentSerif,
                 fontSize = 24.sp,
                 color = Color(0xFFFFFFFF)
             )

@@ -22,9 +22,6 @@ val PlusJakartaSans = FontFamily(
     Font(R.font.plus_jakarta_sans_bold, FontWeight.Bold)
 )
 
-// Fix: CormorantGaramond alias now correctly points to InstrumentSerif (was broken, pointed to PlusJakartaSans)
-val CormorantGaramond = InstrumentSerif
-
 // ── Typography scale ─────────────────────────────────────────────────
 // Headlines/Display: Instrument Serif (serif) — elegant, editorial
 // Title/Body/Label: Plus Jakarta Sans (sans-serif) — clean, modern

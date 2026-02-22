@@ -116,8 +116,8 @@ private val LightExtendedColors = DiaryExtendedColors(
 
 @Composable
 fun ProactiveDiaryTheme(
-    darkTheme: Boolean = true, // V3: dark mode by default
-    accentColorKey: String = "mint",
+    darkTheme: Boolean = false, // V3.1: light mode by default
+    accentColorKey: String = "blue",
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme

@@ -45,7 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.journal.DiaryCard
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import com.proactivediary.ui.theme.DiarySpacing
 import com.proactivediary.ui.theme.LocalDiaryExtendedColors
 import com.proactivediary.ui.theme.PlusJakartaSans
@@ -150,7 +150,7 @@ fun DiaryHomeScreen(
                     Text(
                         text = "Your diary awaits",
                         style = TextStyle(
-                            fontFamily = CormorantGaramond,
+                            fontFamily = InstrumentSerif,
                             fontSize = 26.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -326,7 +326,7 @@ private fun TodaysPromptCard(
             Text(
                 text = prompt,
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Normal,
                     color = MaterialTheme.colorScheme.onSurface,

@@ -70,7 +70,7 @@ import com.proactivediary.ui.share.ShareCardDialog
 import com.proactivediary.ui.share.shareCardAsImage
 import androidx.compose.foundation.layout.navigationBarsPadding
 
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -194,7 +194,7 @@ fun EntryDetailScreen(
         ) {
             // Mark — header
             if (state.markText.isNotBlank() && state.markPosition == "header") {
-                val markFont = if (state.markFont == "serif") CormorantGaramond else FontFamily.Default
+                val markFont = if (state.markFont == "serif") InstrumentSerif else FontFamily.Default
                 Text(
                     text = state.markText,
                     style = TextStyle(
@@ -214,7 +214,7 @@ fun EntryDetailScreen(
             Text(
                 text = state.dateHeader,
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 16.sp,
                     color = secondaryTextColor
                 ),
@@ -258,7 +258,7 @@ fun EntryDetailScreen(
                 Text(
                     text = state.title,
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 20.sp,
                         color = textColor
                     ),
@@ -466,7 +466,7 @@ fun EntryDetailScreen(
             // Mark — footer
             if (state.markText.isNotBlank() && state.markPosition == "footer") {
                 Spacer(modifier = Modifier.height(16.dp))
-                val markFont = if (state.markFont == "serif") CormorantGaramond else FontFamily.Default
+                val markFont = if (state.markFont == "serif") InstrumentSerif else FontFamily.Default
                 Text(
                     text = state.markText,
                     style = TextStyle(

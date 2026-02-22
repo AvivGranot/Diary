@@ -20,7 +20,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 
 data class JournalInsights(
     val totalEntries: Int = 0,
@@ -61,7 +61,7 @@ fun InsightsCard(
                 Text(
                     text = "Your Writing",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 18.sp,
                         color = inkColor
                     )
@@ -126,7 +126,7 @@ private fun StatItem(label: String, value: String) {
         Text(
             text = value,
             style = TextStyle(
-                fontFamily = CormorantGaramond,
+                fontFamily = InstrumentSerif,
                 fontSize = 20.sp,
                 color = MaterialTheme.colorScheme.onBackground
             )

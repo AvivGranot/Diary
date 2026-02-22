@@ -56,7 +56,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.quotes.components.AuthorAvatar
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -471,7 +471,7 @@ private fun LeaderboardCardsRow(
                 Text(
                     text = "\u201C${quote.content}\u201D",
                     style = MaterialTheme.typography.bodySmall.copy(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 11.sp,
                         lineHeight = 14.sp
                     ),
@@ -545,7 +545,7 @@ private fun FeedPostCard(
         Text(
             text = "\u201C${quote.content}\u201D",
             style = MaterialTheme.typography.bodyLarge.copy(
-                fontFamily = CormorantGaramond,
+                fontFamily = InstrumentSerif,
                 fontSize = 16.sp,
                 lineHeight = 22.sp
             ),

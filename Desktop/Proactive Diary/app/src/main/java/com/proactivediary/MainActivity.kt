@@ -121,8 +121,8 @@ class MainActivity : ComponentActivity() {
             val accentPref by preferenceDao.observe("accent_color")
                 .collectAsState(initial = null)
 
-            val isDarkTheme = themePref?.value != "light" // default dark
-            val accentKey = accentPref?.value ?: "mint"
+            val isDarkTheme = themePref?.value == "dark" // default light
+            val accentKey = accentPref?.value ?: "blue"
 
             ProactiveDiaryTheme(
                 darkTheme = isDarkTheme,

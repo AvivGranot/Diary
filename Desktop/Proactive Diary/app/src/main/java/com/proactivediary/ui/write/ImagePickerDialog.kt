@@ -24,7 +24,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 
 @Composable
 fun ImagePickerDialog(
@@ -43,7 +43,7 @@ fun ImagePickerDialog(
                 Text(
                     text = "Add Photo",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 20.sp,
                         color = MaterialTheme.colorScheme.onSurface
                     )

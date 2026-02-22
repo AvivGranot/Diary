@@ -72,7 +72,7 @@ import com.proactivediary.ui.share.StreakShareData
 import com.proactivediary.ui.share.StreakCardPreview
 import com.proactivediary.ui.share.shareCardAsImage
 
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Close
@@ -353,7 +353,7 @@ fun WriteScreen(
                         Text(
                             text = state.dateHeader,
                             style = TextStyle(
-                                fontFamily = CormorantGaramond,
+                                fontFamily = InstrumentSerif,
                                 fontSize = 14.sp,
                                 color = secondaryTextColor
                             )
@@ -427,7 +427,7 @@ fun WriteScreen(
                     value = state.title,
                     onValueChange = { viewModel.onTitleChanged(it) },
                     textStyle = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Normal,
                         color = textColor
@@ -442,7 +442,7 @@ fun WriteScreen(
                                 Text(
                                     text = "Title",
                                     style = TextStyle(
-                                        fontFamily = CormorantGaramond,
+                                        fontFamily = InstrumentSerif,
                                         fontSize = 18.sp,
                                         fontStyle = FontStyle.Italic,
                                         color = secondaryTextColor.copy(alpha = 0.5f)
@@ -660,7 +660,7 @@ fun WriteScreen(
             Text(
                 text = state.goalCompletedMessage!!,
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 13.sp,
                     fontStyle = FontStyle.Italic,
                     color = Color(0xFF5B8C5A).copy(alpha = 0.8f)
@@ -815,7 +815,7 @@ private fun GuidedPromptBanner(
         Text(
             text = prompt,
             style = TextStyle(
-                fontFamily = CormorantGaramond,
+                fontFamily = InstrumentSerif,
                 fontStyle = FontStyle.Italic,
                 fontSize = 15.sp,
                 color = textColor.copy(alpha = 0.7f)
@@ -868,7 +868,7 @@ private fun PersonalizationMark(
     horizontalPadding: Dp
 ) {
     val markFontFamily = when (font) {
-        "serif" -> CormorantGaramond
+        "serif" -> InstrumentSerif
         else -> FontFamily.Default
     }
     Text(
@@ -1026,7 +1026,7 @@ private fun WriteArea(
                     Text(
                         text = placeholderText,
                         style = TextStyle(
-                            fontFamily = CormorantGaramond,
+                            fontFamily = InstrumentSerif,
                             fontStyle = FontStyle.Italic,
                             fontSize = fontSize,
                             color = secondaryTextColor.copy(alpha = 0.5f),
@@ -1073,7 +1073,7 @@ private fun WriteArea(
                             Text(
                                 text = placeholderText,
                                 style = TextStyle(
-                                    fontFamily = CormorantGaramond,
+                                    fontFamily = InstrumentSerif,
                                     fontStyle = FontStyle.Italic,
                                     fontSize = fontSize,
                                     color = secondaryTextColor.copy(alpha = 0.5f),

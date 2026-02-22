@@ -45,7 +45,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import com.proactivediary.ui.theme.DiarySpacing
 import com.proactivediary.ui.theme.PlusJakartaSans
 
@@ -70,7 +70,7 @@ fun ActivityScreen(
         // ── Header ──────────────────────────────────────────────────────
         Text(
             text = "Activity",
-            fontFamily = CormorantGaramond,
+            fontFamily = InstrumentSerif,
             fontSize = 22.sp,
             fontWeight = FontWeight.Normal,
             color = MaterialTheme.colorScheme.onSurface,
@@ -123,7 +123,7 @@ fun ActivityScreen(
                     Spacer(modifier = Modifier.height(DiarySpacing.md))
                     Text(
                         text = "No activity yet",
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 20.sp,
                         color = MaterialTheme.colorScheme.onSurface
                     )

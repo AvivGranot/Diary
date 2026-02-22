@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 
 @Composable
 fun PaywallDialog(
@@ -74,7 +74,7 @@ fun PaywallDialog(
                         "A private daily writing practice."
                     },
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 24.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     ),
@@ -87,7 +87,7 @@ fun PaywallDialog(
                 Text(
                     text = "Your words deserve a home.",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontStyle = FontStyle.Italic,
                         fontSize = 16.sp,
                         color = MaterialTheme.colorScheme.secondary
@@ -117,7 +117,7 @@ fun PaywallDialog(
                 Text(
                     text = "Everything stays on your device.\nWe never see what you write.",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontStyle = FontStyle.Italic,
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f)
@@ -143,7 +143,7 @@ fun PaywallDialog(
                             Text(
                                 text = "Start 7-day free trial",
                                 style = TextStyle(
-                                    fontFamily = CormorantGaramond,
+                                    fontFamily = InstrumentSerif,
                                     fontSize = 18.sp,
                                     color = MaterialTheme.colorScheme.surface
                                 )
@@ -186,7 +186,7 @@ fun PaywallDialog(
                 Text(
                     text = "Cancel anytime. Your entries are always yours.",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontStyle = FontStyle.Italic,
                         fontSize = 13.sp,
                         color = MaterialTheme.colorScheme.secondary

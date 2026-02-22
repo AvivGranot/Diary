@@ -27,7 +27,7 @@ import com.proactivediary.ui.journal.CalendarHeatmap
 import com.proactivediary.ui.journal.DiaryCard
 import com.proactivediary.ui.journal.DiaryCardData
 import com.proactivediary.ui.storelisting.ScreenshotFrame
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import com.proactivediary.ui.theme.ProactiveDiaryTheme
 import java.time.LocalDate
 
@@ -74,7 +74,7 @@ private fun JournalContent() {
                 Text(
                     text = "One year ago, you wrote:",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 14.sp,
                         fontStyle = FontStyle.Italic,
                         color = MaterialTheme.colorScheme.secondary
@@ -84,7 +84,7 @@ private fun JournalContent() {
                 Text(
                     text = "\u201CThe sunset reminded me of that summer in Lisbon, how we sat on the rooftop and watched the light change.\u201D",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.onSurface
                     ),

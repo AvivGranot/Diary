@@ -51,8 +51,8 @@ class BillingViewModel @Inject constructor(
     val isFirstPaywallView: StateFlow<Boolean> = _isFirstPaywallView
 
     companion object {
-        /** Show paywall after this many entries (engagement-gated, not time-gated) */
-        const val ENTRY_GATE_THRESHOLD = 30
+        /** Show paywall after this many entries — disabled until 1K DAU (set to effectively infinite) */
+        const val ENTRY_GATE_THRESHOLD = 999_999
 
         // Preference keys for offline cache
         private const val KEY_CACHED_PLAN = "billing_cached_plan"

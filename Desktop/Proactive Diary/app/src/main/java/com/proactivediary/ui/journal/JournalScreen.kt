@@ -55,7 +55,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -117,7 +117,7 @@ fun JournalScreen(
                 Text(
                     text = "Your Journal",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 24.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
@@ -219,7 +219,7 @@ fun JournalScreen(
                                         Text(
                                             text = "Entries for ${selectedDate!!.format(java.time.format.DateTimeFormatter.ofPattern("MMMM d, yyyy"))}",
                                             style = TextStyle(
-                                                fontFamily = CormorantGaramond,
+                                                fontFamily = InstrumentSerif,
                                                 fontSize = 16.sp,
                                                 color = MaterialTheme.colorScheme.secondary
                                             ),
@@ -318,7 +318,7 @@ fun JournalScreen(
                             Text(
                                 text = dateGroup,
                                 style = TextStyle(
-                                    fontFamily = CormorantGaramond,
+                                    fontFamily = InstrumentSerif,
                                     fontSize = 14.sp,
                                     color = MaterialTheme.colorScheme.secondary
                                 ),
@@ -396,7 +396,7 @@ fun JournalScreen(
                 Text(
                     text = "Delete entry?",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 20.sp,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -451,7 +451,7 @@ private fun OnThisDayCard(
             Text(
                 text = entry.label,
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 14.sp,
                     fontStyle = FontStyle.Italic,
                     color = MaterialTheme.colorScheme.secondary
@@ -461,7 +461,7 @@ private fun OnThisDayCard(
             Text(
                 text = "\u201C${entry.firstLine}\u201D",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 18.sp,
                     color = MaterialTheme.colorScheme.onSurface
                 ),
@@ -473,7 +473,7 @@ private fun OnThisDayCard(
                 Text(
                     text = "See all memories \u2192",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 13.sp,
                         fontStyle = FontStyle.Italic,
                         color = Color(0xFF787878)
@@ -503,7 +503,7 @@ private fun EmptyState(
             Text(
                 text = title,
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 20.sp,
                     color = MaterialTheme.colorScheme.onBackground
                 ),
@@ -531,7 +531,7 @@ private fun EmptyState(
                     Text(
                         text = actionLabel,
                         style = TextStyle(
-                            fontFamily = CormorantGaramond,
+                            fontFamily = InstrumentSerif,
                             fontSize = 16.sp,
                             color = MaterialTheme.colorScheme.background
                         ),
@@ -588,7 +588,7 @@ private fun ViewModeButton(
         Text(
             text = label,
             style = TextStyle(
-                fontFamily = CormorantGaramond,
+                fontFamily = InstrumentSerif,
                 fontSize = 14.sp,
                 color = if (isSelected) MaterialTheme.colorScheme.onSurface
                 else MaterialTheme.colorScheme.secondary.copy(alpha = 0.5f)

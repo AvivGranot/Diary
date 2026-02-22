@@ -20,7 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.proactivediary.ui.storelisting.ScreenshotFrame
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import com.proactivediary.ui.theme.ProactiveDiaryTheme
 
 @Composable
@@ -49,7 +49,7 @@ private fun CelebrationContent() {
             Text(
                 text = "30.",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 56.sp,
                     color = inkColor
                 )
@@ -58,7 +58,7 @@ private fun CelebrationContent() {
             Text(
                 text = "One month",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 32.sp,
                     color = inkColor
                 ),
@@ -68,7 +68,7 @@ private fun CelebrationContent() {
             Text(
                 text = "A month of writing.\nThis is who you are now.",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 18.sp,
                     fontStyle = FontStyle.Italic,
                     color = pencilColor

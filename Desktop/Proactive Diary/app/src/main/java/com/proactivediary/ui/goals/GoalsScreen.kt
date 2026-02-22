@@ -47,7 +47,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.components.formatTime
 import com.proactivediary.ui.components.parseStoredTime
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import androidx.compose.foundation.layout.statusBarsPadding
 
 @Composable
@@ -87,7 +87,7 @@ fun GoalsScreen(
             Text(
                 text = "Goals",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 24.sp,
                     color = inkColor
                 ),
@@ -116,7 +116,7 @@ fun GoalsScreen(
                     Text(
                         text = "No goals yet",
                         style = TextStyle(
-                            fontFamily = CormorantGaramond,
+                            fontFamily = InstrumentSerif,
                             fontSize = 20.sp,
                             color = pencilColor
                         ),

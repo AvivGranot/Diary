@@ -51,7 +51,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.auth.AuthViewModel
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 
 @Composable
 fun AuthDialog(
@@ -92,7 +92,7 @@ fun AuthDialog(
                 Text(
                     text = "Sign in to continue",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 24.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     ),
@@ -104,7 +104,7 @@ fun AuthDialog(
                 Text(
                     text = "Your subscription will be linked\nto your account",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontStyle = FontStyle.Italic,
                         fontSize = 14.sp,
                         color = MaterialTheme.colorScheme.secondary

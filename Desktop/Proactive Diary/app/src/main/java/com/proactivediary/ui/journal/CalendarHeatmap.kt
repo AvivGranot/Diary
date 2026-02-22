@@ -14,7 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import java.time.DayOfWeek
 import java.time.LocalDate
 
@@ -46,7 +46,7 @@ fun CalendarHeatmap(
             Text(
                 text = "Writing Activity",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 16.sp,
                     color = inkColor
                 )

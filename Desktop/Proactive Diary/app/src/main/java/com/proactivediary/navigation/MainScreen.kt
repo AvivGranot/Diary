@@ -133,12 +133,8 @@ fun MainScreen(
         deepLinkDestination?.let { dest ->
             when (dest) {
                 "write" -> {
-                    if (subscriptionState.isActive) {
-                        activeNotificationPrompt = deepLinkPrompt
-                        pagerState.animateScrollToPage(PAGE_DIARY)
-                    } else {
-                        showPaywall = true
-                    }
+                    activeNotificationPrompt = deepLinkPrompt
+                    pagerState.animateScrollToPage(PAGE_DIARY)
                 }
                 "goals" -> {
                     showGoalsAndReminders = true
@@ -193,11 +189,7 @@ fun MainScreen(
                                 rootNavController.navigate(Routes.Journal.route)
                             },
                             onWriteClick = {
-                                if (subscriptionState.isActive) {
-                                    rootNavController.navigate(Routes.Write.create())
-                                } else {
-                                    showPaywall = true
-                                }
+                                rootNavController.navigate(Routes.Write.create())
                             },
                             onEntryClick = { entryId ->
                                 rootNavController.navigate(Routes.EntryDetail.createRoute(entryId))

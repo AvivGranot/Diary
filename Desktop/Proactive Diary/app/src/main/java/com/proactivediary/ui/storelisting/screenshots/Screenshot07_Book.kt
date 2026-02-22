@@ -24,7 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.proactivediary.ui.storelisting.ScreenshotFrame
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import com.proactivediary.ui.theme.ProactiveDiaryTheme
 
 @Composable
@@ -50,7 +50,7 @@ private fun BookContent() {
         Text(
             text = "2026",
             style = TextStyle(
-                fontFamily = CormorantGaramond,
+                fontFamily = InstrumentSerif,
                 fontSize = 32.sp,
                 color = inkColor
             )
@@ -87,7 +87,7 @@ private fun BookContent() {
                 Text(
                     text = "A Year of",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 20.sp,
                         color = inkColor
                     ),
@@ -96,7 +96,7 @@ private fun BookContent() {
                 Text(
                     text = "Writing",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 28.sp,
                         color = inkColor
                     ),
@@ -118,7 +118,7 @@ private fun BookContent() {
                 Text(
                     text = "2026",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 16.sp,
                         fontStyle = FontStyle.Italic,
                         color = pencilColor

@@ -6,9 +6,9 @@ import androidx.compose.ui.graphics.Color
 
 // ── Dark palette primitives ──────────────────────────────────────────
 private val Black = Color(0xFF000000)
-private val Surface111 = Color(0xFF111111)
-private val SurfaceVariant1A = Color(0xFF1A1A1A)
-private val SurfaceElevated22 = Color(0xFF222222)
+private val Surface111 = Color(0xFF1A1A1A)
+private val SurfaceVariant1A = Color(0xFF242424)
+private val SurfaceElevated22 = Color(0xFF2A2A2A)
 private val White = Color(0xFFFFFFFF)
 private val OnSurfaceE0 = Color(0xFFE0E0E0)
 private val OnSurfaceVariant88 = Color(0xFFB0B0B0)

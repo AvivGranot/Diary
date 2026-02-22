@@ -125,7 +125,7 @@ fun ProactiveDiaryNavHost(
             composable(Routes.Typewriter.route) {
                 TypewriterScreen(
                     onNavigateToDesignStudio = {
-                        navController.navigate(Routes.OnboardingGoals.route) {
+                        navController.navigate(Routes.WriteFirstNote.create("onboarding_goals")) {
                             popUpTo(Routes.Typewriter.route) { inclusive = true }
                         }
                     },
@@ -349,12 +349,12 @@ fun ProactiveDiaryNavHost(
             composable(Routes.ProfilePicture.route) {
                 ProfilePictureScreen(
                     onContinue = {
-                        navController.navigate(Routes.WriteFirstNote.route) {
+                        navController.navigate(Routes.WriteFirstNote.create()) {
                             popUpTo(Routes.ProfilePicture.route) { inclusive = true }
                         }
                     },
                     onSkip = {
-                        navController.navigate(Routes.WriteFirstNote.route) {
+                        navController.navigate(Routes.WriteFirstNote.create()) {
                             popUpTo(Routes.ProfilePicture.route) { inclusive = true }
                         }
                     },
@@ -362,10 +362,22 @@ fun ProactiveDiaryNavHost(
                 )
             }
 
-            composable(Routes.WriteFirstNote.route) {
+            composable(
+                route = Routes.WriteFirstNote.route,
+                arguments = listOf(navArgument("next") {
+                    type = NavType.StringType
+                    defaultValue = "quotes_preview"
+                })
+            ) { backStackEntry ->
+                val nextRoute = backStackEntry.arguments?.getString("next") ?: "quotes_preview"
                 WriteFirstNoteScreen(
                     onContinue = {
-                        navController.navigate(Routes.QuotesPreview.route) {
+                        val destination = if (nextRoute == "onboarding_goals") {
+                            Routes.OnboardingGoals.route
+                        } else {
+                            Routes.QuotesPreview.route
+                        }
+                        navController.navigate(destination) {
                             popUpTo(Routes.WriteFirstNote.route) { inclusive = true }
                         }
                     },

@@ -39,7 +39,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 
 /**
  * A dismissible tooltip-style coach mark shown as a floating card.
@@ -84,7 +84,7 @@ fun CoachMark(
                     Text(
                         text = message,
                         style = TextStyle(
-                            fontFamily = CormorantGaramond,
+                            fontFamily = InstrumentSerif,
                             fontSize = 16.sp,
                             color = MaterialTheme.colorScheme.background,
                             lineHeight = 22.sp
@@ -169,7 +169,7 @@ fun SwipeHint(
                         Text(
                             text = "Welcome to your diary.\nSwipe to browse tabs.",
                             style = TextStyle(
-                                fontFamily = CormorantGaramond,
+                                fontFamily = InstrumentSerif,
                                 fontSize = 16.sp,
                                 color = MaterialTheme.colorScheme.background
                             )

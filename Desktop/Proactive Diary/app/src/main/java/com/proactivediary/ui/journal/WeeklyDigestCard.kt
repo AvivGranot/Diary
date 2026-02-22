@@ -23,7 +23,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 
 data class WeeklyDigest(
     val entryCount: Int = 0,
@@ -60,7 +60,7 @@ fun WeeklyDigestCard(
                 Text(
                     text = "Your Week of Writing",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 18.sp,
                         color = inkColor
                     )
@@ -104,7 +104,7 @@ fun WeeklyDigestCard(
                     else -> ""
                 },
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 14.sp,
                     color = inkColor
                 )

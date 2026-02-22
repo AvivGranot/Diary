@@ -62,7 +62,7 @@ import com.proactivediary.ui.auth.AuthDialog
 import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.paywall.Plan
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import com.proactivediary.ui.theme.DiarySpacing
 import com.proactivediary.ui.theme.PlusJakartaSans
 
@@ -155,7 +155,7 @@ fun SettingsScreen(
                 Text(
                     text = "Account & Privacy",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 24.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
@@ -400,7 +400,7 @@ fun SettingsScreen(
                 Text(
                     text = "Privacy Policy",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
@@ -473,7 +473,7 @@ fun SettingsScreen(
                 Text(
                     text = "Terms of Service",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
@@ -513,7 +513,7 @@ fun SettingsScreen(
                 Text(
                     text = "Delete All Data",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )
@@ -546,7 +546,7 @@ fun SettingsScreen(
                 Text(
                     text = "Type DELETE to confirm",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 18.sp,
                         color = MaterialTheme.colorScheme.onBackground
                     )

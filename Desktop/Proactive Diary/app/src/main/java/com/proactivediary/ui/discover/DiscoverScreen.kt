@@ -50,7 +50,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.data.discover.DiscoverContent
 import com.proactivediary.domain.model.DiscoverEntry
-import com.proactivediary.ui.theme.CormorantGaramond
+import com.proactivediary.ui.theme.InstrumentSerif
 import kotlinx.coroutines.delay
 
 @Composable
@@ -80,7 +80,7 @@ fun DiscoverScreen(
         Text(
             text = greeting,
             style = TextStyle(
-                fontFamily = CormorantGaramond,
+                fontFamily = InstrumentSerif,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Normal,
                 color = textColor
@@ -90,7 +90,7 @@ fun DiscoverScreen(
         Text(
             text = "Wisdom from uncommon minds",
             style = TextStyle(
-                fontFamily = CormorantGaramond,
+                fontFamily = InstrumentSerif,
                 fontSize = 14.sp,
                 fontStyle = FontStyle.Italic,
                 color = secondaryColor.copy(alpha = 0.6f)
@@ -222,7 +222,7 @@ private fun CategoryChip(
         Text(
             text = label,
             style = TextStyle(
-                fontFamily = CormorantGaramond,
+                fontFamily = InstrumentSerif,
                 fontSize = 13.sp,
                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                 color = if (isSelected) textColor else secondaryColor.copy(alpha = 0.85f)
@@ -258,7 +258,7 @@ private fun DiscoverCard(
             Text(
                 text = "\u201C",
                 style = TextStyle(
-                    fontFamily = CormorantGaramond,
+                    fontFamily = InstrumentSerif,
                     fontSize = 28.sp,
                     color = textColor.copy(alpha = 0.06f)
                 ),
@@ -270,7 +270,7 @@ private fun DiscoverCard(
                 Text(
                     text = entry.excerpt,
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 16.sp,
                         fontStyle = FontStyle.Italic,
                         color = textColor.copy(alpha = 0.85f),
@@ -323,7 +323,7 @@ private fun DiscoverCard(
                             Text(
                                 text = "Reflect",
                                 style = TextStyle(
-                                    fontFamily = CormorantGaramond,
+                                    fontFamily = InstrumentSerif,
                                     fontSize = 12.sp,
                                     color = secondaryColor.copy(alpha = 0.7f)
                                 ),
@@ -371,7 +371,7 @@ private fun WelcomeBackBanner(
                 Text(
                     text = "Welcome back.",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 22.sp,
                         color = textColor
                     )
@@ -393,7 +393,7 @@ private fun WelcomeBackBanner(
                 Text(
                     text = "Day 1 of a new practice.",
                     style = TextStyle(
-                        fontFamily = CormorantGaramond,
+                        fontFamily = InstrumentSerif,
                         fontSize = 16.sp,
                         fontStyle = FontStyle.Italic,
                         color = textColor.copy(alpha = 0.7f)
