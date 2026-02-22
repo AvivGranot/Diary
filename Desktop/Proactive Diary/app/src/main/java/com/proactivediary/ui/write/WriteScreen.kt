@@ -663,7 +663,7 @@ fun WriteScreen(
                     fontFamily = InstrumentSerif,
                     fontSize = 13.sp,
                     fontStyle = FontStyle.Italic,
-                    color = Color(0xFF5B8C5A).copy(alpha = 0.8f)
+                    color = Color(0xFF3B82F6).copy(alpha = 0.8f)
                 ),
                 modifier = Modifier
                     .align(Alignment.TopStart)

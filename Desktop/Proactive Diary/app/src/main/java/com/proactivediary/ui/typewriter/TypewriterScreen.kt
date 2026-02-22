@@ -128,7 +128,7 @@ fun TypewriterScreen(
         label = "beginPulseAlpha"
     )
 
-    // Dynamic gradient background — dark with subtle mint glow
+    // Dynamic gradient background — dark with subtle blue glow
     val accentColor = MaterialTheme.colorScheme.primary
     val darkBase = Color(0xFF000000)
     val darkMid = Color(0xFF0A0A0A)
@@ -209,7 +209,7 @@ fun TypewriterScreen(
                 )
             }
 
-            // Begin button — mint green accent
+            // Begin button — blue accent
             if (uiState.beginButtonAlpha > 0f) {
                 Spacer(modifier = Modifier.height(40.dp))
                 Box(

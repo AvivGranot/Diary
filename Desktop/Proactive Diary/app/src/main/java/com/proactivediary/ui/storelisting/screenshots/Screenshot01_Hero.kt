@@ -131,7 +131,7 @@ private fun HeroContent() {
                     style = TextStyle(
                         fontSize = 12.sp,
                         fontStyle = FontStyle.Italic,
-                        color = Color(0xFF5B8C5A)
+                        color = Color(0xFF3B82F6)
                     )
                 )
                 Text(

@@ -31,9 +31,9 @@ fun CalendarHeatmap(
 
     val inkColor = MaterialTheme.colorScheme.onBackground
     val pencilColor = MaterialTheme.colorScheme.secondary
-    // Green shades for writing intensity
+    // Blue shades for writing intensity
     val emptyColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.08f)
-    val filledColor = Color(0xFF5B8C5A)
+    val filledColor = Color(0xFF3B82F6)
 
     Surface(
         modifier = modifier

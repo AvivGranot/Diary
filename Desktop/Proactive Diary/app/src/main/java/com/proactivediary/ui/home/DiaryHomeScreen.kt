@@ -376,7 +376,7 @@ private fun AiInsightHomeCard(
         Row(
             modifier = Modifier.height(IntrinsicSize.Min)
         ) {
-            // Mint green left accent border
+            // Blue left accent border
             Box(
                 modifier = Modifier
                     .width(4.dp)

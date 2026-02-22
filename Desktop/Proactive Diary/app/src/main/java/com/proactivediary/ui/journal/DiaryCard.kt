@@ -55,7 +55,7 @@ fun DiaryCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // All entries use mint green accent (mood feature removed)
+    // All entries use blue accent (mood feature removed)
     val accentColor = DarkPalette.primary
 
     val displayTitle = data.title.ifBlank {
@@ -94,7 +94,7 @@ fun DiaryCard(
                 .clickable(onClick = onClick)
                 .height(IntrinsicSize.Min)
         ) {
-            // Mint green accent strip (all entries)
+            // Blue accent strip (all entries)
             Box(
                 modifier = Modifier
                     .width(4.dp)

@@ -471,7 +471,7 @@ private fun RecentEntryCard(
             modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Mint accent dot (mood feature removed)
+            // Blue accent dot (mood feature removed)
             Box(
                 modifier = Modifier
                     .size(8.dp)

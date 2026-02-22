@@ -192,7 +192,7 @@ private fun DayCell(
             if (hasEntry) {
                 Canvas(modifier = Modifier.size(4.dp)) {
                     drawCircle(
-                        color = Color(0xFF5B8C5A),
+                        color = Color(0xFF3B82F6),
                         radius = size.minDimension / 2,
                         center = Offset(size.width / 2, size.height / 2)
                     )
