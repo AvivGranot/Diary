@@ -38,10 +38,10 @@ import com.proactivediary.ui.notes.EnvelopeRevealScreen
 import com.proactivediary.ui.notes.NoteInboxScreen
 import com.proactivediary.ui.onboarding.NotificationPermissionScreen
 import com.proactivediary.ui.onboarding.OnboardingGoalsScreen
-import com.proactivediary.ui.onboarding.ProfilePictureScreen
 import com.proactivediary.ui.onboarding.QuickAuthScreen
 import com.proactivediary.ui.onboarding.QuotesPreviewScreen
 import com.proactivediary.ui.onboarding.QuotesPreviewViewModel
+import com.proactivediary.ui.onboarding.WelcomeScreen
 import com.proactivediary.ui.onboarding.WriteFirstNoteScreen
 import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
@@ -59,7 +59,7 @@ import com.proactivediary.ui.write.WriteScreen
 private val onboardingRoutes = setOf(
     Routes.Typewriter.route,
     Routes.QuickAuth.route,
-    Routes.ProfilePicture.route,
+    Routes.Welcome.route,
     Routes.WriteFirstNote.route,
     Routes.QuotesPreview.route,
     Routes.OnboardingGoals.route,
@@ -119,7 +119,7 @@ fun ProactiveDiaryNavHost(
             startDestination = startDestination!!
         ) {
             // ── Onboarding ──
-            // Flow: Typewriter → QuickAuth → ProfilePicture → WriteFirstNote → QuotesPreview →
+            // Flow: Typewriter → QuickAuth → Welcome → WriteFirstNote → QuotesPreview →
             //       OnboardingGoals → NotificationPermission → Main
 
             composable(Routes.Typewriter.route) {
@@ -201,6 +201,12 @@ fun ProactiveDiaryNavHost(
                     },
                     onNavigateToOnThisDay = {
                         navController.navigate(Routes.OnThisDay.route)
+                    },
+                    onNavigateToRecentlyDeleted = {
+                        navController.navigate(Routes.RecentlyDeleted.route)
+                    },
+                    onNavigateToMap = {
+                        navController.navigate(Routes.PlacesMap.route)
                     },
                     onBack = { navController.popBackStack() }
                 )
@@ -332,7 +338,7 @@ fun ProactiveDiaryNavHost(
             composable(Routes.QuickAuth.route) {
                 QuickAuthScreen(
                     onAuthenticated = {
-                        navController.navigate(Routes.ProfilePicture.route) {
+                        navController.navigate(Routes.Welcome.route) {
                             popUpTo(Routes.QuickAuth.route) { inclusive = true }
                         }
                     },
@@ -346,16 +352,18 @@ fun ProactiveDiaryNavHost(
                 )
             }
 
-            composable(Routes.ProfilePicture.route) {
-                ProfilePictureScreen(
-                    onContinue = {
-                        navController.navigate(Routes.WriteFirstNote.create()) {
-                            popUpTo(Routes.ProfilePicture.route) { inclusive = true }
-                        }
-                    },
-                    onSkip = {
-                        navController.navigate(Routes.WriteFirstNote.create()) {
-                            popUpTo(Routes.ProfilePicture.route) { inclusive = true }
+            composable(Routes.Welcome.route) {
+                WelcomeScreen(
+                    onChannelSelected = { channel, contact ->
+                        navController.navigate(
+                            Routes.WriteFirstNote.create(
+                                channel = channel,
+                                contactName = contact?.displayName,
+                                contactPhone = contact?.phone,
+                                contactEmail = contact?.email
+                            )
+                        ) {
+                            popUpTo(Routes.Welcome.route) { inclusive = true }
                         }
                     },
                     analyticsService = analyticsService
@@ -364,13 +372,43 @@ fun ProactiveDiaryNavHost(
 
             composable(
                 route = Routes.WriteFirstNote.route,
-                arguments = listOf(navArgument("next") {
-                    type = NavType.StringType
-                    defaultValue = "quotes_preview"
-                })
+                arguments = listOf(
+                    navArgument("next") {
+                        type = NavType.StringType
+                        defaultValue = "quotes_preview"
+                    },
+                    navArgument("channel") {
+                        type = NavType.StringType
+                        defaultValue = "contacts"
+                    },
+                    navArgument("contactName") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("contactPhone") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                    navArgument("contactEmail") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    }
+                )
             ) { backStackEntry ->
                 val nextRoute = backStackEntry.arguments?.getString("next") ?: "quotes_preview"
+                val channel = backStackEntry.arguments?.getString("channel") ?: "contacts"
+                val contactName = backStackEntry.arguments?.getString("contactName")
+                val contactPhone = backStackEntry.arguments?.getString("contactPhone")
+                val contactEmail = backStackEntry.arguments?.getString("contactEmail")
+
                 WriteFirstNoteScreen(
+                    channel = channel,
+                    contactName = contactName,
+                    contactPhone = contactPhone,
+                    contactEmail = contactEmail,
                     onContinue = {
                         val destination = if (nextRoute == "onboarding_goals") {
                             Routes.OnboardingGoals.route
@@ -440,6 +478,63 @@ fun ProactiveDiaryNavHost(
             ) {
                 QuoteDetailScreen(
                     onBack = { navController.popBackStack() }
+                )
+            }
+
+            // ── Phase 1: Recently Deleted ──
+
+            composable(Routes.RecentlyDeleted.route) {
+                com.proactivediary.ui.journal.RecentlyDeletedScreen(
+                    onBack = { navController.popBackStack() },
+                    onEntryClick = { entryId ->
+                        navController.navigate(Routes.EntryDetail.createRoute(entryId))
+                    }
+                )
+            }
+
+            // ── Phase 3: Wellbeing Dashboard ──
+
+            composable(Routes.WellbeingDashboard.route) {
+                com.proactivediary.ui.mood.WellbeingDashboard(
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            // ── Phase 5: Security Settings ──
+
+            composable(Routes.SecuritySettings.route) {
+                com.proactivediary.ui.settings.SecuritySettingsScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            // ── Phase 5: Enhanced Export ──
+
+            composable(Routes.EnhancedExport.route) {
+                com.proactivediary.ui.export.EnhancedExportScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            // ── Phase 6: Places Map ──
+
+            composable(Routes.PlacesMap.route) {
+                com.proactivediary.ui.places.PlacesMapScreen(
+                    onBack = { navController.popBackStack() },
+                    onEntryClick = { entryId ->
+                        navController.navigate(Routes.EntryDetail.createRoute(entryId))
+                    }
+                )
+            }
+
+            // ── Phase 7: Suggestions Feed ──
+
+            composable(Routes.SuggestionsFeed.route) {
+                com.proactivediary.ui.suggestions.SuggestionsFeedScreen(
+                    onBack = { navController.popBackStack() },
+                    onSuggestionTap = { suggestion ->
+                        navController.navigate(Routes.Write.create())
+                    }
                 )
             }
         }

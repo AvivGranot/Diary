@@ -40,10 +40,48 @@ sealed class Routes(val route: String) {
 
     // Social onboarding (DesignStudio removed from flow)
     object QuickAuth : Routes("quick_auth")
+    object Welcome : Routes("welcome")
     object ProfilePicture : Routes("profile_picture")
-    object WriteFirstNote : Routes("write_first_note?next={next}") {
-        fun create(next: String = "quotes_preview") = "write_first_note?next=$next"
+    object WriteFirstNote : Routes("write_first_note?next={next}&channel={channel}&contactName={contactName}&contactPhone={contactPhone}&contactEmail={contactEmail}") {
+        fun create(
+            next: String = "quotes_preview",
+            channel: String = "contacts",
+            contactName: String? = null,
+            contactPhone: String? = null,
+            contactEmail: String? = null
+        ): String {
+            var route = "write_first_note?next=$next&channel=$channel"
+            if (contactName != null) route += "&contactName=${android.net.Uri.encode(contactName)}"
+            if (contactPhone != null) route += "&contactPhone=${android.net.Uri.encode(contactPhone)}"
+            if (contactEmail != null) route += "&contactEmail=${android.net.Uri.encode(contactEmail)}"
+            return route
+        }
     }
     object QuotesPreview : Routes("quotes_preview")
 
+    // Phase 1: Entry Management
+    object RecentlyDeleted : Routes("recently_deleted")
+
+    // Phase 3: Wellbeing
+    object WellbeingDashboard : Routes("wellbeing_dashboard")
+
+    // Phase 4: Multi-Journal
+    object JournalManage : Routes("journal_manage")
+    object CreateJournal : Routes("create_journal")
+
+    // Phase 5: Security
+    object SecuritySettings : Routes("security_settings")
+    object LockScreen : Routes("lock_screen")
+    object EnhancedExport : Routes("enhanced_export")
+
+    // Phase 6: Places Map
+    object PlacesMap : Routes("places_map")
+
+    // Phase 7: Suggestions
+    object SuggestionsFeed : Routes("suggestions_feed")
+    object PrivacyControls : Routes("privacy_controls")
+
+    // Phase 8: Sharing
+    object ShareReceiver : Routes("share_receiver")
 }
+

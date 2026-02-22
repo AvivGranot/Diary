@@ -22,11 +22,6 @@
         android:fillColor="#1D4ED8"
         android:pathData="M34,60 L38,56 L42,70 L34,60 Z" />
 
-    <!-- Ink dot at the pen tip — brighter blue glow -->
-    <path
-        android:fillColor="#93C5FD"
-        android:pathData="M33,65 C33,62.8 34.8,61 37,61 C39.2,61 41,62.8 41,65 C41,67.2 39.2,69 37,69 C34.8,69 33,67.2 33,65 Z" />
-
     <!-- Small ink splash accent -->
     <path
         android:fillColor="#3B82F6"
