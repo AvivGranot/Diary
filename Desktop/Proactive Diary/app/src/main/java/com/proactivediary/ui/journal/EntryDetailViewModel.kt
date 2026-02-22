@@ -92,7 +92,7 @@ class EntryDetailViewModel @Inject constructor(
                 } else { defaultFeatures }
 
                 _uiState.value = _uiState.value.copy(
-                    colorKey = prefs["diary_color"] ?: "dark",
+                    colorKey = prefs["diary_color"] ?: "sky",
                     form = prefs["diary_form"] ?: "focused",
                     canvas = prefs["diary_canvas"] ?: "lined",
                     fontSize = when (prefs["font_size"]) {
