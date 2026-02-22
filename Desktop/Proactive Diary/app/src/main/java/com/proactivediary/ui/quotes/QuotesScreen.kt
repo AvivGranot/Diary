@@ -70,7 +70,7 @@ private val Bronze = Color(0xFFCD7F32)
 private val RedAccent = Color(0xFFFF3B5C)
 private val Purple = Color(0xFFBF5AF2)
 private val Blue = Color(0xFF0A84FF)
-private val Surface2 = Color(0xFF1A1A1A)
+// Surface2 removed — use MaterialTheme.colorScheme.surfaceVariant instead
 
 private val RainbowGradient = Brush.linearGradient(
     colors = listOf(RedAccent, Purple, Blue)
@@ -199,7 +199,8 @@ fun QuotesScreen(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(20.dp))
                                     .background(
-                                        if (isSelected) AccentBlue else Surface2
+                                        if (isSelected) AccentBlue
+                                        else MaterialTheme.colorScheme.surfaceVariant
                                     )
                                     .clickable { viewModel.selectTab(tab) }
                                     .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -212,7 +213,7 @@ fun QuotesScreen(
                                     },
                                     style = MaterialTheme.typography.labelMedium,
                                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (isSelected) Color.Black else MaterialTheme.colorScheme.onBackground
+                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onBackground
                                 )
                             }
                         }
@@ -330,7 +331,7 @@ private fun StoriesRow(
                         modifier = Modifier
                             .fillMaxSize()
                             .clip(CircleShape)
-                            .background(Color.Black),
+                            .background(MaterialTheme.colorScheme.surface),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -420,7 +421,7 @@ private fun LeaderboardCardsRow(
                             .background(MaterialTheme.colorScheme.surface)
                             .border(
                                 1.dp,
-                                Color.White.copy(alpha = 0.08f),
+                                MaterialTheme.colorScheme.outlineVariant,
                                 RoundedCornerShape(14.dp)
                             )
                     )
