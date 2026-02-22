@@ -80,7 +80,7 @@ private val DarkExtendedColors = DiaryExtendedColors(
     shimmerHighlight = Color(0xFF1A1A1A),
     gradientStart = Color(0xFF3B82F6).copy(alpha = 0.15f),
     gradientEnd = Color(0xFF000000),
-    bottomNavBackground = Color(0xFF111111),
+    bottomNavBackground = Color(0xFF0A0A0A),
     bottomNavIndicator = Color(0xFF3B82F6),
     streakGold = Color(0xFFFFD700),
     error = Color(0xFFEF4444),
