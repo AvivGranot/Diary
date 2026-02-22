@@ -75,25 +75,14 @@ class ProfilePictureViewModel @Inject constructor(
 
     fun useGooglePhoto() {
         val url = _state.value.googlePhotoUrl ?: return
-        _state.value = _state.value.copy(isUploading = true, error = null)
-
+        // Navigate immediately — Firestore write happens in background.
+        // ensureMinimalProfile already wrote photoUrl; this is just a confirmation write.
+        _state.value = _state.value.copy(uploadedUrl = url)
         viewModelScope.launch {
-            val result = profileImageRepository.useGooglePhotoAsDefault(url)
-            result.fold(
-                onSuccess = { savedUrl ->
-                    analyticsService.logProfilePhotoUploaded(source = "google")
-                    _state.value = _state.value.copy(
-                        isUploading = false,
-                        uploadedUrl = savedUrl
-                    )
-                },
-                onFailure = { e ->
-                    _state.value = _state.value.copy(
-                        isUploading = false,
-                        error = e.message ?: "Failed to set photo"
-                    )
-                }
-            )
+            try {
+                profileImageRepository.useGooglePhotoAsDefault(url)
+                analyticsService.logProfilePhotoUploaded(source = "google")
+            } catch (_: Exception) { }
         }
     }
 }
