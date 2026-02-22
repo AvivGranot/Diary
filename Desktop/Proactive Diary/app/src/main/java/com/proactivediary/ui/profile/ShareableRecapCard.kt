@@ -112,7 +112,7 @@ object ShareableRecapCard {
                     data.entriesThisYear > 5 -> "Top 20% of writers"
                     else -> "Keep going!"
                 },
-                gradientColors = intArrayOf(0xFF065F46.toInt(), 0xFF059669.toInt(), 0xFF34D399.toInt())
+                gradientColors = intArrayOf(0xFF1E3A5F.toInt(), 0xFF2563EB.toInt(), 0xFF60A5FA.toInt())
             ),
             CardInfo(
                 bigText = "${data.totalLikesReceived}",

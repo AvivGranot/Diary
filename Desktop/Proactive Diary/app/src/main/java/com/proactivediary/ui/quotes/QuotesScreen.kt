@@ -62,8 +62,8 @@ import java.util.Date
 import java.util.Locale
 
 // Theme colors
-private val MintGreen = Color(0xFF4ADE80)
-private val MintGlow = Color(0xFF4ADE80).copy(alpha = 0.12f)
+private val AccentBlue = Color(0xFF3B82F6)
+private val AccentBlueGlow = Color(0xFF3B82F6).copy(alpha = 0.12f)
 private val Gold = Color(0xFFFFD700)
 private val Silver = Color(0xFFC0C0C0)
 private val Bronze = Color(0xFFCD7F32)
@@ -75,8 +75,8 @@ private val Surface2 = Color(0xFF1A1A1A)
 private val RainbowGradient = Brush.linearGradient(
     colors = listOf(RedAccent, Purple, Blue)
 )
-private val MintGradient = Brush.linearGradient(
-    colors = listOf(MintGreen, Color(0xFF059669))
+private val AccentGradient = Brush.linearGradient(
+    colors = listOf(AccentBlue, Color(0xFF2563EB))
 )
 
 @Composable
@@ -199,7 +199,7 @@ fun QuotesScreen(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(20.dp))
                                     .background(
-                                        if (isSelected) MintGreen else Surface2
+                                        if (isSelected) AccentBlue else Surface2
                                     )
                                     .clickable { viewModel.selectTab(tab) }
                                     .padding(horizontal = 14.dp, vertical = 8.dp)
@@ -278,12 +278,12 @@ fun QuotesScreen(
             // FAB at bottom-start
             FloatingActionButton(
                 onClick = { viewModel.showComposeSheet() },
-                containerColor = MintGreen,
+                containerColor = AccentBlue,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(start = 16.dp, bottom = 72.dp)
             ) {
-                Icon(Icons.Default.Add, "Write a quote", tint = Color.Black)
+                Icon(Icons.Default.Add, "Write a quote", tint = Color.White)
             }
         }
     }
@@ -323,7 +323,7 @@ private fun StoriesRow(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .background(brush = MintGradient)
+                        .background(brush = AccentGradient)
                         .padding(2.dp)
                 ) {
                     Box(
@@ -336,7 +336,7 @@ private fun StoriesRow(
                         Icon(
                             Icons.Default.Add,
                             contentDescription = "Your quote",
-                            tint = MintGreen,
+                            tint = AccentBlue,
                             modifier = Modifier.size(16.dp)
                         )
                     }
@@ -414,8 +414,8 @@ private fun LeaderboardCardsRow(
                     .clip(RoundedCornerShape(14.dp))
                     .then(
                         if (isFirst) Modifier
-                            .background(MintGlow)
-                            .border(1.dp, MintGreen.copy(alpha = 0.3f), RoundedCornerShape(14.dp))
+                            .background(AccentBlueGlow)
+                            .border(1.dp, AccentBlue.copy(alpha = 0.3f), RoundedCornerShape(14.dp))
                         else Modifier
                             .background(MaterialTheme.colorScheme.surface)
                             .border(
@@ -488,7 +488,7 @@ private fun LeaderboardCardsRow(
                     text = "\u2764\uFE0F ${quote.likeCount}",
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                     fontWeight = if (isFirst) FontWeight.Bold else FontWeight.SemiBold,
-                    color = if (isFirst) MintGreen else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    color = if (isFirst) AccentBlue else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
             }
         }

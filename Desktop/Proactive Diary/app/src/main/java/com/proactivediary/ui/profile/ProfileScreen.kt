@@ -234,7 +234,7 @@ fun ProfileScreen(
                 RecapCard(
                     modifier = Modifier.weight(1f),
                     gradient = Brush.linearGradient(
-                        colors = listOf(Color(0xFF065F46), Color(0xFF059669), Color(0xFF34D399))
+                        colors = listOf(Color(0xFF1E3A5F), Color(0xFF2563EB), Color(0xFF60A5FA))
                     ),
                     bigText = "${state.entriesThisYear}",
                     label = "Entries this year",

@@ -38,8 +38,8 @@ object DynamicColors {
     fun isNightMode(): Boolean = true // Always dark mode during migration
 
     fun accentForTime(timePeriod: TimePeriod = currentTimePeriod()): Color {
-        // All time periods now return mint green accent
-        return Color(0xFF4ADE80)
+        // All time periods now return blue accent
+        return Color(0xFF3B82F6)
     }
 
     fun textColorForTime(timePeriod: TimePeriod = currentTimePeriod()): Color {

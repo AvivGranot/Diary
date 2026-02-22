@@ -157,8 +157,8 @@ fun StreakCardPreview(
     data: StreakShareData,
     modifier: Modifier = Modifier
 ) {
-    // Use mint green gradient (mood feature removed)
-    val gradient = listOf(DarkPalette.primary, Color(0xFF22C55E))
+    // Use blue gradient (brand accent)
+    val gradient = listOf(DarkPalette.primary, Color(0xFF2563EB))
 
     Box(
         modifier = modifier

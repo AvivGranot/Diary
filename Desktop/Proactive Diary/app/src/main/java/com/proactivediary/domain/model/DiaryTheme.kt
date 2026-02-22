@@ -51,7 +51,8 @@ data class DiaryThemeConfig(
             "teal" to Color(0xFF14B8A6),
             "sunset" to Color(0xFFF97316),
             "purple" to Color(0xFF8B5CF6),
-            "mint" to Color(0xFF4ADE80)
+            "mint" to Color(0xFF4ADE80),
+            "blue" to Color(0xFF3B82F6)
         )
 
         fun colorForKey(key: String): Color {
@@ -59,7 +60,7 @@ data class DiaryThemeConfig(
         }
 
         fun accentForKey(key: String): Color {
-            return accentColors[key] ?: Color(0xFF4ADE80) // mint green default
+            return accentColors[key] ?: Color(0xFF3B82F6) // blue default
         }
 
         fun textureColorForKey(textureKey: String): Color {

@@ -27,7 +27,7 @@ private val DarkColorScheme = darkColorScheme(
     secondary = DarkPalette.secondary,
     onSecondary = DarkPalette.onSecondary,
     secondaryContainer = DarkPalette.secondaryContainer,
-    tertiary = DarkPalette.primary, // mint green as tertiary too
+    tertiary = DarkPalette.primary, // blue as tertiary too
     onTertiary = DarkPalette.onPrimary,
     outline = DarkPalette.outline,
     outlineVariant = DarkPalette.outlineVariant,
@@ -36,7 +36,7 @@ private val DarkColorScheme = darkColorScheme(
     surfaceContainerLow = DarkPalette.surfaceContainerLow,
     inverseSurface = Color(0xFFE0E0E0),
     inverseOnSurface = Color(0xFF1A1A1A),
-    inversePrimary = Color(0xFF16A34A),
+    inversePrimary = Color(0xFF2563EB),
     error = Color(0xFFEF4444),
     onError = Color(0xFFFFFFFF),
 )
@@ -64,24 +64,24 @@ private val LightColorScheme = lightColorScheme(
     surfaceContainerLow = LightPalette.surfaceContainerLow,
     inverseSurface = Color(0xFF2A2A2A),
     inverseOnSurface = Color(0xFFF0F0F0),
-    inversePrimary = Color(0xFF4ADE80),
+    inversePrimary = Color(0xFF3B82F6),
     error = Color(0xFFDC2626),
     onError = Color(0xFFFFFFFF),
 )
 
 // Extended color sets for dark/light
 private val DarkExtendedColors = DiaryExtendedColors(
-    accent = Color(0xFF4ADE80),
-    accentDark = Color(0xFF22C55E),
-    accentContainer = Color(0xFF1A2E1A),
-    cardSideLine = Color(0xFF4ADE80),
+    accent = Color(0xFF3B82F6),
+    accentDark = Color(0xFF2563EB),
+    accentContainer = Color(0xFF172554),
+    cardSideLine = Color(0xFF3B82F6),
     divider = Color(0xFF333333),
     shimmerBase = Color(0xFF111111),
     shimmerHighlight = Color(0xFF1A1A1A),
-    gradientStart = Color(0xFF4ADE80).copy(alpha = 0.15f),
+    gradientStart = Color(0xFF3B82F6).copy(alpha = 0.15f),
     gradientEnd = Color(0xFF000000),
     bottomNavBackground = Color(0xFF111111),
-    bottomNavIndicator = Color(0xFF4ADE80),
+    bottomNavIndicator = Color(0xFF3B82F6),
     streakGold = Color(0xFFFFD700),
     error = Color(0xFFEF4444),
     success = Color(0xFF4ADE80),
@@ -93,17 +93,17 @@ private val DarkExtendedColors = DiaryExtendedColors(
 )
 
 private val LightExtendedColors = DiaryExtendedColors(
-    accent = Color(0xFF16A34A),
-    accentDark = Color(0xFF15803D),
-    accentContainer = Color(0xFFDCFCE7),
-    cardSideLine = Color(0xFF16A34A),
+    accent = Color(0xFF2563EB),
+    accentDark = Color(0xFF1D4ED8),
+    accentContainer = Color(0xFFDBEAFE),
+    cardSideLine = Color(0xFF2563EB),
     divider = Color(0xFFE0E0E0),
     shimmerBase = Color(0xFFF0F0F0),
     shimmerHighlight = Color(0xFFE0E0E0),
-    gradientStart = Color(0xFF16A34A).copy(alpha = 0.1f),
+    gradientStart = Color(0xFF2563EB).copy(alpha = 0.1f),
     gradientEnd = Color(0xFFFAFAFA),
     bottomNavBackground = Color(0xFFFFFFFF),
-    bottomNavIndicator = Color(0xFF16A34A),
+    bottomNavIndicator = Color(0xFF2563EB),
     streakGold = Color(0xFFD97706),
     error = Color(0xFFDC2626),
     success = Color(0xFF16A34A),
@@ -125,7 +125,7 @@ fun ProactiveDiaryTheme(
 
     // Apply user-chosen accent color globally
     val accentOption = accentColorOptions.firstOrNull { it.key == accentColorKey }
-    val extendedColors = if (accentOption != null && accentOption.key != "mint") {
+    val extendedColors = if (accentOption != null && accentOption.key != "blue") {
         baseExtendedColors.copy(
             accent = accentOption.color,
             accentDark = accentOption.color,

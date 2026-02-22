@@ -13,9 +13,14 @@ private val White = Color(0xFFFFFFFF)
 private val OnSurfaceE0 = Color(0xFFE0E0E0)
 private val OnSurfaceVariant88 = Color(0xFFB0B0B0)
 private val Outline33 = Color(0xFF333333)
-private val MintGreen = Color(0xFF4ADE80)
+private val MintGreen = Color(0xFF4ADE80) // kept for accent picker option only
 private val MintGreenDark = Color(0xFF22C55E)
 private val MintContainer = Color(0xFF1A2E1A)
+
+// ── Blue palette primitives (new default accent) ─────────────────────
+private val Blue = Color(0xFF3B82F6)
+private val BlueDark = Color(0xFF2563EB)
+private val BlueContainer = Color(0xFF172554)
 
 // ── Light palette primitives ─────────────────────────────────────────
 private val LightBackground = Color(0xFFFAFAFA)
@@ -25,7 +30,8 @@ private val LightOnBackground = Color(0xFF1A1A1A)
 private val LightOnSurface = Color(0xFF2A2A2A)
 private val LightOnSurfaceVariant = Color(0xFF666666)
 private val LightOutline = Color(0xFFE0E0E0)
-private val LightMintGreen = Color(0xFF16A34A)
+private val LightMintGreen = Color(0xFF16A34A) // kept for accent picker option only
+private val LightBlue = Color(0xFF2563EB)
 
 // ── Semantic dark scheme colors (used in Theme.kt) ───────────────────
 object DarkPalette {
@@ -36,10 +42,10 @@ object DarkPalette {
     val onBackground = White
     val onSurface = OnSurfaceE0
     val onSurfaceVariant = OnSurfaceVariant88
-    val primary = MintGreen
-    val onPrimary = Black
-    val primaryContainer = MintContainer
-    val onPrimaryContainer = MintGreen
+    val primary = Blue
+    val onPrimary = White
+    val primaryContainer = BlueContainer
+    val onPrimaryContainer = Blue
     val secondary = OnSurfaceVariant88
     val onSecondary = Black
     val secondaryContainer = SurfaceVariant1A
@@ -58,10 +64,10 @@ object LightPalette {
     val onBackground = LightOnBackground
     val onSurface = LightOnSurface
     val onSurfaceVariant = LightOnSurfaceVariant
-    val primary = LightMintGreen
+    val primary = LightBlue
     val onPrimary = White
-    val primaryContainer = Color(0xFFDCFCE7)
-    val onPrimaryContainer = Color(0xFF14532D)
+    val primaryContainer = Color(0xFFDBEAFE)
+    val onPrimaryContainer = Color(0xFF1E3A5F)
     val secondary = LightOnSurfaceVariant
     val onSecondary = White
     val secondaryContainer = LightSurfaceVariant
@@ -75,20 +81,20 @@ object LightPalette {
 // ── Extended colors (provided via CompositionLocal) ──────────────────
 @Immutable
 data class DiaryExtendedColors(
-    val accent: Color = MintGreen,
-    val accentDark: Color = MintGreenDark,
-    val accentContainer: Color = MintContainer,
-    val cardSideLine: Color = MintGreen,
+    val accent: Color = Blue,
+    val accentDark: Color = BlueDark,
+    val accentContainer: Color = BlueContainer,
+    val cardSideLine: Color = Blue,
     val divider: Color = Outline33,
     val shimmerBase: Color = Surface111,
     val shimmerHighlight: Color = SurfaceVariant1A,
-    val gradientStart: Color = MintGreen.copy(alpha = 0.15f),
+    val gradientStart: Color = Blue.copy(alpha = 0.15f),
     val gradientEnd: Color = Black,
     val bottomNavBackground: Color = Surface111,
-    val bottomNavIndicator: Color = MintGreen,
+    val bottomNavIndicator: Color = Blue,
     val streakGold: Color = Color(0xFFFFD700),
     val error: Color = Color(0xFFEF4444),
-    val success: Color = MintGreen,
+    val success: Color = Color(0xFF4ADE80), // success stays green (semantic)
     val warning: Color = Color(0xFFFBBF24),
     // Time-of-day write canvas gradients (kept for Write screen only)
     val morningGradient: List<Color> = listOf(Color(0xFF1A1500), Color(0xFF0D0A00)),
