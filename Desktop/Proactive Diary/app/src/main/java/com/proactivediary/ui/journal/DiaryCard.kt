@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -46,7 +47,11 @@ data class DiaryCardData(
     val wordCount: Int,
     val createdAt: Long,
     val imageCount: Int = 0,
-    val mood: String? = null
+    val mood: String? = null,
+    val isBookmarked: Boolean = false,
+    val hasAudio: Boolean = false,
+    val hasLocation: Boolean = false,
+    val deletedAt: Long? = null
 )
 
 @Composable
@@ -191,6 +196,15 @@ fun DiaryCard(
                                 fontWeight = FontWeight.Medium,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
                             )
+                        )
+                    }
+
+                    if (data.isBookmarked) {
+                        Icon(
+                            imageVector = Icons.Filled.Bookmark,
+                            contentDescription = "Bookmarked",
+                            modifier = Modifier.size(13.dp),
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f)
                         )
                     }
 

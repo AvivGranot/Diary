@@ -8,7 +8,11 @@ import com.proactivediary.data.sync.SyncStatus
 
 @Entity(
     tableName = "entries",
-    indices = [Index("created_at")]
+    indices = [
+        Index("created_at"),
+        Index("deleted_at"),
+        Index("is_bookmarked")
+    ]
 )
 data class EntryEntity(
     @PrimaryKey val id: String,
@@ -32,5 +36,11 @@ data class EntryEntity(
     @ColumnInfo(name = "word_count") val wordCount: Int = 0,
     @ColumnInfo(name = "created_at") val createdAt: Long,
     @ColumnInfo(name = "updated_at") val updatedAt: Long,
-    @ColumnInfo(name = "sync_status") val syncStatus: Int = SyncStatus.PENDING_UPLOAD
+    @ColumnInfo(name = "sync_status") val syncStatus: Int = SyncStatus.PENDING_UPLOAD,
+    // Phase 1: Entry Management
+    @ColumnInfo(name = "deleted_at") val deletedAt: Long? = null,
+    @ColumnInfo(name = "is_bookmarked") val isBookmarked: Boolean = false,
+    @ColumnInfo(name = "entry_date") val entryDate: Long? = null,
+    // Phase 9: Font color
+    @ColumnInfo(name = "font_color") val fontColor: String? = null
 )

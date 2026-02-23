@@ -26,4 +26,15 @@ interface EntryRepository {
     suspend fun getTotalCount(): Int
     fun getEntryDatesInRange(startMs: Long, endMs: Long): Flow<List<Long>>
     fun getEntriesWithImages(): Flow<List<EntryEntity>>
+    // Phase 1: Soft delete & bookmarks
+    suspend fun softDelete(entryId: String)
+    suspend fun restore(entryId: String)
+    suspend fun permanentDelete(entryId: String)
+    suspend fun purgeExpired()
+    fun getRecentlyDeleted(): Flow<List<EntryEntity>>
+    suspend fun toggleBookmark(entryId: String, bookmarked: Boolean)
+    fun getBookmarked(): Flow<List<EntryEntity>>
+    suspend fun updateEntryDate(entryId: String, entryDate: Long?)
+    // Phase 6: Location entries
+    fun getEntriesWithLocation(): Flow<List<EntryEntity>>
 }

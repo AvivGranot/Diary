@@ -48,6 +48,7 @@ data class EntryDetailUiState(
     val markText: String = "",
     val markPosition: String = "header",
     val markFont: String = "serif",
+    val isBookmarked: Boolean = false,
     val isLoaded: Boolean = false,
     val isDeleted: Boolean = false
 )
@@ -92,7 +93,7 @@ class EntryDetailViewModel @Inject constructor(
                 } else { defaultFeatures }
 
                 _uiState.value = _uiState.value.copy(
-                    colorKey = prefs["diary_color"] ?: "sky",
+                    colorKey = prefs["diary_color"] ?: "paper",
                     form = prefs["diary_form"] ?: "focused",
                     canvas = prefs["diary_canvas"] ?: "lined",
                     fontSize = when (prefs["font_size"]) {
@@ -144,6 +145,7 @@ class EntryDetailViewModel @Inject constructor(
                 audioPath = entry.audioPath,
                 wordCount = entry.wordCount,
                 dateHeader = dateHeader,
+                isBookmarked = entry.isBookmarked,
                 isLoaded = true
             )
         }
@@ -153,11 +155,25 @@ class EntryDetailViewModel @Inject constructor(
         viewModelScope.launch {
             withContext(NonCancellable + Dispatchers.IO) {
                 try {
-                    entryRepository.delete(entryId)
+                    entryRepository.softDelete(entryId)
                 } catch (_: Exception) {
                     // Entry may already be deleted
                 }
             }
+        }
+    }
+
+    fun toggleBookmark() {
+        val current = _uiState.value.isBookmarked
+        _uiState.value = _uiState.value.copy(isBookmarked = !current)
+        viewModelScope.launch {
+            entryRepository.toggleBookmark(entryId, !current)
+        }
+    }
+
+    fun updateEntryDate(dateMillis: Long?) {
+        viewModelScope.launch {
+            entryRepository.updateEntryDate(entryId, dateMillis)
         }
     }
 

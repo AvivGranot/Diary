@@ -22,8 +22,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -144,6 +146,13 @@ fun EntryDetailScreen(
                             tint = textColor
                         )
                     }
+                }
+                IconButton(onClick = { viewModel.toggleBookmark() }) {
+                    Icon(
+                        imageVector = if (state.isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+                        contentDescription = if (state.isBookmarked) "Remove bookmark" else "Bookmark",
+                        tint = textColor
+                    )
                 }
                 IconButton(onClick = { showShareDialog = true }) {
                     Icon(
@@ -491,7 +500,7 @@ fun EntryDetailScreen(
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("Delete entry") },
-            text = { Text("Delete this entry? This cannot be undone.") },
+            text = { Text("This entry will be moved to Recently Deleted and permanently removed after 30 days.") },
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteDialog = false

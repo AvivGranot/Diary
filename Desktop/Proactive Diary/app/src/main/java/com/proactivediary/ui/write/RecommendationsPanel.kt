@@ -74,13 +74,8 @@ fun RecommendationsPanel(
     val secondaryColor = DiaryThemeConfig.secondaryTextColorFor(colorKey)
     var selectedTab by remember { mutableIntStateOf(TAB_RECOMMENDED) }
 
-    val hasContent = state.nearbyPlaces.isNotEmpty() ||
-            state.devicePhotos.isNotEmpty() ||
-            state.pastLocations.isNotEmpty() ||
-            state.recentEntries.isNotEmpty() ||
-            !state.hasPhotoPermission
-
-    AnimatedVisibility(visible = hasContent, enter = fadeIn(), exit = fadeOut()) {
+    // Always show the panel — at minimum, display photo permission card or writing prompts
+    AnimatedVisibility(visible = true, enter = fadeIn(), exit = fadeOut()) {
         Column(modifier = modifier.fillMaxWidth().padding(top = 24.dp)) {
             // Chevron hint
             Icon(
@@ -258,7 +253,7 @@ private fun RecentTab(
     onEntryTapped: (String) -> Unit
 ) {
     if (entries.isEmpty()) {
-        EmptyHint("No entries yet", secondaryColor)
+        EmptyHint("Your recent entries will appear here", secondaryColor)
         return
     }
 

@@ -41,7 +41,6 @@ import com.proactivediary.ui.onboarding.OnboardingGoalsScreen
 import com.proactivediary.ui.onboarding.QuickAuthScreen
 import com.proactivediary.ui.onboarding.QuotesPreviewScreen
 import com.proactivediary.ui.onboarding.QuotesPreviewViewModel
-import com.proactivediary.ui.onboarding.WelcomeScreen
 import com.proactivediary.ui.onboarding.WriteFirstNoteScreen
 import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
@@ -59,7 +58,6 @@ import com.proactivediary.ui.write.WriteScreen
 private val onboardingRoutes = setOf(
     Routes.Typewriter.route,
     Routes.QuickAuth.route,
-    Routes.Welcome.route,
     Routes.WriteFirstNote.route,
     Routes.QuotesPreview.route,
     Routes.OnboardingGoals.route,
@@ -294,8 +292,8 @@ fun ProactiveDiaryNavHost(
                 if (showYearPaywall) {
                     PaywallDialog(
                         onDismiss = { showYearPaywall = false },
-                        monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "\$5/month",
-                        annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "\$40/year",
+                        monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "\$2/month",
+                        annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "\$15/year",
                         onSelectPlan = { sku ->
                             yearActivity?.let { billingViewModel.launchPurchase(it, sku) }
                             showYearPaywall = false
@@ -338,7 +336,7 @@ fun ProactiveDiaryNavHost(
             composable(Routes.QuickAuth.route) {
                 QuickAuthScreen(
                     onAuthenticated = {
-                        navController.navigate(Routes.Welcome.route) {
+                        navController.navigate(Routes.WriteFirstNote.create()) {
                             popUpTo(Routes.QuickAuth.route) { inclusive = true }
                         }
                     },
@@ -352,63 +350,18 @@ fun ProactiveDiaryNavHost(
                 )
             }
 
-            composable(Routes.Welcome.route) {
-                WelcomeScreen(
-                    onChannelSelected = { channel, contact ->
-                        navController.navigate(
-                            Routes.WriteFirstNote.create(
-                                channel = channel,
-                                contactName = contact?.displayName,
-                                contactPhone = contact?.phone,
-                                contactEmail = contact?.email
-                            )
-                        ) {
-                            popUpTo(Routes.Welcome.route) { inclusive = true }
-                        }
-                    },
-                    analyticsService = analyticsService
-                )
-            }
-
             composable(
                 route = Routes.WriteFirstNote.route,
                 arguments = listOf(
                     navArgument("next") {
                         type = NavType.StringType
                         defaultValue = "quotes_preview"
-                    },
-                    navArgument("channel") {
-                        type = NavType.StringType
-                        defaultValue = "contacts"
-                    },
-                    navArgument("contactName") {
-                        type = NavType.StringType
-                        nullable = true
-                        defaultValue = null
-                    },
-                    navArgument("contactPhone") {
-                        type = NavType.StringType
-                        nullable = true
-                        defaultValue = null
-                    },
-                    navArgument("contactEmail") {
-                        type = NavType.StringType
-                        nullable = true
-                        defaultValue = null
                     }
                 )
             ) { backStackEntry ->
                 val nextRoute = backStackEntry.arguments?.getString("next") ?: "quotes_preview"
-                val channel = backStackEntry.arguments?.getString("channel") ?: "contacts"
-                val contactName = backStackEntry.arguments?.getString("contactName")
-                val contactPhone = backStackEntry.arguments?.getString("contactPhone")
-                val contactEmail = backStackEntry.arguments?.getString("contactEmail")
 
                 WriteFirstNoteScreen(
-                    channel = channel,
-                    contactName = contactName,
-                    contactPhone = contactPhone,
-                    contactEmail = contactEmail,
                     onContinue = {
                         val destination = if (nextRoute == "onboarding_goals") {
                             Routes.OnboardingGoals.route
@@ -569,8 +522,8 @@ fun ProactiveDiaryNavHost(
     if (showPaywall) {
         PaywallDialog(
             onDismiss = { showPaywall = false },
-            monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "\$5/month",
-            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "\$40/year",
+            monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "\$2/month",
+            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "\$15/year",
             onSelectPlan = { sku ->
                 activity?.let { billingViewModel.launchPurchase(it, sku) }
                 showPaywall = false

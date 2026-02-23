@@ -17,7 +17,6 @@ object FirestoreMapper {
     fun entryToMap(entry: EntryEntity): Map<String, Any?> = mapOf(
         "title" to entry.title,
         "content" to entry.content,
-        // "mood" removed — mood feature deprecated
         "tags" to entry.tags,
         "taggedContacts" to entry.taggedContacts,
         "images" to entry.images,
@@ -34,7 +33,11 @@ object FirestoreMapper {
         "wordCount" to entry.wordCount,
         "createdAt" to entry.createdAt,
         "updatedAt" to entry.updatedAt,
-        "_deleted" to false
+        "deletedAt" to entry.deletedAt,
+        "isBookmarked" to entry.isBookmarked,
+        "entryDate" to entry.entryDate,
+        "fontColor" to entry.fontColor,
+        "_deleted" to (entry.deletedAt != null)
     )
 
     fun documentToEntry(doc: DocumentSnapshot): EntryEntity? {
@@ -60,7 +63,11 @@ object FirestoreMapper {
                 wordCount = doc.getLong("wordCount")?.toInt() ?: 0,
                 createdAt = doc.getLong("createdAt") ?: System.currentTimeMillis(),
                 updatedAt = doc.getLong("updatedAt") ?: System.currentTimeMillis(),
-                syncStatus = SyncStatus.SYNCED
+                syncStatus = SyncStatus.SYNCED,
+                deletedAt = doc.getLong("deletedAt"),
+                isBookmarked = doc.getBoolean("isBookmarked") ?: false,
+                entryDate = doc.getLong("entryDate"),
+                fontColor = doc.getString("fontColor")
             )
         } catch (e: Exception) {
             null

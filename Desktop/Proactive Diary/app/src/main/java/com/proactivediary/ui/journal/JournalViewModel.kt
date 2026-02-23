@@ -293,7 +293,11 @@ class JournalViewModel @Inject constructor(
             wordCount = wordCount,
             createdAt = createdAt,
             imageCount = imageCount,
-            mood = null // mood feature removed
+            mood = null,
+            isBookmarked = isBookmarked,
+            hasAudio = audioPath != null,
+            hasLocation = latitude != null && longitude != null,
+            deletedAt = deletedAt
         )
     }
 
@@ -469,7 +473,13 @@ class JournalViewModel @Inject constructor(
 
     fun deleteEntry(entryId: String) {
         viewModelScope.launch {
-            entryRepository.delete(entryId)
+            entryRepository.softDelete(entryId)
+        }
+    }
+
+    fun toggleBookmark(entryId: String, bookmarked: Boolean) {
+        viewModelScope.launch {
+            entryRepository.toggleBookmark(entryId, bookmarked)
         }
     }
 }

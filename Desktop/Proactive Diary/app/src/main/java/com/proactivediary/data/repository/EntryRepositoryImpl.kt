@@ -69,24 +69,8 @@ class EntryRepositoryImpl @Inject constructor(
     }
 
     override suspend fun delete(entryId: String) {
-        // Clean up associated image files
-        try { imageStorageManager.deleteAllImages(entryId) } catch (_: Exception) { }
-
-        try {
-            // Soft-delete: mark for deletion, push to cloud, then hard-delete
-            entryDao.updateSyncStatus(entryId, SyncStatus.PENDING_DELETE)
-            CoroutineScope(Dispatchers.IO).launch {
-                try { syncService.pushEntryDeletion(entryId) } catch (_: Exception) { }
-            }
-        } catch (_: SQLiteException) {
-            // FTS delete trigger fails (encoding/tokenization mismatch) — drop it and retry
-            entryDao.rawExec(SimpleSQLiteQuery("DROP TRIGGER IF EXISTS entries_ad"))
-            entryDao.deleteById(entryId)
-            // Rebuild FTS to clean up stale entries
-            try {
-                entryDao.rawExec(SimpleSQLiteQuery("INSERT INTO entries_fts(entries_fts) VALUES('rebuild')"))
-            } catch (_: Exception) { }
-        }
+        // Use soft delete instead of permanent delete
+        softDelete(entryId)
     }
 
     override suspend fun deleteAll() =
@@ -130,6 +114,68 @@ class EntryRepositoryImpl @Inject constructor(
 
     override fun getEntriesWithImages(): Flow<List<EntryEntity>> =
         entryDao.getEntriesWithImages()
+
+    // Phase 1: Soft delete & bookmarks
+
+    override suspend fun softDelete(entryId: String) {
+        entryDao.softDelete(entryId)
+        CoroutineScope(Dispatchers.IO).launch {
+            try { syncService.pushEntry(entryDao.getByIdSync(entryId) ?: return@launch) } catch (_: Exception) { }
+        }
+    }
+
+    override suspend fun restore(entryId: String) {
+        entryDao.restore(entryId)
+        CoroutineScope(Dispatchers.IO).launch {
+            try { syncService.pushEntry(entryDao.getByIdSync(entryId) ?: return@launch) } catch (_: Exception) { }
+        }
+    }
+
+    override suspend fun permanentDelete(entryId: String) {
+        try { imageStorageManager.deleteAllImages(entryId) } catch (_: Exception) { }
+        try {
+            entryDao.updateSyncStatus(entryId, SyncStatus.PENDING_DELETE)
+            CoroutineScope(Dispatchers.IO).launch {
+                try { syncService.pushEntryDeletion(entryId) } catch (_: Exception) { }
+            }
+        } catch (_: SQLiteException) {
+            entryDao.rawExec(SimpleSQLiteQuery("DROP TRIGGER IF EXISTS entries_ad"))
+            entryDao.deleteById(entryId)
+            try {
+                entryDao.rawExec(SimpleSQLiteQuery("INSERT INTO entries_fts(entries_fts) VALUES('rebuild')"))
+            } catch (_: Exception) { }
+        }
+    }
+
+    override suspend fun purgeExpired() {
+        val cutoff = System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000 // 30 days ago
+        val expired = entryDao.getRecentlyDeletedSync(0) // get all deleted
+            .filter { it.deletedAt != null && it.deletedAt < cutoff }
+        for (entry in expired) {
+            try { imageStorageManager.deleteAllImages(entry.id) } catch (_: Exception) { }
+        }
+        entryDao.purgeExpired(cutoff)
+    }
+
+    override fun getRecentlyDeleted(): Flow<List<EntryEntity>> {
+        val cutoff = System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000
+        return entryDao.getRecentlyDeleted(cutoff)
+    }
+
+    override suspend fun toggleBookmark(entryId: String, bookmarked: Boolean) {
+        entryDao.updateBookmark(entryId, bookmarked)
+    }
+
+    override fun getBookmarked(): Flow<List<EntryEntity>> =
+        entryDao.getBookmarked()
+
+    override suspend fun updateEntryDate(entryId: String, entryDate: Long?) {
+        entryDao.updateEntryDate(entryId, entryDate)
+    }
+
+    // Phase 6: Location entries
+    override fun getEntriesWithLocation(): Flow<List<EntryEntity>> =
+        entryDao.getEntriesWithLocation()
 
     private fun todayRange(): Pair<Long, Long> {
         val zone = ZoneId.systemDefault()

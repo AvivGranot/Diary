@@ -407,27 +407,24 @@ fun WriteScreen(
                     Spacer(modifier = Modifier.height(6.dp))
                 }
 
-                // Apple Journal-style recommendations — show ABOVE editor for new entries
-                val isNewEmptyEntry = state.title.isBlank() && state.content.isBlank() && state.isNewEntry
-                if (isNewEmptyEntry) {
-                    RecommendationsPanel(
-                        state = recommendationsState,
-                        colorKey = state.colorKey,
-                        onNearbyPlaceTapped = { viewModel.onNearbyPlaceTapped(it) },
-                        onPhotoTapped = { viewModel.addImage(it.uri) },
-                        onLocationTapped = { viewModel.onLocationSuggestionTapped(it) },
-                        onRecentEntryTapped = { entryId -> onNavigateToEntry?.invoke(entryId) },
-                        onRequestPhotoPermission = {
-                            val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                Manifest.permission.READ_MEDIA_IMAGES
-                            } else {
-                                Manifest.permission.READ_EXTERNAL_STORAGE
-                            }
-                            photoPermissionLauncher.launch(permission)
+                // Apple Journal-style recommendations — always visible above editor
+                RecommendationsPanel(
+                    state = recommendationsState,
+                    colorKey = state.colorKey,
+                    onNearbyPlaceTapped = { viewModel.onNearbyPlaceTapped(it) },
+                    onPhotoTapped = { viewModel.addImage(it.uri) },
+                    onLocationTapped = { viewModel.onLocationSuggestionTapped(it) },
+                    onRecentEntryTapped = { entryId -> onNavigateToEntry?.invoke(entryId) },
+                    onRequestPhotoPermission = {
+                        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            Manifest.permission.READ_MEDIA_IMAGES
+                        } else {
+                            Manifest.permission.READ_EXTERNAL_STORAGE
                         }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
+                        photoPermissionLauncher.launch(permission)
+                    }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
 
                 // Title field — always visible, clean placeholder
                 BasicTextField(
@@ -592,25 +589,8 @@ fun WriteScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // Recommendations at bottom — only when entry has content (panel shown above for empty entries)
-                if (!isNewEmptyEntry) {
-                    RecommendationsPanel(
-                        state = recommendationsState,
-                        colorKey = state.colorKey,
-                        onNearbyPlaceTapped = { viewModel.onNearbyPlaceTapped(it) },
-                        onPhotoTapped = { viewModel.addImage(it.uri) },
-                        onLocationTapped = { viewModel.onLocationSuggestionTapped(it) },
-                        onRecentEntryTapped = { entryId -> onNavigateToEntry?.invoke(entryId) },
-                        onRequestPhotoPermission = {
-                            val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                Manifest.permission.READ_MEDIA_IMAGES
-                            } else {
-                                Manifest.permission.READ_EXTERNAL_STORAGE
-                            }
-                            photoPermissionLauncher.launch(permission)
-                        }
-                    )
-                }
+                // Extra bottom spacing for scrollable content
+                Spacer(modifier = Modifier.height(24.dp))
             }
 
             // Bottom toolbar — always visible, with clearance for persistent bottom nav

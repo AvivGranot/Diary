@@ -42,20 +42,9 @@ sealed class Routes(val route: String) {
     object QuickAuth : Routes("quick_auth")
     object Welcome : Routes("welcome")
     object ProfilePicture : Routes("profile_picture")
-    object WriteFirstNote : Routes("write_first_note?next={next}&channel={channel}&contactName={contactName}&contactPhone={contactPhone}&contactEmail={contactEmail}") {
-        fun create(
-            next: String = "quotes_preview",
-            channel: String = "contacts",
-            contactName: String? = null,
-            contactPhone: String? = null,
-            contactEmail: String? = null
-        ): String {
-            var route = "write_first_note?next=$next&channel=$channel"
-            if (contactName != null) route += "&contactName=${android.net.Uri.encode(contactName)}"
-            if (contactPhone != null) route += "&contactPhone=${android.net.Uri.encode(contactPhone)}"
-            if (contactEmail != null) route += "&contactEmail=${android.net.Uri.encode(contactEmail)}"
-            return route
-        }
+    object WriteFirstNote : Routes("write_first_note?next={next}") {
+        fun create(next: String = "quotes_preview"): String =
+            "write_first_note?next=$next"
     }
     object QuotesPreview : Routes("quotes_preview")
 

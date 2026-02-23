@@ -272,8 +272,8 @@ fun MainScreen(
             entryCount = subscriptionState.entryCount,
             totalWords = subscriptionState.totalWords,
             isFirstPaywallView = isFirstPaywallView,
-            monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$5/month",
-            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$40/year",
+            monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$2/month",
+            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$15/year",
             onSelectPlan = { sku ->
                 billingViewModel.markPaywallViewed()
                 activity?.let { billingViewModel.launchPurchase(it, sku) }

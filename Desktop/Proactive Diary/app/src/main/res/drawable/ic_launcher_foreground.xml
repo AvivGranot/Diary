@@ -10,13 +10,6 @@
         android:fillColor="#3B82F6"
         android:pathData="M42,70 L46,66 L62,42 C63.5,39.8 63,37 61,35.5 C59,34 56.2,34.5 54,36.7 L38,56 L34,60 Z" />
 
-    <!-- Nib split line — dark groove down the center -->
-    <path
-        android:fillColor="#00000000"
-        android:pathData="M39.5,58.5 L54.5,38.5"
-        android:strokeColor="#172554"
-        android:strokeWidth="0.8" />
-
     <!-- Pen tip — darker blue -->
     <path
         android:fillColor="#1D4ED8"

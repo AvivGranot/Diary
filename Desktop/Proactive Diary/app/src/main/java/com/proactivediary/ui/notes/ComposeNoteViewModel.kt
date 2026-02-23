@@ -107,6 +107,24 @@ class ComposeNoteViewModel @Inject constructor(
         }
     }
 
+    /** Run client-side moderation and return true if content passes. */
+    fun moderateContent(): Boolean {
+        val current = _state.value
+        if (current.content.isBlank()) return false
+        val modResult = contentModerator.check(current.content)
+        if (!modResult.isAllowed) {
+            _state.value = current.copy(moderationError = modResult.reason)
+            return false
+        }
+        _state.value = current.copy(moderationError = null)
+        return true
+    }
+
+    /** Mark note as sent via an external channel (WhatsApp, Instagram, etc.) */
+    fun markSentViaChannel() {
+        _state.value = _state.value.copy(isSent = true)
+    }
+
     fun clearError() {
         _state.value = _state.value.copy(error = null, moderationError = null)
     }

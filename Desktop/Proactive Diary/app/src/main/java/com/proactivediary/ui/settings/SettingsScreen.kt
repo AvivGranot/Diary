@@ -371,8 +371,8 @@ fun SettingsScreen(
             onDismiss = { showPaywall = false },
             entryCount = subState.entryCount,
             totalWords = subState.totalWords,
-            monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$5/month",
-            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$40/year",
+            monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$2/month",
+            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$15/year",
             onSelectPlan = { sku ->
                 activity?.let { billingViewModel.launchPurchase(it, sku) }
                 showPaywall = false

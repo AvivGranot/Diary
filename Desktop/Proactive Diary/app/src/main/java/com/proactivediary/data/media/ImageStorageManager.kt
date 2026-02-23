@@ -122,6 +122,9 @@ class ImageStorageManager @Inject constructor(
         entryDir(entryId).deleteRecursively()
     }
 
+    /** Returns the directory for an entry's images (used by DrawingViewModel). */
+    fun getEntryImagesDir(entryId: String): File = entryDir(entryId)
+
     private fun scaleBitmap(bitmap: Bitmap, maxDim: Int): Bitmap {
         val width = bitmap.width
         val height = bitmap.height

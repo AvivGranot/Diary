@@ -32,7 +32,7 @@ class NavViewModel @Inject constructor(
                 val currentColor = preferenceDao.get("diary_color")?.value
                 val currentTexture = preferenceDao.get("diary_texture")?.value
                 if (currentColor == "dark") {
-                    preferenceDao.insert(PreferenceEntity("diary_color", "sky"))
+                    preferenceDao.insert(PreferenceEntity("diary_color", "paper"))
                 }
                 if (currentTexture == "dark") {
                     preferenceDao.insert(PreferenceEntity("diary_texture", "paper"))
@@ -40,12 +40,21 @@ class NavViewModel @Inject constructor(
                 preferenceDao.insert(PreferenceEntity("canvas_migrated_v31", "true"))
             }
 
+            // One-time migration: sky → paper white default (v3.2)
+            if (preferenceDao.get("canvas_migrated_v32") == null) {
+                val currentColor = preferenceDao.get("diary_color")?.value
+                if (currentColor == "sky") {
+                    preferenceDao.insert(PreferenceEntity("diary_color", "paper"))
+                }
+                preferenceDao.insert(PreferenceEntity("canvas_migrated_v32", "true"))
+            }
+
             val typewriterCompleted = preferenceDao.get("first_launch_completed")?.value == "true"
 
             // Set beautiful defaults for first-time users so Write tab looks great immediately
             if (!typewriterCompleted) {
                 val defaults = listOf(
-                    "diary_color" to "sky",
+                    "diary_color" to "paper",
                     "diary_form" to "focused",
                     "diary_texture" to "paper",
                     "diary_canvas" to "lined",

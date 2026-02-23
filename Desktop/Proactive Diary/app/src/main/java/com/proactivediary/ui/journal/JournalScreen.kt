@@ -66,6 +66,8 @@ fun JournalScreen(
     onEntryClick: (String) -> Unit = {},
     onNavigateToWrite: (() -> Unit)? = null,
     onNavigateToOnThisDay: (() -> Unit)? = null,
+    onNavigateToRecentlyDeleted: (() -> Unit)? = null,
+    onNavigateToMap: (() -> Unit)? = null,
     onBack: (() -> Unit)? = null,
     viewModel: JournalViewModel = hiltViewModel()
 ) {
@@ -186,6 +188,12 @@ fun JournalScreen(
 
             else -> {
                 when (viewMode) {
+                    "map" -> {
+                        // Navigate to places map screen
+                        LaunchedEffect(Unit) {
+                            onNavigateToMap?.invoke()
+                        }
+                    }
                     "gallery" -> {
                         GalleryView(
                             onImageClick = { entryId -> onEntryClick(entryId) }
@@ -404,7 +412,7 @@ fun JournalScreen(
             },
             text = {
                 Text(
-                    text = "This entry will be permanently deleted.",
+                    text = "This entry will be moved to Recently Deleted and permanently removed after 30 days.",
                     style = TextStyle(
                         fontFamily = FontFamily.Default,
                         fontSize = 14.sp,
@@ -568,6 +576,11 @@ private fun ViewModeSwitcher(
             label = "Gallery",
             isSelected = selectedMode == "gallery",
             onClick = { onModeSelected("gallery") }
+        )
+        ViewModeButton(
+            label = "Map",
+            isSelected = selectedMode == "map",
+            onClick = { onModeSelected("map") }
         )
     }
 }

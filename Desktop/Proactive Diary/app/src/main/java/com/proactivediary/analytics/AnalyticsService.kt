@@ -286,6 +286,10 @@ class AnalyticsService @Inject constructor() {
 
     fun logNoteInviteSent() = log("note_invite_sent")
 
+    fun logShareViaChannel(channel: String, wordCount: Int) {
+        log("share_via_channel", bundleOf("channel" to channel, "word_count" to wordCount))
+    }
+
     // ─── K-Factor / Viral Loop Tracking ───
     fun logNoteViralSend(recipientOnApp: Boolean) {
         log("note_viral_send", bundleOf("recipient_on_app" to recipientOnApp))

@@ -29,6 +29,7 @@ class SpeechToTextService @Inject constructor(
 ) {
     private var speechRecognizer: SpeechRecognizer? = null
     private var isActive = false
+    private var consecutiveErrors = 0
     private val mainHandler = Handler(Looper.getMainLooper())
 
     private val _partialText = MutableStateFlow("")
@@ -56,6 +57,7 @@ class SpeechToTextService @Inject constructor(
             return
         }
         isActive = true
+        consecutiveErrors = 0
         _isListening.value = true
         _partialText.value = ""
         mainHandler.post { createAndStart() }
@@ -91,14 +93,19 @@ class SpeechToTextService @Inject constructor(
         putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
         putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
         putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-        putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 10000L)
+        putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 1000L)
         putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1500L)
-        putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 3000L)
+        putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1500L)
     }
 
     private fun restartIfActive() {
-        if (isActive) {
-            mainHandler.postDelayed({ createAndStart() }, 50)
+        if (isActive && consecutiveErrors < 5) {
+            val delay = if (consecutiveErrors > 0) 200L * consecutiveErrors else 50L
+            mainHandler.postDelayed({ createAndStart() }, delay)
+        } else if (consecutiveErrors >= 5) {
+            isActive = false
+            _isListening.value = false
+            _error.tryEmit("Dictation stopped — too many errors. Tap to retry.")
         }
     }
 
@@ -118,6 +125,7 @@ class SpeechToTextService @Inject constructor(
                 SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> {
                     // Normal: silence timeout, restart for continuous listening
                     _partialText.value = ""
+                    consecutiveErrors = 0 // not a real error
                     restartIfActive()
                 }
                 SpeechRecognizer.ERROR_AUDIO -> {
@@ -128,11 +136,11 @@ class SpeechToTextService @Inject constructor(
                     _error.tryEmit("Microphone error. Please try again.")
                 }
                 SpeechRecognizer.ERROR_CLIENT -> {
-                    // Client-side error, try to restart
+                    consecutiveErrors++
                     restartIfActive()
                 }
                 else -> {
-                    // Other errors — stop
+                    consecutiveErrors++
                     _partialText.value = ""
                     restartIfActive()
                 }
@@ -146,6 +154,7 @@ class SpeechToTextService @Inject constructor(
                 _finalText.tryEmit(text)
             }
             _partialText.value = ""
+            consecutiveErrors = 0
             restartIfActive()
         }
 

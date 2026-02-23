@@ -8,8 +8,8 @@ import androidx.compose.ui.graphics.Color
  * NOT the app-wide theme. App theme uses MaterialTheme.colorScheme.
  */
 data class DiaryThemeConfig(
-    val colorScheme: String = "sky",
-    val primaryColor: Color = Color(0xFFDDE4EC),
+    val colorScheme: String = "paper",
+    val primaryColor: Color = Color(0xFFFFFFFF),
     val colorMode: String = "adaptive",
     val form: String = "focused",
     val texture: String = "paper",
@@ -24,6 +24,8 @@ data class DiaryThemeConfig(
 
         // Canvas background colors (for Write screen paper only)
         private val canvasColors = mapOf(
+            // Default white paper
+            "paper" to Color(0xFFFFFFFF),
             // Dark variants
             "dark" to Color(0xFF111111),
             "midnight" to Color(0xFF2C2C34),
@@ -31,7 +33,7 @@ data class DiaryThemeConfig(
             "wine_red" to Color(0xFF8B3A3A),
             "forest" to Color(0xFF3A5A40),
             "ocean" to Color(0xFF2C5F7C),
-            // Light variants (default for new users)
+            // Light variants
             "cream" to Color(0xFFF3EEE7),
             "blush" to Color(0xFFF0E0D6),
             "sage" to Color(0xFFE4E8DF),
@@ -47,7 +49,7 @@ data class DiaryThemeConfig(
 
         // Light canvas keys — these need dark text
         private val lightCanvasKeys = setOf(
-            "cream", "blush", "sage", "sky", "lavender"
+            "paper", "cream", "blush", "sage", "sky", "lavender"
         )
 
         private val accentColors = mapOf(
@@ -61,14 +63,14 @@ data class DiaryThemeConfig(
         )
 
         fun colorForKey(key: String): Color {
-            return canvasColors[key] ?: Color(0xFFDDE4EC) // sky default
+            return canvasColors[key] ?: Color(0xFFFFFFFF) // paper white default
         }
 
         fun accentForKey(key: String): Color {
             return accentColors[key] ?: Color(0xFF3B82F6) // blue default
         }
 
-        fun textureColorForKey(textureKey: String, canvasKey: String = "sky"): Color {
+        fun textureColorForKey(textureKey: String, canvasKey: String = "paper"): Color {
             // Light canvas → subtle light texture lines
             if (canvasKey in lightCanvasKeys) {
                 return when (textureKey) {
@@ -95,7 +97,7 @@ data class DiaryThemeConfig(
             return true // texture lines themselves are always subtle
         }
 
-        fun textureTextColor(textureKey: String, canvasKey: String = "sky"): Color {
+        fun textureTextColor(textureKey: String, canvasKey: String = "paper"): Color {
             return if (canvasKey in lightCanvasKeys) {
                 Color(0xFF2A2A2A) // dark text on light canvas
             } else {
@@ -103,7 +105,7 @@ data class DiaryThemeConfig(
             }
         }
 
-        fun textureSecondaryTextColor(textureKey: String, canvasKey: String = "sky"): Color {
+        fun textureSecondaryTextColor(textureKey: String, canvasKey: String = "paper"): Color {
             return if (canvasKey in lightCanvasKeys) {
                 Color(0xFF6B7280) // muted dark text on light canvas
             } else {

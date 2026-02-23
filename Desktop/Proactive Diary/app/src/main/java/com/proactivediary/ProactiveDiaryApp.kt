@@ -55,6 +55,8 @@ class ProactiveDiaryApp : Application(), Configuration.Provider {
             scheduleAIInsightGeneration()
             scheduleWeeklyDigest()
             scheduleCloudSync()
+            schedulePurgeDeleted()
+            scheduleSignalCollection()
         } catch (e: Exception) {
             Log.e("ProactiveDiaryApp", "Failed to schedule workers", e)
         }
@@ -130,6 +132,30 @@ class ProactiveDiaryApp : Application(), Configuration.Provider {
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             SyncWorker.WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
+    }
+
+    private fun schedulePurgeDeleted() {
+        val request = PeriodicWorkRequestBuilder<com.proactivediary.workers.PurgeDeletedWorker>(
+            1, TimeUnit.DAYS
+        ).build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "purge_deleted_entries",
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
+    }
+
+    private fun scheduleSignalCollection() {
+        val request = PeriodicWorkRequestBuilder<com.proactivediary.workers.SignalCollectionWorker>(
+            4, TimeUnit.HOURS
+        ).build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "signal_collection",
             ExistingPeriodicWorkPolicy.KEEP,
             request
         )

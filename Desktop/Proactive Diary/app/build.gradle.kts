@@ -50,6 +50,9 @@ android {
             "PLACES_API_KEY",
             "\"${project.findProperty("PLACES_API_KEY") ?: ""}\""
         )
+
+        // Google Maps API key injected as manifest placeholder
+        manifestPlaceholders["MAPS_API_KEY"] = project.findProperty("MAPS_API_KEY") ?: ""
     }
 
     signingConfigs {
@@ -185,6 +188,21 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.1")
     implementation("androidx.hilt:hilt-work:1.2.0")
     ksp("androidx.hilt:hilt-compiler:1.2.0")
+
+    // Phase 4: Drag-to-reorder journals
+    implementation("org.burnoutcrew.composereorderable:reorderable:0.9.6")
+
+    // Phase 5: Biometric lock
+    implementation("androidx.biometric:biometric:1.2.0-alpha05")
+
+    // Phase 6: Google Maps
+    implementation("com.google.maps.android:maps-compose:4.3.3")
+    implementation("com.google.maps.android:maps-compose-utils:4.3.3")
+    implementation("com.google.android.gms:play-services-maps:19.0.0")
+
+    // Phase 9: Video playback
+    implementation("androidx.media3:media3-exoplayer:1.2.1")
+    implementation("androidx.media3:media3-ui:1.2.1")
 
     // Screenshot Testing
     screenshotTestImplementation("androidx.compose.ui:ui-tooling")

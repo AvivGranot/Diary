@@ -2,12 +2,9 @@ package com.proactivediary.ui.notes
 
 import android.content.Intent
 import android.net.Uri
-import android.provider.ContactsContract
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,7 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -41,6 +38,9 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -61,7 +61,11 @@ fun ComposeNoteScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
+    var showChannelPicker by remember { mutableStateOf(false) }
+    // True once user picks Browse Contacts and selects a contact
+    var browseContactsMode by remember { mutableStateOf(false) }
 
+    // Contact picker for Browse Contacts path only
     val contactPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickContact()
     ) { uri: Uri? ->
@@ -72,6 +76,7 @@ fun ComposeNoteScreen(
                 phone = contact?.phone,
                 email = contact?.email
             )
+            browseContactsMode = true
         }
     }
 
@@ -115,7 +120,7 @@ fun ComposeNoteScreen(
         return
     }
 
-    // Scrollable single-page layout — no Scaffold, uses full height with nav clearance
+    // Scrollable single-page layout
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -143,7 +148,7 @@ fun ComposeNoteScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Envelope body — fixed height to keep everything visible
+        // Envelope body
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -212,17 +217,8 @@ fun ComposeNoteScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Recipient selection
-        if (state.recipientName == null) {
-            OutlinedButton(
-                onClick = { contactPicker.launch(null) },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Default.Person, "Pick contact", modifier = Modifier.size(20.dp))
-                Text("  Choose Recipient", color = MaterialTheme.colorScheme.onBackground)
-            }
-        } else {
-            // Recipient selected
+        // Browse Contacts path: show recipient + send/invite buttons
+        if (browseContactsMode && state.recipientName != null) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -260,7 +256,9 @@ fun ComposeNoteScreen(
 
                     if (state.isResolving) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(16.dp).padding(top = 4.dp),
+                            modifier = Modifier
+                                .size(16.dp)
+                                .padding(top = 4.dp),
                             strokeWidth = 2.dp,
                             color = MaterialTheme.colorScheme.primary
                         )
@@ -278,51 +276,77 @@ fun ComposeNoteScreen(
                     .align(Alignment.CenterHorizontally)
                     .clickable { contactPicker.launch(null) }
             )
-        }
 
-        Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
-        // Send / Invite button
-        if (state.isRecipientOnApp == true) {
+            // In-app send
+            if (state.isRecipientOnApp == true) {
+                Button(
+                    onClick = { viewModel.sendNote() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    enabled = state.content.isNotBlank() && !state.isSending,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    if (state.isSending) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Icon(Icons.AutoMirrored.Filled.Send, "Send", modifier = Modifier.size(18.dp))
+                        Text("  Seal & Send", fontSize = 15.sp)
+                    }
+                }
+            } else if (state.isRecipientOnApp == false) {
+                // Recipient not on app — invite
+                Button(
+                    onClick = {
+                        val shareText = ShareIntentLauncher.buildShareText(state.content)
+                        val sendIntent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, shareText)
+                            type = "text/plain"
+                        }
+                        context.startActivity(Intent.createChooser(sendIntent, "Invite via"))
+                        viewModel.markSentViaChannel()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.onBackground
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(Icons.Default.Share, "Invite", modifier = Modifier.size(18.dp))
+                    Text("  Share Note", fontSize = 15.sp)
+                }
+            }
+        } else {
+            // Default: single Send button that opens channel picker
             Button(
-                onClick = { viewModel.sendNote() },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
-                enabled = state.content.isNotBlank() && !state.isSending,
+                onClick = {
+                    if (viewModel.moderateContent()) {
+                        showChannelPicker = true
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                enabled = state.content.isNotBlank(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 ),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                if (state.isSending) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(20.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Icon(Icons.Default.Send, "Send", modifier = Modifier.size(18.dp))
-                    Text("  Seal & Send", fontSize = 15.sp)
-                }
-            }
-        } else if (state.isRecipientOnApp == false) {
-            Button(
-                onClick = {
-                    val shareText = "Someone wants to send you a kind note on Proactive Diary! Download it to read: https://play.google.com/store/apps/details?id=com.proactivediary"
-                    val sendIntent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_TEXT, shareText)
-                        type = "text/plain"
-                    }
-                    context.startActivity(Intent.createChooser(sendIntent, "Invite via"))
-                },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.onBackground
-                ),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Icon(Icons.Default.Share, "Invite", modifier = Modifier.size(18.dp))
-                Text("  Share Note", fontSize = 15.sp)
+                Icon(Icons.AutoMirrored.Filled.Send, "Send", modifier = Modifier.size(18.dp))
+                Text("  Send", fontSize = 15.sp)
             }
         }
 
@@ -337,7 +361,23 @@ fun ComposeNoteScreen(
             )
         }
 
-        // Clearance for persistent bottom nav (64dp nav + system nav bar)
+        // Clearance for persistent bottom nav
         Spacer(modifier = Modifier.height(80.dp))
+    }
+
+    // Channel picker bottom sheet
+    if (showChannelPicker) {
+        ChannelPickerSheet(
+            onChannelSelected = { channel ->
+                showChannelPicker = false
+                ShareIntentLauncher.launch(context, channel, state.content)
+                viewModel.markSentViaChannel()
+            },
+            onBrowseContacts = {
+                showChannelPicker = false
+                contactPicker.launch(null)
+            },
+            onDismiss = { showChannelPicker = false }
+        )
     }
 }
