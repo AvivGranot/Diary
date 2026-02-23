@@ -38,6 +38,11 @@ sealed class Routes(val route: String) {
         fun createRoute(quoteId: String) = "quote/$quoteId"
     }
 
+    // Phone auth onboarding
+    object PhoneAuth : Routes("phone_auth")
+    object OtpVerification : Routes("otp_verification")
+    object NotificationFallback : Routes("notification_fallback")
+
     // Social onboarding (DesignStudio removed from flow)
     object QuickAuth : Routes("quick_auth")
     object Welcome : Routes("welcome")

@@ -36,8 +36,11 @@ import com.proactivediary.ui.notes.NoteInboxViewModel
 import com.proactivediary.ui.notes.ComposeNoteScreen
 import com.proactivediary.ui.notes.EnvelopeRevealScreen
 import com.proactivediary.ui.notes.NoteInboxScreen
+import com.proactivediary.ui.onboarding.NotificationFallbackScreen
 import com.proactivediary.ui.onboarding.NotificationPermissionScreen
 import com.proactivediary.ui.onboarding.OnboardingGoalsScreen
+import com.proactivediary.ui.onboarding.OtpVerificationScreen
+import com.proactivediary.ui.onboarding.PhoneAuthScreen
 import com.proactivediary.ui.onboarding.QuickAuthScreen
 import com.proactivediary.ui.onboarding.QuotesPreviewScreen
 import com.proactivediary.ui.onboarding.QuotesPreviewViewModel
@@ -59,11 +62,14 @@ import androidx.compose.runtime.LaunchedEffect
 // Onboarding routes where the bottom nav should be hidden
 private val onboardingRoutes = setOf(
     Routes.Typewriter.route,
+    Routes.PhoneAuth.route,
+    Routes.OtpVerification.route,
     Routes.QuickAuth.route,
     Routes.WriteFirstNote.route,
     Routes.QuotesPreview.route,
     Routes.OnboardingGoals.route,
-    Routes.NotificationPermission.route
+    Routes.NotificationPermission.route,
+    Routes.NotificationFallback.route
 )
 
 @Composable
@@ -164,6 +170,7 @@ fun ProactiveDiaryNavHost(
             composable(Routes.NotificationPermission.route) {
                 NotificationPermissionScreen(
                     onContinue = {
+                        // "Allow" tapped and permission granted
                         analyticsService.logOnboardingCompleted(designCustomized = false, goalsSet = 0)
                         viewModel.markOnboardingComplete()
                         navController.navigate(Routes.Main.route) {
@@ -171,10 +178,34 @@ fun ProactiveDiaryNavHost(
                         }
                     },
                     onSkip = {
+                        // "Don't Allow" tapped → show fallback screen
+                        navController.navigate(Routes.NotificationFallback.route) {
+                            popUpTo(Routes.NotificationPermission.route) { inclusive = true }
+                        }
+                    },
+                    analyticsService = analyticsService
+                )
+            }
+
+            composable(Routes.NotificationFallback.route) {
+                NotificationFallbackScreen(
+                    onTurnOn = {
+                        // Permission granted from fallback or pre-API 33
                         analyticsService.logOnboardingCompleted(designCustomized = false, goalsSet = 0)
                         viewModel.markOnboardingComplete()
                         navController.navigate(Routes.Main.route) {
-                            popUpTo(Routes.NotificationPermission.route) { inclusive = true }
+                            popUpTo(Routes.NotificationFallback.route) { inclusive = true }
+                        }
+                    },
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                    onNotNow = {
+                        // Skip notifications entirely
+                        analyticsService.logOnboardingCompleted(designCustomized = false, goalsSet = 0)
+                        viewModel.markOnboardingComplete()
+                        navController.navigate(Routes.Main.route) {
+                            popUpTo(Routes.NotificationFallback.route) { inclusive = true }
                         }
                     },
                     analyticsService = analyticsService
@@ -356,7 +387,47 @@ fun ProactiveDiaryNavHost(
                 ContactSupportScreen(onBack = { navController.popBackStack() })
             }
 
-            // ── Social Onboarding ──
+            // ── Phone Auth Onboarding ──
+
+            composable(Routes.PhoneAuth.route) {
+                PhoneAuthScreen(
+                    onOtpSent = {
+                        navController.navigate(Routes.OtpVerification.route)
+                    },
+                    onSignedIn = {
+                        // Auto-verified or Google sign-in — go to notifications
+                        navController.navigate(Routes.NotificationPermission.route) {
+                            popUpTo(Routes.PhoneAuth.route) { inclusive = true }
+                        }
+                    },
+                    onGoogleSignIn = {
+                        // Google sign-in completed
+                        navController.navigate(Routes.NotificationPermission.route) {
+                            popUpTo(Routes.PhoneAuth.route) { inclusive = true }
+                        }
+                    },
+                    analyticsService = analyticsService
+                )
+            }
+
+            composable(Routes.OtpVerification.route) {
+                // Share PhoneAuthViewModel with PhoneAuth screen
+                val phoneAuthEntry = remember { navController.getBackStackEntry(Routes.PhoneAuth.route) }
+                OtpVerificationScreen(
+                    onVerified = {
+                        navController.navigate(Routes.NotificationPermission.route) {
+                            popUpTo(Routes.PhoneAuth.route) { inclusive = true }
+                        }
+                    },
+                    onBack = {
+                        navController.popBackStack()
+                    },
+                    analyticsService = analyticsService,
+                    viewModel = hiltViewModel(phoneAuthEntry)
+                )
+            }
+
+            // ── Social Onboarding (legacy) ──
 
             composable(Routes.QuickAuth.route) {
                 QuickAuthScreen(

@@ -67,12 +67,12 @@ class NavViewModel @Inject constructor(
                 }
             }
 
-            // First launch: show the new social onboarding (Nikita Bier style)
+            // First launch: phone auth onboarding
             // Returning users: go straight to Main (Quotes tab)
             _startDestination.value = if (typewriterCompleted) {
                 Routes.Main.route
             } else {
-                Routes.QuickAuth.route
+                Routes.PhoneAuth.route
             }
         }
     }

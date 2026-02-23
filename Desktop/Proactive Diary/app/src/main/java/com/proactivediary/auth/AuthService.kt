@@ -1,5 +1,6 @@
 package com.proactivediary.auth
 
+import android.app.Activity
 import android.content.Context
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
@@ -7,9 +8,13 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.PhoneAuthCredential
+import com.google.firebase.auth.PhoneAuthOptions
+import com.google.firebase.auth.PhoneAuthProvider
 import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.social.UserProfileRepository
 import com.proactivediary.data.sync.RestoreService
@@ -27,8 +32,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 @Singleton
 class AuthService @Inject constructor(
@@ -200,6 +208,100 @@ class AuthService @Inject constructor(
                     .build()
             )
         } catch (_: Exception) { }
+    }
+
+    /**
+     * Phone auth result holding verificationId and resend token.
+     */
+    data class PhoneAuthResult(
+        val verificationId: String,
+        val resendToken: PhoneAuthProvider.ForceResendingToken?
+    )
+
+    /**
+     * Sends OTP to the given phone number via Firebase Phone Auth.
+     */
+    suspend fun sendOtp(
+        phoneNumber: String,
+        activity: Activity,
+        resendToken: PhoneAuthProvider.ForceResendingToken? = null
+    ): Result<PhoneAuthResult> = suspendCoroutine { continuation ->
+        val callbacks = object : PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+            override fun onVerificationCompleted(credential: PhoneAuthCredential) {
+                // Auto-verification (e.g. Google Play Services auto-read SMS)
+                // We still return the credential via sign-in path
+                CoroutineScope(Dispatchers.Main).launch {
+                    try {
+                        val authResult = auth.signInWithCredential(credential).await()
+                        val user = authResult.user
+                        if (user != null) {
+                            _currentUser.value = user
+                            syncUserProfile(user)
+                            triggerCloudSync()
+                        }
+                    } catch (_: Exception) { }
+                }
+                // Return a dummy result — the VM will detect isSignedIn via auth state
+                continuation.resume(Result.success(PhoneAuthResult("auto_verified", null)))
+            }
+
+            override fun onVerificationFailed(e: FirebaseException) {
+                val message = when {
+                    e.message?.contains("invalid", ignoreCase = true) == true ->
+                        "Invalid phone number. Please check and try again."
+                    e.message?.contains("quota", ignoreCase = true) == true ->
+                        "Too many attempts. Please try again later."
+                    e.message?.contains("blocked", ignoreCase = true) == true ->
+                        "This phone number has been blocked. Contact support."
+                    else -> "Could not send verification code. Please try again."
+                }
+                continuation.resume(Result.failure(Exception(message)))
+            }
+
+            override fun onCodeSent(
+                verificationId: String,
+                token: PhoneAuthProvider.ForceResendingToken
+            ) {
+                continuation.resume(Result.success(PhoneAuthResult(verificationId, token)))
+            }
+        }
+
+        val optionsBuilder = PhoneAuthOptions.newBuilder(auth)
+            .setPhoneNumber(phoneNumber)
+            .setTimeout(60L, TimeUnit.SECONDS)
+            .setActivity(activity)
+            .setCallbacks(callbacks)
+
+        if (resendToken != null) {
+            optionsBuilder.setForceResendingToken(resendToken)
+        }
+
+        PhoneAuthProvider.verifyPhoneNumber(optionsBuilder.build())
+    }
+
+    /**
+     * Verifies OTP code and signs in the user.
+     */
+    suspend fun verifyOtp(verificationId: String, code: String): Result<FirebaseUser> {
+        return try {
+            val credential = PhoneAuthProvider.getCredential(verificationId, code)
+            val authResult = auth.signInWithCredential(credential).await()
+            val user = authResult.user
+                ?: return Result.failure(Exception("Verification succeeded but user is null"))
+            _currentUser.value = user
+            syncUserProfile(user)
+            triggerCloudSync()
+            Result.success(user)
+        } catch (e: Exception) {
+            val message = when {
+                e.message?.contains("invalid", ignoreCase = true) == true ->
+                    "Invalid code. Please try again."
+                e.message?.contains("expired", ignoreCase = true) == true ->
+                    "Code expired. Please request a new one."
+                else -> "Verification failed. Please try again."
+            }
+            Result.failure(Exception(message))
+        }
     }
 
     fun signOut() {

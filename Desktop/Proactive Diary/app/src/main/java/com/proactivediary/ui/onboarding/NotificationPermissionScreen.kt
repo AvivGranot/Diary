@@ -4,39 +4,38 @@ import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.material3.MaterialTheme
 import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.ui.theme.InstrumentSerif
+
+private val AllowBlue = Color(0xFF3897F0)
 
 @Composable
 fun NotificationPermissionScreen(
@@ -44,7 +43,6 @@ fun NotificationPermissionScreen(
     onSkip: () -> Unit,
     analyticsService: AnalyticsService
 ) {
-    // Track screen shown
     LaunchedEffect(Unit) {
         analyticsService.logOnboardingNotifShown()
     }
@@ -54,182 +52,151 @@ fun NotificationPermissionScreen(
     ) { granted ->
         if (granted) {
             analyticsService.logOnboardingNotifGranted()
+            onContinue()
         } else {
             analyticsService.logOnboardingNotifDenied()
+            onSkip()
         }
-        onContinue()
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Spacer(modifier = Modifier.weight(0.15f))
+        Spacer(modifier = Modifier.weight(0.3f))
 
-        // Illustration: stylized bell with sparkles drawn with Canvas
-        NotificationIllustration(
-            modifier = Modifier.size(160.dp)
-        )
+        // App icon placeholder (simple circle with bell)
+        NotificationIcon(modifier = Modifier.size(80.dp))
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(32.dp))
 
-        // Headline
+        // Title
         Text(
-            text = "Stay Inspired",
+            text = "Allow Proactive Diary to\nsend you notifications?",
             style = TextStyle(
                 fontFamily = InstrumentSerif,
-                fontSize = 28.sp,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Normal,
                 color = MaterialTheme.colorScheme.onBackground,
-                textAlign = TextAlign.Center
-            )
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Body text
-        Text(
-            text = "Get gentle reminders to write, plus personalized suggestions based on your routine and surroundings.",
-            style = TextStyle(
-                fontFamily = FontFamily.Default,
-                fontSize = 15.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
-                lineHeight = 22.sp
+                lineHeight = 28.sp
             )
         )
 
-        Spacer(modifier = Modifier.weight(0.15f))
+        Spacer(modifier = Modifier.height(48.dp))
 
-        // Primary button: "Turn On Notifications"
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.onBackground)
-                .clickable {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    } else {
-                        onContinue()
-                    }
-                },
-            contentAlignment = Alignment.Center
+        // Two tab buttons side by side
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(
-                text = "Turn On Notifications",
-                style = TextStyle(
-                    fontFamily = FontFamily.Default,
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.background
+            // Allow button (blue, highlighted)
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(AllowBlue)
+                    .clickable {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            analyticsService.logOnboardingNotifGranted()
+                            onContinue()
+                        }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Allow",
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White
+                    )
                 )
-            )
-        }
+            }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Secondary: "Not Now"
-        Text(
-            text = "Not Now",
-            style = TextStyle(
-                fontFamily = FontFamily.Default,
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-            ),
-            modifier = Modifier
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = {
+            // Don't Allow button (outlined)
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(52.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .border(
+                        1.dp,
+                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                        RoundedCornerShape(8.dp)
+                    )
+                    .clickable {
                         analyticsService.logOnboardingNotifDenied()
                         onSkip()
-                    }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Don't Allow",
+                    style = TextStyle(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                 )
-                .padding(vertical = 8.dp)
-        )
+            }
+        }
 
-        Spacer(modifier = Modifier.weight(0.1f))
+        Spacer(modifier = Modifier.weight(0.4f))
     }
 }
 
 @Composable
-private fun NotificationIllustration(modifier: Modifier = Modifier) {
+private fun NotificationIcon(modifier: Modifier = Modifier) {
     val inkColor = MaterialTheme.colorScheme.onBackground
-    val pencilColor = MaterialTheme.colorScheme.onSurfaceVariant
 
-    Canvas(modifier = modifier) {
+    androidx.compose.foundation.Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
         val cx = w / 2
         val cy = h / 2
 
-        // Bell body
-        val bellWidth = w * 0.4f
-        val bellHeight = h * 0.35f
-        val bellTop = cy - bellHeight * 0.3f
+        // Simple bell icon
+        val bellWidth = w * 0.45f
+        val bellHeight = h * 0.38f
+        val bellTop = cy - bellHeight * 0.4f
         val bellLeft = cx - bellWidth / 2
 
-        // Bell dome (rounded rect)
+        // Bell dome
         drawRoundRect(
-            color = pencilColor.copy(alpha = 0.15f),
-            topLeft = Offset(bellLeft, bellTop),
-            size = Size(bellWidth, bellHeight),
-            cornerRadius = CornerRadius(bellWidth * 0.3f)
+            color = inkColor.copy(alpha = 0.12f),
+            topLeft = androidx.compose.ui.geometry.Offset(bellLeft, bellTop),
+            size = androidx.compose.ui.geometry.Size(bellWidth, bellHeight),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(bellWidth * 0.3f)
         )
         drawRoundRect(
-            color = inkColor.copy(alpha = 0.6f),
-            topLeft = Offset(bellLeft, bellTop),
-            size = Size(bellWidth, bellHeight),
-            cornerRadius = CornerRadius(bellWidth * 0.3f),
-            style = Stroke(width = 2f)
+            color = inkColor.copy(alpha = 0.5f),
+            topLeft = androidx.compose.ui.geometry.Offset(bellLeft, bellTop),
+            size = androidx.compose.ui.geometry.Size(bellWidth, bellHeight),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(bellWidth * 0.3f),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5f)
         )
 
-        // Bell clapper (small circle at bottom)
+        // Bell clapper
         drawCircle(
-            color = inkColor.copy(alpha = 0.5f),
+            color = inkColor.copy(alpha = 0.4f),
             radius = w * 0.03f,
-            center = Offset(cx, bellTop + bellHeight + w * 0.04f)
+            center = androidx.compose.ui.geometry.Offset(cx, bellTop + bellHeight + w * 0.04f)
         )
 
-        // Bell handle (small arc at top)
+        // Bell handle
         drawCircle(
-            color = inkColor.copy(alpha = 0.5f),
-            radius = w * 0.04f,
-            center = Offset(cx, bellTop - w * 0.02f),
-            style = Stroke(width = 2f)
-        )
-
-        // Sparkle dots around the bell
-        val sparkleColor = inkColor.copy(alpha = 0.3f)
-        val sparkleRadius = w * 0.015f
-
-        // Top right sparkle
-        drawCircle(color = sparkleColor, radius = sparkleRadius, center = Offset(cx + w * 0.25f, cy - h * 0.2f))
-        drawCircle(color = sparkleColor, radius = sparkleRadius * 0.7f, center = Offset(cx + w * 0.3f, cy - h * 0.15f))
-
-        // Top left sparkle
-        drawCircle(color = sparkleColor, radius = sparkleRadius, center = Offset(cx - w * 0.25f, cy - h * 0.18f))
-        drawCircle(color = sparkleColor, radius = sparkleRadius * 0.6f, center = Offset(cx - w * 0.2f, cy - h * 0.25f))
-
-        // Small lines radiating (like notification rays)
-        val rayColor = inkColor.copy(alpha = 0.2f)
-        // Right ray
-        drawLine(
-            color = rayColor,
-            start = Offset(cx + bellWidth / 2 + 8, bellTop + bellHeight * 0.3f),
-            end = Offset(cx + bellWidth / 2 + 20, bellTop + bellHeight * 0.15f),
-            strokeWidth = 1.5f
-        )
-        // Left ray
-        drawLine(
-            color = rayColor,
-            start = Offset(cx - bellWidth / 2 - 8, bellTop + bellHeight * 0.3f),
-            end = Offset(cx - bellWidth / 2 - 20, bellTop + bellHeight * 0.15f),
-            strokeWidth = 1.5f
+            color = inkColor.copy(alpha = 0.4f),
+            radius = w * 0.035f,
+            center = androidx.compose.ui.geometry.Offset(cx, bellTop - w * 0.02f),
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5f)
         )
     }
 }
