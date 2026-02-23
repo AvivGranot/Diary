@@ -172,7 +172,7 @@ fun DiaryHomeScreen(
                         contentPadding = PaddingValues(horizontal = 24.dp, vertical = 10.dp)
                     ) {
                         Text(
-                            text = "Write your first entry",
+                            text = "Write what\u2019s been on your mind",
                             style = TextStyle(
                                 fontFamily = PlusJakartaSans,
                                 fontSize = 14.sp,

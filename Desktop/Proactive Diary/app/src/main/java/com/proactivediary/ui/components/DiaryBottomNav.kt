@@ -140,55 +140,22 @@ fun DiaryBottomNav(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        // Center tab (Diary) gets a special gradient background circle
-                        if (tab.isCenter) {
-                            Box(
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        if (selected) Brush.linearGradient(
-                                            listOf(extendedColors.accent, extendedColors.accentDark)
+                        // Tab icon with optional badge
+                        if (badgeCount > 0) {
+                            BadgedBox(
+                                badge = {
+                                    Badge(
+                                        containerColor = extendedColors.accent,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    ) {
+                                        Text(
+                                            text = if (badgeCount > 99) "99+" else "$badgeCount",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold
                                         )
-                                        else Brush.linearGradient(
-                                            listOf(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.colorScheme.surfaceVariant)
-                                        )
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
-                                    contentDescription = tab.label,
-                                    modifier = Modifier.size(22.dp),
-                                    tint = if (selected) MaterialTheme.colorScheme.onPrimary
-                                    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                                )
-                            }
-                        } else {
-                            // Regular tab icon with optional badge
-                            if (badgeCount > 0) {
-                                BadgedBox(
-                                    badge = {
-                                        Badge(
-                                            containerColor = extendedColors.accent,
-                                            contentColor = MaterialTheme.colorScheme.onPrimary
-                                        ) {
-                                            Text(
-                                                text = if (badgeCount > 99) "99+" else "$badgeCount",
-                                                fontSize = 9.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
                                     }
-                                ) {
-                                    Icon(
-                                        imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
-                                        contentDescription = tab.label,
-                                        modifier = Modifier.size(24.dp),
-                                        tint = iconColor
-                                    )
                                 }
-                            } else {
+                            ) {
                                 Icon(
                                     imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
                                     contentDescription = tab.label,
@@ -196,18 +163,25 @@ fun DiaryBottomNav(
                                     tint = iconColor
                                 )
                             }
-
-                            Spacer(modifier = Modifier.height(2.dp))
-
-                            Text(
-                                text = tab.label,
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 10.sp,
-                                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = labelColor
-                                )
+                        } else {
+                            Icon(
+                                imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
+                                contentDescription = tab.label,
+                                modifier = Modifier.size(24.dp),
+                                tint = iconColor
                             )
                         }
+
+                        Spacer(modifier = Modifier.height(2.dp))
+
+                        Text(
+                            text = tab.label,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 10.sp,
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                                color = labelColor
+                            )
+                        )
                     }
                 }
             }
