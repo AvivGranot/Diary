@@ -52,6 +52,7 @@ import com.proactivediary.ui.settings.ContactSupportScreen
 import com.proactivediary.ui.settings.ExportScreen
 import com.proactivediary.ui.settings.LayoutScreen
 import com.proactivediary.ui.insights.ThemeEvolutionScreen
+import com.proactivediary.ui.story.StoryGeneratorScreen
 import com.proactivediary.ui.write.WriteScreen
 
 // Onboarding routes where the bottom nav should be hidden
@@ -221,8 +222,19 @@ fun ProactiveDiaryNavHost(
                     onEdit = { entryId ->
                         navController.navigate(Routes.Write.create(entryId))
                     },
+                    onCreateStory = { entryId ->
+                        navController.navigate(Routes.StoryGenerator.createRoute(entryId))
+                    },
                     canEdit = subscriptionState.isActive
                 )
+            }
+
+            // Visual Story generator
+            composable(
+                route = Routes.StoryGenerator.route,
+                arguments = listOf(navArgument("entryId") { type = NavType.StringType })
+            ) {
+                StoryGeneratorScreen(onBack = { navController.popBackStack() })
             }
 
             // Write with entryId — for editing from EntryDetail
@@ -296,8 +308,7 @@ fun ProactiveDiaryNavHost(
                 if (showYearPaywall) {
                     PaywallDialog(
                         onDismiss = { showYearPaywall = false },
-                        monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "\$2/month",
-                        annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "\$15/year",
+                        annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "\$19.99/year",
                         onSelectPlan = { sku ->
                             yearActivity?.let { billingViewModel.launchPurchase(it, sku) }
                             showYearPaywall = false
@@ -526,8 +537,7 @@ fun ProactiveDiaryNavHost(
     if (showPaywall) {
         PaywallDialog(
             onDismiss = { showPaywall = false },
-            monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "\$2/month",
-            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "\$15/year",
+            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "\$19.99/year",
             onSelectPlan = { sku ->
                 activity?.let { billingViewModel.launchPurchase(it, sku) }
                 showPaywall = false

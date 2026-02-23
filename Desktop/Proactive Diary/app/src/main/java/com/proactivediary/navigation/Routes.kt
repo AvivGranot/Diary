@@ -72,5 +72,10 @@ sealed class Routes(val route: String) {
 
     // Phase 8: Sharing
     object ShareReceiver : Routes("share_receiver")
+
+    // Visual Story
+    object StoryGenerator : Routes("story_generator/{entryId}") {
+        fun createRoute(entryId: String) = "story_generator/$entryId"
+    }
 }
 

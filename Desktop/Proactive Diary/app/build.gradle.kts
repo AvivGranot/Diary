@@ -51,6 +51,13 @@ android {
             "\"${project.findProperty("PLACES_API_KEY") ?: ""}\""
         )
 
+        // Grok Imagine API key injected from local.properties (gitignored)
+        buildConfigField(
+            "String",
+            "GROK_API_KEY",
+            "\"${project.findProperty("GROK_API_KEY") ?: ""}\""
+        )
+
         // Google Maps API key injected as manifest placeholder
         manifestPlaceholders["MAPS_API_KEY"] = project.findProperty("MAPS_API_KEY") ?: ""
     }

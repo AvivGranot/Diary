@@ -9,6 +9,7 @@ import androidx.compose.material.icons.outlined.Forum
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.Sms
 import androidx.compose.material.icons.outlined.Tag
+import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material.icons.outlined.Work
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -25,6 +26,7 @@ enum class ShareChannel(
     MESSENGER("messenger", "Messenger", "com.facebook.orca", Color(0xFF0084FF), Icons.Outlined.Forum),
     X_TWITTER("x", "X", "com.twitter.android", Color(0xFF000000), Icons.Outlined.Tag),
     SNAPCHAT("snapchat", "Snapchat", "com.snapchat.android", Color(0xFFFFFC00), Icons.Outlined.PhotoCamera),
+    TIKTOK("tiktok", "TikTok", "com.zhiliaoapp.musically", Color(0xFF000000), Icons.Outlined.Videocam),
     LINKEDIN("linkedin", "LinkedIn", "com.linkedin.android", Color(0xFF0A66C2), Icons.Outlined.Work),
     MESSAGES("messages", "Messages", "com.google.android.apps.messaging", Color(0xFF1A73E8), Icons.Outlined.Sms),
     GMAIL("gmail", "Gmail", "com.google.android.gm", Color(0xFFEA4335), Icons.Outlined.Email),

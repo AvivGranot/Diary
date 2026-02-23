@@ -79,6 +79,7 @@ import com.proactivediary.ui.theme.InstrumentSerif
 fun EntryDetailScreen(
     onBack: () -> Unit,
     onEdit: (String) -> Unit,
+    onCreateStory: (String) -> Unit = {},
     canEdit: Boolean = true,
     viewModel: EntryDetailViewModel = hiltViewModel()
 ) {
@@ -178,6 +179,13 @@ fun EntryDetailScreen(
                             onClick = {
                                 showMenu = false
                                 showShareDialog = true
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Create visual story") },
+                            onClick = {
+                                showMenu = false
+                                onCreateStory(state.entryId)
                             }
                         )
                         DropdownMenuItem(
