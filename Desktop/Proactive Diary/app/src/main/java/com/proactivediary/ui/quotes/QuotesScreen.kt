@@ -45,7 +45,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -68,16 +67,6 @@ private val Gold = Color(0xFFFFD700)
 private val Silver = Color(0xFFC0C0C0)
 private val Bronze = Color(0xFFCD7F32)
 private val RedAccent = Color(0xFFFF3B5C)
-private val Purple = Color(0xFFBF5AF2)
-private val Blue = Color(0xFF0A84FF)
-// Surface2 removed — use MaterialTheme.colorScheme.surfaceVariant instead
-
-private val RainbowGradient = Brush.linearGradient(
-    colors = listOf(RedAccent, Purple, Blue)
-)
-private val AccentGradient = Brush.linearGradient(
-    colors = listOf(AccentBlue, Color(0xFF2563EB))
-)
 
 @Composable
 fun QuotesScreen(
@@ -97,23 +86,27 @@ fun QuotesScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize()
             ) {
-                // ── Header row: title + notification bell ──
+                // ── Header: centered title + notification bell ──
                 item(key = "header") {
-                    Row(
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(horizontal = 16.dp, vertical = 24.dp)
                     ) {
                         Text(
                             text = "Quotes",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground
+                            style = MaterialTheme.typography.displaySmall.copy(
+                                fontFamily = InstrumentSerif,
+                                fontSize = 36.sp
+                            ),
+                            color = MaterialTheme.colorScheme.onBackground,
+                            modifier = Modifier.align(Alignment.Center)
                         )
 
-                        IconButton(onClick = onNotificationBellClick) {
+                        IconButton(
+                            onClick = onNotificationBellClick,
+                            modifier = Modifier.align(Alignment.CenterEnd)
+                        ) {
                             BadgedBox(
                                 badge = {
                                     if (unreadNoteCount > 0) {
@@ -135,17 +128,6 @@ fun QuotesScreen(
                             }
                         }
                     }
-                }
-
-                // ── Stories Row (Instagram-style) ──
-                item(key = "stories") {
-                    StoriesRow(
-                        quotes = state.trendingQuotes,
-                        onYourQuoteClick = { viewModel.showComposeSheet() },
-                        onStoryClick = { onQuoteClick(it.id) }
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
                 }
 
                 // ── Horizontal Leaderboard Cards ──
@@ -303,93 +285,6 @@ fun QuotesScreen(
     }
 }
 
-// ── Stories Row ──
-@Composable
-private fun StoriesRow(
-    quotes: List<com.proactivediary.data.social.Quote>,
-    onYourQuoteClick: () -> Unit,
-    onStoryClick: (com.proactivediary.data.social.Quote) -> Unit
-) {
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = 20.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        // "Your quote" button — first item
-        item(key = "your_quote") {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.clickable(onClick = onYourQuoteClick)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(brush = AccentGradient)
-                        .padding(2.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surface),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = "Your quote",
-                            tint = AccentBlue,
-                            modifier = Modifier.size(16.dp)
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(3.dp))
-                Text(
-                    text = "Your quote",
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.width(48.dp),
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-
-        // Top authors from trending quotes (unique authors)
-        val uniqueAuthors = quotes.distinctBy { it.authorId }.take(12)
-        items(uniqueAuthors, key = { "story_${it.id}" }) { quote ->
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.clickable { onStoryClick(quote) }
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(brush = RainbowGradient)
-                        .padding(2.dp)
-                ) {
-                    AuthorAvatar(
-                        photoUrl = quote.authorPhotoUrl,
-                        authorName = quote.authorName,
-                        size = 44
-                    )
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = quote.authorName.split(" ").firstOrNull() ?: "",
-                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-                    color = MaterialTheme.colorScheme.onBackground,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.width(48.dp),
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-    }
-}
-
 // ── Horizontal Leaderboard Cards ──
 @Composable
 private fun LeaderboardCardsRow(
@@ -411,7 +306,7 @@ private fun LeaderboardCardsRow(
 
             Column(
                 modifier = Modifier
-                    .width(120.dp)
+                    .width(140.dp)
                     .clip(RoundedCornerShape(14.dp))
                     .then(
                         if (isFirst) Modifier
@@ -451,7 +346,7 @@ private fun LeaderboardCardsRow(
                 AuthorAvatar(
                     photoUrl = quote.authorPhotoUrl,
                     authorName = quote.authorName,
-                    size = 36
+                    size = 44
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -547,8 +442,8 @@ private fun FeedPostCard(
             text = "\u201C${quote.content}\u201D",
             style = MaterialTheme.typography.bodyLarge.copy(
                 fontFamily = InstrumentSerif,
-                fontSize = 16.sp,
-                lineHeight = 22.sp
+                fontSize = 18.sp,
+                lineHeight = 26.sp
             ),
             fontStyle = FontStyle.Italic,
             color = MaterialTheme.colorScheme.onBackground
