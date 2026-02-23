@@ -39,6 +39,7 @@ import com.proactivediary.ui.paywall.PurchaseResult
 import com.proactivediary.ui.profile.ProfileScreen
 import com.proactivediary.ui.quotes.QuotesScreen
 import com.proactivediary.ui.settings.GoalsAndRemindersScreen
+import com.proactivediary.ui.write.QuickCaptureSheet
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
@@ -76,6 +77,9 @@ fun MainScreen(
 
     // Overlay sub-screen (Goals & Reminders) — shown on top of pager
     var showGoalsAndReminders by remember { mutableStateOf(false) }
+
+    // Quick capture sheet state
+    var showQuickCapture by remember { mutableStateOf(false) }
 
     // Notification prompt carried through deep link
     var activeNotificationPrompt by remember { mutableStateOf<String?>(null) }
@@ -191,6 +195,9 @@ fun MainScreen(
                             onWriteClick = {
                                 rootNavController.navigate(Routes.Write.create())
                             },
+                            onQuickCapture = {
+                                showQuickCapture = true
+                            },
                             onEntryClick = { entryId ->
                                 rootNavController.navigate(Routes.EntryDetail.createRoute(entryId))
                             },
@@ -260,6 +267,16 @@ fun MainScreen(
 
             // Bottom nav is now at NavGraph level (persistent across all screens)
         }
+    }
+
+    // Quick capture bottom sheet
+    if (showQuickCapture) {
+        QuickCaptureSheet(
+            onSave = { text ->
+                mainScreenViewModel.saveQuickThought(text)
+            },
+            onDismiss = { showQuickCapture = false }
+        )
     }
 
     // Paywall dialog
