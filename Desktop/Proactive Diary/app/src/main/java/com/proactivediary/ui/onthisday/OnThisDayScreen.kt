@@ -1,7 +1,9 @@
 package com.proactivediary.ui.onthisday
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -15,41 +17,45 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.outlined.Timelapse
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
-import com.proactivediary.data.media.ImageMetadata
-import androidx.compose.material3.MaterialTheme
-import com.proactivediary.ui.theme.InstrumentSerif
+import com.proactivediary.ui.components.GlassCard
+import com.proactivediary.ui.components.HeroSection
+import com.proactivediary.ui.theme.DiarySpacing
+import com.proactivediary.ui.theme.LocalDiaryExtendedColors
+import kotlinx.coroutines.delay
 import java.io.File
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnThisDayScreen(
     onBack: () -> Unit,
@@ -62,99 +68,92 @@ fun OnThisDayScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .statusBarsPadding()
     ) {
-        TopAppBar(
-            title = {
-                Text(
-                    text = "On This Day",
-                    style = TextStyle(
-                        fontFamily = InstrumentSerif,
-                        fontSize = 20.sp,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
+        // Back button
+        Row(
+            modifier = Modifier.padding(horizontal = DiarySpacing.xs, vertical = DiarySpacing.xxs)
+        ) {
+            IconButton(onClick = onBack) {
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = MaterialTheme.colorScheme.onBackground
                 )
-            },
-            navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
-        )
+            }
+        }
 
         if (state.isLoading) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
                     text = "Looking through your memories\u2026",
-                    style = TextStyle(
-                        fontFamily = InstrumentSerif,
-                        fontSize = 16.sp,
-                        fontStyle = FontStyle.Italic,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontStyle = FontStyle.Italic
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         } else if (state.entries.isEmpty()) {
-            // Empty state — no memories yet
+            // Empty state — Apple-style centered
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        imageVector = Icons.Outlined.Timelapse,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                    )
+                    Spacer(Modifier.height(DiarySpacing.md))
                     Text(
                         text = "No memories for today",
-                        style = TextStyle(
-                            fontFamily = InstrumentSerif,
-                            fontSize = 20.sp,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onBackground
                     )
-                    Spacer(Modifier.height(8.dp))
+                    Spacer(Modifier.height(DiarySpacing.xs))
                     Text(
                         text = "Keep writing \u2014 your future self will thank you",
-                        style = TextStyle(
-                            fontFamily = InstrumentSerif,
-                            fontSize = 14.sp,
-                            fontStyle = FontStyle.Italic,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontStyle = FontStyle.Italic
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
         } else {
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(DiarySpacing.md)
             ) {
+                // Hero
                 item {
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = state.todayFormatted.uppercase(),
-                        style = TextStyle(
-                            fontFamily = InstrumentSerif,
-                            fontSize = 12.sp,
-                            letterSpacing = 2.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                        )
+                    HeroSection(
+                        title = "Memories",
+                        subtitle = state.todayFormatted
                     )
                 }
 
                 items(state.entries, key = { it.id }) { memory ->
-                    AnimatedVisibility(visible = true, enter = fadeIn()) {
+                    var visible by remember { mutableStateOf(false) }
+                    LaunchedEffect(Unit) {
+                        delay(100)
+                        visible = true
+                    }
+                    AnimatedVisibility(
+                        visible = visible,
+                        enter = fadeIn(tween(800)) + slideInVertically(tween(600)) { 30 }
+                    ) {
                         MemoryCard(
                             entry = memory,
-                            onClick = { onEntryTap(memory.id) }
+                            onClick = { onEntryTap(memory.id) },
+                            modifier = Modifier.padding(horizontal = DiarySpacing.screenHorizontal)
                         )
                     }
                 }
 
-                item { Spacer(Modifier.height(40.dp)) }
+                item { Spacer(Modifier.height(60.dp)) }
             }
         }
     }
@@ -163,125 +162,120 @@ fun OnThisDayScreen(
 @Composable
 private fun MemoryCard(
     entry: MemoryEntry,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val extendedColors = LocalDiaryExtendedColors.current
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .clickable(onClick = onClick)
-            .padding(20.dp)
+    GlassCard(
+        modifier = modifier.fillMaxWidth(),
+        onClick = onClick
     ) {
-        // Time label — "2 years ago · February 12, 2024"
-        Text(
-            text = entry.dateFormatted,
-            style = TextStyle(
-                fontFamily = InstrumentSerif,
-                fontSize = 12.sp,
-                letterSpacing = 1.sp,
+        Column {
+            // Time label — "2 years ago"
+            Text(
+                text = entry.dateFormatted,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    letterSpacing = 2.sp
+                ),
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
             )
-        )
 
-        Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(DiarySpacing.sm))
 
-        // Title
-        if (entry.title.isNotBlank()) {
-            Text(
-                text = entry.title,
-                style = TextStyle(
-                    fontFamily = InstrumentSerif,
-                    fontSize = 18.sp,
-                    color = MaterialTheme.colorScheme.onBackground
+            // Hero image if available
+            if (entry.images.isNotEmpty()) {
+                val thumbFile = File(
+                    context.filesDir,
+                    "images/${entry.id}/thumbs/${entry.images.first().filename}"
                 )
-            )
-            Spacer(Modifier.height(6.dp))
-        }
-
-        // Preview text
-        Text(
-            text = entry.preview,
-            style = TextStyle(
-                fontFamily = InstrumentSerif,
-                fontSize = 15.sp,
-                fontStyle = FontStyle.Italic,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 22.sp
-            ),
-            maxLines = 5,
-            overflow = TextOverflow.Ellipsis
-        )
-
-        // Photo thumbnails
-        if (entry.images.isNotEmpty()) {
-            Spacer(Modifier.height(12.dp))
-            Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                for (image in entry.images.take(4)) {
-                    val thumbFile = File(
-                        context.filesDir,
-                        "images/${entry.id}/thumbs/${image.filename}"
-                    )
-                    if (thumbFile.exists()) {
+                if (thumbFile.exists()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(160.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                    ) {
                         AsyncImage(
                             model = thumbFile,
                             contentDescription = null,
-                            modifier = Modifier
-                                .size(64.dp)
-                                .clip(RoundedCornerShape(8.dp)),
+                            modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
+                        )
+                        // Gradient overlay
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(
+                                            Color.Transparent,
+                                            Color.Black.copy(alpha = 0.4f)
+                                        )
+                                    )
+                                )
+                        )
+                    }
+                    Spacer(Modifier.height(DiarySpacing.sm))
+                }
+            }
+
+            // Title
+            if (entry.title.isNotBlank()) {
+                Text(
+                    text = entry.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(Modifier.height(DiarySpacing.xxs))
+            }
+
+            // Preview text — quote style with serif italic
+            Text(
+                text = entry.preview,
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontStyle = FontStyle.Italic
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            // Context chips
+            val chips = buildList {
+                entry.locationName?.let { add("\uD83D\uDCCD $it") }
+                entry.weatherCondition?.let { condition ->
+                    val temp = entry.weatherTemp?.let { "${it.toInt()}\u00B0" } ?: ""
+                    add("$temp ${condition.replaceFirstChar { c -> c.uppercase() }}")
+                }
+            }
+
+            if (chips.isNotEmpty()) {
+                Spacer(Modifier.height(DiarySpacing.sm))
+                Row(horizontalArrangement = Arrangement.spacedBy(DiarySpacing.xs)) {
+                    chips.forEach { chip ->
+                        Text(
+                            text = chip,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.background)
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
                         )
                     }
                 }
             }
-        }
 
-        // Context chips: location, weather
-        val chips = buildList {
-            entry.locationName?.let { add("\uD83D\uDCCD $it") }
-            entry.weatherCondition?.let { condition ->
-                val temp = entry.weatherTemp?.let { "${it.toInt()}\u00B0" } ?: ""
-                add("$temp ${condition.replaceFirstChar { it.uppercase() }}")
-            }
-        }
+            Spacer(Modifier.height(DiarySpacing.xs))
 
-        if (chips.isNotEmpty()) {
-            Spacer(Modifier.height(12.dp))
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                for (chip in chips) {
-                    Text(
-                        text = chip,
-                        style = TextStyle(
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        ),
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.background)
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                    )
-                }
-            }
-        }
-
-        // Word count footer
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = "${entry.wordCount} words",
-            style = TextStyle(
-                fontSize = 10.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                letterSpacing = 0.5.sp
+            // Word count
+            Text(
+                text = "${entry.wordCount} words",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
             )
-        )
+        }
     }
 }
-
-// moodEmoji function removed — mood feature deprecated

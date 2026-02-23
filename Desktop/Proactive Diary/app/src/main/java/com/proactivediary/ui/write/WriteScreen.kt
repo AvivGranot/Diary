@@ -64,6 +64,11 @@ import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import com.proactivediary.domain.model.DiaryThemeConfig
 import com.proactivediary.ui.components.ImageViewer
 import com.proactivediary.ui.share.ShareCardDialog
@@ -80,8 +85,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import android.content.Intent
+import android.speech.RecognizerIntent
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import java.util.Locale
 
 @Composable
 fun WriteScreen(
@@ -153,12 +161,28 @@ fun WriteScreen(
         }
     }
 
+    // Speech recognition via system activity (works on all devices)
+    var pendingSpeechText by remember { mutableStateOf<String?>(null) }
+    val speechLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == android.app.Activity.RESULT_OK) {
+            val text = result.data
+                ?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+                ?.firstOrNull()
+                ?.trim()
+            if (!text.isNullOrBlank()) {
+                pendingSpeechText = text
+            }
+        }
+    }
+
     // Mic permission launcher for dictation
     val micPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) {
-            viewModel.startDictation()
+            launchSpeechRecognizer(speechLauncher)
         }
     }
 
@@ -166,7 +190,6 @@ fun WriteScreen(
     var viewingImageId by remember { mutableStateOf<String?>(null) }
     var showTemplatePicker by remember { mutableStateOf(false) }
     var showDrawingCanvas by remember { mutableStateOf(false) }
-    var dictationSeconds by remember { mutableStateOf(0) }
 
     // Auto-show template picker for first-ever write
     LaunchedEffect(state.isFirstEverWrite) {
@@ -175,28 +198,6 @@ fun WriteScreen(
             viewModel.markTemplatePromptShown()
         }
     }
-
-    // Speech error feedback — show toast when dictation fails
-    LaunchedEffect(Unit) {
-        viewModel.speechError.collect { errorMsg ->
-            android.widget.Toast.makeText(context, errorMsg, android.widget.Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    // Track dictation duration
-    LaunchedEffect(state.isDictating) {
-        if (state.isDictating) {
-            dictationSeconds = 0
-            while (true) {
-                delay(1000)
-                dictationSeconds++
-            }
-        } else {
-            dictationSeconds = 0
-        }
-    }
-
-    // Transcription wiring is after richTextState initialization below
 
     // Refresh entry state when screen resumes (e.g., after deleting from journal detail)
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -260,18 +261,18 @@ fun WriteScreen(
             }
     }
 
-    // Observe transcribed text and append to rich text editor
-    LaunchedEffect(richTextInitialized) {
+    // Append speech-to-text result from system activity into the editor
+    LaunchedEffect(pendingSpeechText, richTextInitialized) {
         if (!richTextInitialized) return@LaunchedEffect
-        viewModel.transcribedTextFlow.collect { text ->
+        pendingSpeechText?.let { text ->
             val current = richTextState.annotatedString.text
             val separator = if (current.isNotEmpty() && !current.endsWith(" ") && !current.endsWith("\n")) " " else ""
             richTextState.setText(current + separator + text)
-            // Sync to ViewModel so auto-save picks up dictated text
             viewModel.onRichContentChanged(
                 html = richTextState.toHtml(),
                 plainText = richTextState.annotatedString.text
             )
+            pendingSpeechText = null
         }
     }
 
@@ -474,6 +475,32 @@ fun WriteScreen(
                     }
                 }
 
+                // Contextual prompt card — Siri Suggestions style (only when editor is empty)
+                if (state.content.isBlank() && state.templatePrompts.isEmpty() && state.dailyPrompt.isNotBlank()) {
+                    ContextualPromptCard(
+                        prompt = state.dailyPrompt,
+                        secondaryTextColor = secondaryTextColor,
+                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 4.dp),
+                        onDismiss = { /* Card dismissed */ },
+                        onPromptTap = { prompt ->
+                            viewModel.activateGuidedPrompt(prompt)
+                        }
+                    )
+                }
+
+                // Floating suggestion chips when editor is empty
+                if (state.content.isBlank() && state.templatePrompts.isEmpty()) {
+                    SuggestionChips(
+                        suggestions = listOf("How am I feeling?", "What happened today?", "One thing I'm grateful for"),
+                        secondaryTextColor = secondaryTextColor,
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        onChipClick = { chip ->
+                            viewModel.activateGuidedPrompt(chip)
+                        }
+                    )
+                    Spacer(Modifier.height(4.dp))
+                }
+
                 // Template prompt banner (when a template is active) — inline above editor
                 if (state.templatePrompts.isNotEmpty() && state.currentPromptIndex < state.templatePrompts.size) {
                     GuidedPromptBanner(
@@ -504,31 +531,6 @@ fun WriteScreen(
                         .fillMaxWidth()
                         .weight(1f)
                 )
-
-                // Live transcription — ghost text that feels like words materializing
-                if (state.isDictating && state.partialTranscript.isNotBlank()) {
-                    Text(
-                        text = "\u25CF  ${state.partialTranscript}",
-                        style = TextStyle(
-                            fontFamily = FontFamily.Default,
-                            fontSize = (state.fontSize).sp,
-                            color = Color(0xFF1565C0).copy(alpha = 0.5f),
-                            lineHeight = (state.fontSize * lineHeightMultiplier).sp
-                        ),
-                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 2.dp)
-                    )
-                } else if (state.isDictating) {
-                    // Listening indicator when no partial text yet
-                    Text(
-                        text = "\u25CF  Listening\u2026",
-                        style = TextStyle(
-                            fontFamily = FontFamily.Default,
-                            fontSize = 13.sp,
-                            color = Color(0xFF1565C0).copy(alpha = 0.3f)
-                        ),
-                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 2.dp)
-                    )
-                }
 
                 // Attachment strip — only when there are attachments
                 AttachmentStrip(
@@ -576,7 +578,7 @@ fun WriteScreen(
                         true
                     }
                     if (hasPermission) {
-                        viewModel.startDictation()
+                        launchSpeechRecognizer(speechLauncher)
                     } else {
                         micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                     }
@@ -584,10 +586,7 @@ fun WriteScreen(
                 onTemplatesClick = { showTemplatePicker = true },
                 onShareClick = { contactPickerLauncher.launch(null) },
                 onDrawClick = { showDrawingCanvas = true },
-                onSuggestionsClick = { onSuggestionsClick?.invoke() },
-                isDictating = state.isDictating,
-                dictationSeconds = dictationSeconds,
-                onStopDictation = { viewModel.stopDictation() }
+                onSuggestionsClick = { onSuggestionsClick?.invoke() }
             )
 
             // Clearance for persistent bottom nav (64dp height)
@@ -599,6 +598,7 @@ fun WriteScreen(
             SavedIndicator(
                 isSaving = state.isSaving,
                 color = secondaryTextColor.copy(alpha = 0.5f),
+                wordCount = state.wordCount,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(top = 10.dp, end = 16.dp)
@@ -863,7 +863,7 @@ private fun WriteArea(
     horizontalPadding: Dp,
     fontSizeSp: Int,
     lineHeightMultiplier: Float,
-    placeholderText: String = "Start writing...",
+    placeholderText: String = "Even one word counts...",
     modifier: Modifier = Modifier
 ) {
     val fontSize = fontSizeSp.sp
@@ -989,13 +989,24 @@ private fun WriteArea(
                     .padding(start = leftPadding, end = horizontalPadding)
             ) {
                 if (richTextState.annotatedString.text.isEmpty()) {
+                    // Breathing placeholder — pulses alpha to invite writing
+                    val breathTransition = rememberInfiniteTransition(label = "breath")
+                    val breathAlpha by breathTransition.animateFloat(
+                        initialValue = 0.3f,
+                        targetValue = 0.6f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(2000, easing = FastOutSlowInEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "breath_alpha"
+                    )
                     Text(
                         text = placeholderText,
                         style = TextStyle(
                             fontFamily = InstrumentSerif,
                             fontStyle = FontStyle.Italic,
                             fontSize = fontSize,
-                            color = secondaryTextColor.copy(alpha = 0.5f),
+                            color = secondaryTextColor.copy(alpha = breathAlpha),
                             lineHeight = lineHeightSp
                         )
                     )
@@ -1036,13 +1047,23 @@ private fun WriteArea(
                 decorationBox = { innerTextField ->
                     Box {
                         if (content.isEmpty()) {
+                            val breathTransition = rememberInfiniteTransition(label = "breath_plain")
+                            val breathAlpha by breathTransition.animateFloat(
+                                initialValue = 0.3f,
+                                targetValue = 0.6f,
+                                animationSpec = infiniteRepeatable(
+                                    animation = tween(2000, easing = FastOutSlowInEasing),
+                                    repeatMode = RepeatMode.Reverse
+                                ),
+                                label = "breath_alpha_plain"
+                            )
                             Text(
                                 text = placeholderText,
                                 style = TextStyle(
                                     fontFamily = InstrumentSerif,
                                     fontStyle = FontStyle.Italic,
                                     fontSize = fontSize,
-                                    color = secondaryTextColor.copy(alpha = 0.5f),
+                                    color = secondaryTextColor.copy(alpha = breathAlpha),
                                     lineHeight = lineHeightSp
                                 )
                             )
@@ -1059,32 +1080,86 @@ private fun WriteArea(
 private fun SavedIndicator(
     isSaving: Boolean,
     color: Color,
+    wordCount: Int = 0,
     modifier: Modifier = Modifier
 ) {
     var showSaved by remember { mutableStateOf(false) }
     val alpha = remember { Animatable(0f) }
+    var showSparkle by remember { mutableStateOf(false) }
 
     LaunchedEffect(isSaving) {
         if (isSaving) {
             showSaved = true
+            showSparkle = wordCount in 1..10
             alpha.snapTo(0f)
             alpha.animateTo(1f, animationSpec = tween(200))
         } else if (showSaved) {
             delay(2000)
             alpha.animateTo(0f, animationSpec = tween(400))
             showSaved = false
+            showSparkle = false
         }
     }
 
+    // Compassionate copy — celebrate any entry
+    val savedText = when {
+        wordCount == 1 -> "Saved \u2014 that\u2019s a start"
+        wordCount in 2..3 -> "Saved \u2014 every word counts"
+        wordCount in 4..10 -> "Saved \u2014 that\u2019s all you need"
+        wordCount > 50 -> "Saved \u2014 you\u2019re in the flow"
+        else -> "Saved"
+    }
+
     if (showSaved || alpha.value > 0f) {
-        Text(
-            text = "Saved",
-            style = TextStyle(
-                fontFamily = FontFamily.Default,
-                fontSize = 12.sp,
-                color = color.copy(alpha = alpha.value)
-            ),
-            modifier = modifier
-        )
+        Box(modifier = modifier) {
+            // Micro-celebration sparkle for short entries
+            if (showSparkle) {
+                val sparkleAlpha = remember { Animatable(1f) }
+                LaunchedEffect(showSparkle) {
+                    sparkleAlpha.snapTo(1f)
+                    sparkleAlpha.animateTo(0f, animationSpec = tween(600))
+                }
+                Canvas(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .align(Alignment.Center)
+                ) {
+                    val random = java.util.Random(System.currentTimeMillis())
+                    for (i in 0 until 5) {
+                        val offsetX = (random.nextFloat() - 0.5f) * size.width
+                        val offsetY = (random.nextFloat() - 0.5f) * size.height
+                        drawCircle(
+                            color = color.copy(alpha = sparkleAlpha.value * 0.8f),
+                            radius = 2.dp.toPx(),
+                            center = center + Offset(offsetX, offsetY)
+                        )
+                    }
+                }
+            }
+            Text(
+                text = savedText,
+                style = TextStyle(
+                    fontFamily = FontFamily.Default,
+                    fontSize = 12.sp,
+                    color = color.copy(alpha = alpha.value)
+                )
+            )
+        }
+    }
+}
+
+/** Launch the system speech recognition activity. */
+private fun launchSpeechRecognizer(
+    launcher: androidx.activity.result.ActivityResultLauncher<Intent>
+) {
+    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+        putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag())
+        putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak now\u2026")
+    }
+    try {
+        launcher.launch(intent)
+    } catch (_: Exception) {
+        // No speech recognizer app installed — extremely rare
     }
 }

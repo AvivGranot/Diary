@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.components.formatTime
 import com.proactivediary.ui.components.parseStoredTime
+import com.proactivediary.ui.components.HeroSection
+import com.proactivediary.ui.theme.DiarySpacing
 import com.proactivediary.ui.theme.InstrumentSerif
 import androidx.compose.foundation.layout.statusBarsPadding
 
@@ -69,12 +71,13 @@ fun GoalsScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Header: back + title + add
+        // Header: back + add buttons
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .statusBarsPadding()
-                .padding(horizontal = 8.dp, vertical = 12.dp),
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(onClick = onBack) {
@@ -84,23 +87,20 @@ fun GoalsScreen(
                     tint = inkColor
                 )
             }
-            Text(
-                text = "Goals",
-                style = TextStyle(
-                    fontFamily = InstrumentSerif,
-                    fontSize = 24.sp,
-                    color = inkColor
-                ),
-                modifier = Modifier.weight(1f)
-            )
             IconButton(onClick = { showAddDialog = true }) {
                 Icon(
                     Icons.Default.Add,
-                    contentDescription = "Add goal",
+                    contentDescription = "Add practice",
                     tint = inkColor
                 )
             }
         }
+
+        // Hero section
+        HeroSection(
+            title = "Your Practice",
+            subtitle = "Small steps, taken often."
+        )
 
         if (goals.isEmpty()) {
             Box(
@@ -114,7 +114,7 @@ fun GoalsScreen(
                     modifier = Modifier.padding(top = 40.dp)
                 ) {
                     Text(
-                        text = "No goals yet",
+                        text = "No practices yet",
                         style = TextStyle(
                             fontFamily = InstrumentSerif,
                             fontSize = 20.sp,
@@ -124,12 +124,13 @@ fun GoalsScreen(
                     )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "Tap + to add a goal",
+                        text = "Start a writing practice.\nSmall and regular.",
                         style = TextStyle(
                             fontSize = 13.sp,
                             fontStyle = FontStyle.Italic,
                             color = pencilColor.copy(alpha = 0.7f)
-                        )
+                        ),
+                        textAlign = TextAlign.Center
                     )
                 }
             }

@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -55,8 +56,12 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.proactivediary.ui.components.GlassCard
+import com.proactivediary.ui.theme.DiarySpacing
 import com.proactivediary.ui.theme.InstrumentSerif
+import com.proactivediary.ui.theme.LocalDiaryExtendedColors
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material.icons.outlined.Timelapse
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 
@@ -179,10 +184,10 @@ fun JournalScreen(
             }
 
             state.isSearchEmpty -> {
-                // Empty search results
+                // Empty search results — Apple Spotlight style
                 EmptyState(
-                    title = "Nothing found",
-                    subtitle = "Try different words or check the date"
+                    title = "No results for \u201C${state.searchQuery}\u201D",
+                    subtitle = "Try different words"
                 )
             }
 
@@ -444,48 +449,54 @@ private fun OnThisDayCard(
     onSeeAll: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
-    Surface(
+    val extendedColors = LocalDiaryExtendedColors.current
+
+    GlassCard(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 1.dp
+            .padding(horizontal = DiarySpacing.screenHorizontal, vertical = 4.dp),
+        onClick = onClick
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text(
-                text = entry.label,
-                style = TextStyle(
-                    fontFamily = InstrumentSerif,
-                    fontSize = 14.sp,
-                    fontStyle = FontStyle.Italic,
-                    color = MaterialTheme.colorScheme.secondary
+        Column {
+            // Header row: timelapse icon + label
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(DiarySpacing.xs)
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Timelapse,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = extendedColors.accent
                 )
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = entry.label,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        letterSpacing = 2.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(DiarySpacing.sm))
+
+            // Quote-style preview
             Text(
                 text = "\u201C${entry.firstLine}\u201D",
-                style = TextStyle(
-                    fontFamily = InstrumentSerif,
-                    fontSize = 18.sp,
-                    color = MaterialTheme.colorScheme.onSurface
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontStyle = FontStyle.Italic
                 ),
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis
             )
+
             if (onSeeAll != null) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(DiarySpacing.sm))
                 Text(
-                    text = "See all memories \u2192",
-                    style = TextStyle(
-                        fontFamily = InstrumentSerif,
-                        fontSize = 13.sp,
-                        fontStyle = FontStyle.Italic,
-                        color = Color(0xFF787878)
-                    ),
+                    text = "Open memories",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = extendedColors.accent,
                     modifier = Modifier.clickable(onClick = onSeeAll)
                 )
             }
@@ -502,48 +513,47 @@ private fun EmptyState(
 ) {
     Box(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter
+        contentAlignment = Alignment.Center
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(top = 40.dp, start = 24.dp, end = 24.dp)
+            modifier = Modifier.padding(horizontal = DiarySpacing.screenHorizontal)
         ) {
+            // Search icon for empty search results
+            Icon(
+                imageVector = Icons.Outlined.Search,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f)
+            )
+            Spacer(modifier = Modifier.height(DiarySpacing.md))
             Text(
                 text = title,
-                style = TextStyle(
-                    fontFamily = InstrumentSerif,
-                    fontSize = 20.sp,
-                    color = MaterialTheme.colorScheme.onBackground
-                ),
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(DiarySpacing.xs))
             Text(
                 text = subtitle,
-                style = TextStyle(
-                    fontFamily = FontFamily.Default,
-                    fontSize = 14.sp,
-                    fontStyle = FontStyle.Italic,
-                    color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.7f)
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontStyle = FontStyle.Italic
                 ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
             if (actionLabel != null && onAction != null) {
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(DiarySpacing.lg))
                 Surface(
-                    modifier = Modifier
-                        .clickable(onClick = onAction),
-                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.clickable(onClick = onAction),
+                    shape = com.proactivediary.ui.theme.PillShape,
                     color = MaterialTheme.colorScheme.onBackground
                 ) {
                     Text(
                         text = actionLabel,
-                        style = TextStyle(
-                            fontFamily = InstrumentSerif,
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.background
-                        ),
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp)
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.background,
+                        modifier = Modifier.padding(horizontal = 28.dp, vertical = 12.dp)
                     )
                 }
             }
