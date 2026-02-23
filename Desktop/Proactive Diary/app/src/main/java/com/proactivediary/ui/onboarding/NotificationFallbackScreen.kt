@@ -6,10 +6,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -23,6 +19,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -31,12 +28,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -52,18 +50,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.ui.theme.InstrumentSerif
-import kotlin.math.cos
-import kotlin.math.sin
 
 private val AccentBlue = Color(0xFF3897F0)
-private val FlowerPink = Color(0xFFF48FB1)
-private val FlowerLavender = Color(0xFFCE93D8)
-private val FlowerPeach = Color(0xFFFFAB91)
-private val FlowerYellow = Color(0xFFFFD54F)
-private val FlowerRose = Color(0xFFEF9A9A)
-private val StemGreen = Color(0xFF81C784)
-private val LeafGreen = Color(0xFF66BB6A)
-private val VaseTerracotta = Color(0xFF8D6E63)
 
 @Composable
 fun NotificationFallbackScreen(
@@ -81,12 +69,12 @@ fun NotificationFallbackScreen(
         onTurnOn()
     }
 
-    // Staggered drawing animation — stems, leaves, then flowers
-    val drawProgress = remember { Animatable(0f) }
+    // Diary open animation
+    val openProgress = remember { Animatable(0f) }
     LaunchedEffect(Unit) {
-        drawProgress.animateTo(
+        openProgress.animateTo(
             targetValue = 1f,
-            animationSpec = tween(2500, easing = FastOutSlowInEasing)
+            animationSpec = tween(2000, delayMillis = 200, easing = FastOutSlowInEasing)
         )
     }
 
@@ -94,10 +82,11 @@ fun NotificationFallbackScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .navigationBarsPadding()
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.weight(0.06f))
+        Spacer(modifier = Modifier.weight(0.1f))
 
         // Header
         Text(
@@ -123,7 +112,7 @@ fun NotificationFallbackScreen(
             )
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Turn On Notifications button
         Box(
@@ -151,7 +140,7 @@ fun NotificationFallbackScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // 4 bullet benefits
         val benefits = listOf(
@@ -163,28 +152,30 @@ fun NotificationFallbackScreen(
 
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             benefits.forEach { benefit ->
                 BenefitRow(text = benefit)
             }
         }
 
-        Spacer(modifier = Modifier.weight(0.05f))
+        Spacer(modifier = Modifier.weight(0.04f))
 
-        // Animated flower bouquet — drawn with lines
-        BouquetIllustration(
+        // Animated diary that opens — line-drawn
+        OpenDiaryIllustration(
             modifier = Modifier
-                .weight(0.45f)
-                .fillMaxWidth(),
-            drawProgress = drawProgress.value
+                .weight(0.38f)
+                .fillMaxWidth(0.6f),
+            openProgress = openProgress.value
         )
 
-        // Bottom: Back (left) + Not Now (right)
+        Spacer(modifier = Modifier.weight(0.02f))
+
+        // Bottom: Back (left) + Not Now (right) — above system nav bar
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 20.dp),
+                .padding(bottom = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
@@ -200,7 +191,7 @@ fun NotificationFallbackScreen(
                         indication = null,
                         onClick = onBack
                     )
-                    .padding(vertical = 6.dp, horizontal = 4.dp)
+                    .padding(vertical = 8.dp, horizontal = 4.dp)
             )
             Text(
                 text = "Not Now",
@@ -218,7 +209,7 @@ fun NotificationFallbackScreen(
                             onNotNow()
                         }
                     )
-                    .padding(vertical = 6.dp, horizontal = 4.dp)
+                    .padding(vertical = 8.dp, horizontal = 4.dp)
             )
         }
     }
@@ -249,213 +240,173 @@ private fun BenefitRow(text: String) {
     }
 }
 
+/**
+ * Animated diary that opens and stays open, drawn with lines.
+ * Cover pivots from the spine and reveals lined pages inside.
+ */
 @Composable
-private fun BouquetIllustration(
+private fun OpenDiaryIllustration(
     modifier: Modifier = Modifier,
-    drawProgress: Float
+    openProgress: Float
 ) {
-    // Gentle sway
-    val infiniteTransition = rememberInfiniteTransition(label = "sway")
-    val swayAngle by infiniteTransition.animateFloat(
-        initialValue = -1.5f,
-        targetValue = 1.5f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3500, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "sway"
-    )
+    val inkColor = MaterialTheme.colorScheme.onBackground
+    val pageColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f)
+    val coverColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f)
 
-    // Phase breakpoints: stems 0-0.4, leaves 0.3-0.7, flowers 0.5-1.0
-    val stemProgress = (drawProgress / 0.4f).coerceIn(0f, 1f)
-    val leafProgress = ((drawProgress - 0.3f) / 0.4f).coerceIn(0f, 1f)
-    val flowerProgress = ((drawProgress - 0.5f) / 0.5f).coerceIn(0f, 1f)
-
-    val lineStroke = Stroke(
-        width = 2f,
-        cap = StrokeCap.Round,
-        join = StrokeJoin.Round
-    )
+    val lineStroke = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
 
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
         val cx = w / 2
 
-        rotate(swayAngle, pivot = Offset(cx, h)) {
+        val bookW = w * 0.8f
+        val bookH = h * 0.85f
+        val bookL = (w - bookW) / 2
+        val bookR = bookL + bookW
+        val bookT = (h - bookH) / 2
+        val bookB = bookT + bookH
+        val spine = bookL + bookW * 0.04f
 
-            // ── Vase ──
-            val vaseTop = h * 0.72f
-            val vaseBottom = h * 0.94f
-            val vaseMidY = (vaseTop + vaseBottom) / 2
-            val vaseTopW = w * 0.14f
-            val vaseMidW = w * 0.12f
-            val vaseBotW = w * 0.15f
+        // ── Back cover (always visible) ──
+        drawRoundRect(
+            color = coverColor,
+            topLeft = Offset(bookL, bookT),
+            size = Size(bookW, bookH),
+            cornerRadius = CornerRadius(8f)
+        )
+        drawRoundRect(
+            color = inkColor.copy(alpha = 0.35f),
+            topLeft = Offset(bookL, bookT),
+            size = Size(bookW, bookH),
+            cornerRadius = CornerRadius(8f),
+            style = lineStroke
+        )
 
-            val vasePath = Path().apply {
-                moveTo(cx - vaseTopW, vaseTop)
-                // Left edge curves in then out
-                quadraticTo(cx - vaseMidW, vaseMidY, cx - vaseBotW, vaseBottom)
-                lineTo(cx + vaseBotW, vaseBottom)
-                quadraticTo(cx + vaseMidW, vaseMidY, cx + vaseTopW, vaseTop)
-                close()
-            }
-            drawPath(vasePath, color = VaseTerracotta.copy(alpha = 0.2f * stemProgress))
-            drawPath(vasePath, color = VaseTerracotta.copy(alpha = 0.5f * stemProgress), style = lineStroke)
+        // ── Pages (visible as diary opens) ──
+        val pageAlpha = (openProgress * 1.2f).coerceIn(0f, 1f)
+        val pageInset = 6f
+        drawRoundRect(
+            color = pageColor.copy(alpha = pageAlpha),
+            topLeft = Offset(spine + pageInset, bookT + pageInset),
+            size = Size(bookR - spine - pageInset * 2, bookH - pageInset * 2),
+            cornerRadius = CornerRadius(4f)
+        )
 
-            // Vase rim
-            val rimPath = Path().apply {
-                moveTo(cx - vaseTopW - 4, vaseTop)
-                quadraticTo(cx, vaseTop - 6, cx + vaseTopW + 4, vaseTop)
-            }
-            drawPath(rimPath, color = VaseTerracotta.copy(alpha = 0.4f * stemProgress), style = lineStroke)
-
-            // ── 5 Stems (drawn as lines that grow upward) ──
-            data class StemDef(val topX: Float, val topY: Float, val ctrlX: Float, val ctrlY: Float)
-
-            val stems = listOf(
-                StemDef(cx, h * 0.18f, cx, h * 0.45f),                          // center tall
-                StemDef(cx - w * 0.12f, h * 0.22f, cx - w * 0.04f, h * 0.48f), // left
-                StemDef(cx + w * 0.12f, h * 0.24f, cx + w * 0.05f, h * 0.46f), // right
-                StemDef(cx - w * 0.08f, h * 0.28f, cx - w * 0.06f, h * 0.50f), // inner left
-                StemDef(cx + w * 0.09f, h * 0.26f, cx + w * 0.03f, h * 0.48f)  // inner right
-            )
-
-            stems.forEach { stem ->
-                val stemPath = Path().apply {
-                    moveTo(cx, vaseTop)
-                    quadraticTo(stem.ctrlX, stem.ctrlY, stem.topX, stem.topY)
-                }
-                drawPathAnimated(stemPath, StemGreen.copy(alpha = 0.7f), stemProgress, lineStroke)
-            }
-
-            // ── Leaves (small curved shapes on stems) ──
-            data class LeafDef(val baseX: Float, val baseY: Float, val dir: Float) // dir: -1 left, +1 right
-
-            val leaves = listOf(
-                LeafDef(cx - w * 0.03f, h * 0.52f, -1f),
-                LeafDef(cx + w * 0.04f, h * 0.50f, 1f),
-                LeafDef(cx - w * 0.09f, h * 0.42f, -1f),
-                LeafDef(cx + w * 0.08f, h * 0.44f, 1f),
-                LeafDef(cx, h * 0.40f, -1f),
-                LeafDef(cx - w * 0.05f, h * 0.58f, 1f),
-                LeafDef(cx + w * 0.02f, h * 0.56f, -1f)
-            )
-
-            leaves.forEach { leaf ->
-                val leafSize = w * 0.06f
-                val leafPath = Path().apply {
-                    moveTo(leaf.baseX, leaf.baseY)
-                    quadraticTo(
-                        leaf.baseX + leaf.dir * leafSize,
-                        leaf.baseY - leafSize * 0.5f,
-                        leaf.baseX + leaf.dir * leafSize * 0.4f,
-                        leaf.baseY - leafSize
-                    )
-                    quadraticTo(
-                        leaf.baseX,
-                        leaf.baseY - leafSize * 0.4f,
-                        leaf.baseX, leaf.baseY
-                    )
-                }
-                drawPath(
-                    leafPath,
-                    color = LeafGreen.copy(alpha = 0.35f * leafProgress),
+        // Page lines — drawn progressively
+        if (openProgress > 0.3f) {
+            val lineAlpha = ((openProgress - 0.3f) / 0.7f).coerceIn(0f, 1f)
+            val lineL = spine + bookW * 0.12f
+            val lineR = bookR - bookW * 0.08f
+            val lineCount = 7
+            for (i in 0 until lineCount) {
+                val frac = (i + 1).toFloat() / (lineCount + 1)
+                val y = bookT + bookH * frac
+                // Animated line drawing
+                val thisLineProgress = ((lineAlpha - i * 0.08f) / 0.5f).coerceIn(0f, 1f)
+                val currentLineR = lineL + (lineR - lineL) * thisLineProgress
+                drawLine(
+                    color = inkColor.copy(alpha = 0.15f * lineAlpha),
+                    start = Offset(lineL, y),
+                    end = Offset(currentLineR, y),
+                    strokeWidth = 1f
                 )
-                drawPathAnimated(leafPath, LeafGreen.copy(alpha = 0.6f * leafProgress), leafProgress, lineStroke)
             }
 
-            // ── 5 Flowers (line-drawn petals radiating from stem tops) ──
-            data class FlowerDef(val cx: Float, val cy: Float, val color: Color, val petals: Int, val size: Float)
-
-            val flowers = listOf(
-                FlowerDef(cx, h * 0.18f, FlowerPink, 6, w * 0.07f),
-                FlowerDef(cx - w * 0.12f, h * 0.22f, FlowerLavender, 5, w * 0.055f),
-                FlowerDef(cx + w * 0.12f, h * 0.24f, FlowerPeach, 5, w * 0.06f),
-                FlowerDef(cx - w * 0.08f, h * 0.28f, FlowerRose, 7, w * 0.05f),
-                FlowerDef(cx + w * 0.09f, h * 0.26f, FlowerYellow, 6, w * 0.055f)
-            )
-
-            flowers.forEach { flower ->
-                val petalR = flower.size * flowerProgress
-                if (petalR > 0.5f) {
-                    // Draw each petal as a line-drawn teardrop
-                    for (i in 0 until flower.petals) {
-                        val angle = (i * 360f / flower.petals) * (Math.PI / 180.0)
-                        val tipX = flower.cx + (petalR * cos(angle)).toFloat()
-                        val tipY = flower.cy + (petalR * sin(angle)).toFloat()
-                        val perpAngle = angle + Math.PI / 2
-                        val bulge = petalR * 0.35f
-                        val midX = (flower.cx + tipX) / 2
-                        val midY = (flower.cy + tipY) / 2
-
-                        val petalPath = Path().apply {
-                            moveTo(flower.cx, flower.cy)
-                            quadraticTo(
-                                midX + (bulge * cos(perpAngle)).toFloat(),
-                                midY + (bulge * sin(perpAngle)).toFloat(),
-                                tipX, tipY
-                            )
-                            quadraticTo(
-                                midX - (bulge * cos(perpAngle)).toFloat(),
-                                midY - (bulge * sin(perpAngle)).toFloat(),
-                                flower.cx, flower.cy
-                            )
-                        }
-                        // Soft fill
-                        drawPath(petalPath, color = flower.color.copy(alpha = 0.25f * flowerProgress))
-                        // Line-drawn outline
-                        drawPath(
-                            petalPath,
-                            color = flower.color.copy(alpha = 0.7f * flowerProgress),
-                            style = Stroke(width = 1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)
-                        )
-                    }
-                    // Center dot
-                    drawCircle(
-                        color = FlowerYellow.copy(alpha = 0.8f * flowerProgress),
-                        radius = petalR * 0.25f,
-                        center = Offset(flower.cx, flower.cy)
-                    )
-                    // Center dot outline
-                    drawCircle(
-                        color = FlowerYellow.copy(alpha = 0.5f * flowerProgress),
-                        radius = petalR * 0.25f,
-                        center = Offset(flower.cx, flower.cy),
-                        style = Stroke(width = 1f)
+            // Small "writing" marks on first few lines
+            if (openProgress > 0.6f) {
+                val writingAlpha = ((openProgress - 0.6f) / 0.4f).coerceIn(0f, 1f) * 0.12f
+                for (i in 0..2) {
+                    val frac = (i + 1).toFloat() / (lineCount + 1)
+                    val y = bookT + bookH * frac
+                    val markEnd = lineL + (lineR - lineL) * (0.3f + i * 0.15f)
+                    drawLine(
+                        color = inkColor.copy(alpha = writingAlpha),
+                        start = Offset(lineL, y - 2),
+                        end = Offset(markEnd, y - 2),
+                        strokeWidth = 2f
                     )
                 }
             }
         }
-    }
-}
 
-/**
- * Draws a path with animated stroke progress (line-drawing effect).
- */
-private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawPathAnimated(
-    path: Path,
-    color: Color,
-    progress: Float,
-    stroke: Stroke
-) {
-    if (progress <= 0f) return
-    val measure = PathMeasure()
-    measure.setPath(path, false)
-    val length = measure.length
-    val drawnLength = length * progress
-
-    drawPath(
-        path = path,
-        color = color,
-        style = Stroke(
-            width = stroke.width,
-            cap = stroke.cap,
-            join = stroke.join,
-            pathEffect = PathEffect.dashPathEffect(
-                floatArrayOf(drawnLength, length - drawnLength),
-                0f
+        // ── Front cover — rotates open from spine ──
+        val coverAngle = -openProgress * 155f
+        rotate(
+            degrees = coverAngle,
+            pivot = Offset(spine, (bookT + bookB) / 2)
+        ) {
+            // Cover fill
+            drawRoundRect(
+                color = coverColor.copy(alpha = 0.9f),
+                topLeft = Offset(spine, bookT),
+                size = Size(bookR - spine, bookH),
+                cornerRadius = CornerRadius(6f)
             )
+            // Cover outline
+            drawRoundRect(
+                color = inkColor.copy(alpha = 0.45f),
+                topLeft = Offset(spine, bookT),
+                size = Size(bookR - spine, bookH),
+                cornerRadius = CornerRadius(6f),
+                style = lineStroke
+            )
+
+            // Diary title label on cover
+            val labelW = (bookR - spine) * 0.45f
+            val labelH = bookH * 0.06f
+            val labelX = spine + (bookR - spine - labelW) / 2
+            val labelY = bookT + bookH * 0.38f
+            drawRoundRect(
+                color = inkColor.copy(alpha = 0.12f),
+                topLeft = Offset(labelX, labelY),
+                size = Size(labelW, labelH),
+                cornerRadius = CornerRadius(3f)
+            )
+
+            // Decorative line below label
+            drawLine(
+                color = inkColor.copy(alpha = 0.08f),
+                start = Offset(labelX + labelW * 0.1f, labelY + labelH + 8),
+                end = Offset(labelX + labelW * 0.9f, labelY + labelH + 8),
+                strokeWidth = 1f
+            )
+        }
+
+        // ── Spine line ──
+        drawLine(
+            color = inkColor.copy(alpha = 0.5f),
+            start = Offset(spine, bookT + 2),
+            end = Offset(spine, bookB - 2),
+            strokeWidth = 2f
         )
-    )
+
+        // ── Bookmark ribbon (peeks out from top) ──
+        if (openProgress > 0.5f) {
+            val ribbonAlpha = ((openProgress - 0.5f) / 0.5f).coerceIn(0f, 1f) * 0.4f
+            val ribbonX = spine + (bookR - spine) * 0.7f
+            val ribbonTop = bookT - 4
+            val ribbonBottom = bookT + bookH * 0.18f
+            drawLine(
+                color = Color(0xFFEF5350).copy(alpha = ribbonAlpha),
+                start = Offset(ribbonX, ribbonTop),
+                end = Offset(ribbonX, ribbonBottom),
+                strokeWidth = 3f,
+                cap = StrokeCap.Round
+            )
+            // Ribbon V-notch
+            drawLine(
+                color = Color(0xFFEF5350).copy(alpha = ribbonAlpha),
+                start = Offset(ribbonX - 3, ribbonBottom),
+                end = Offset(ribbonX, ribbonBottom - 4),
+                strokeWidth = 2f
+            )
+            drawLine(
+                color = Color(0xFFEF5350).copy(alpha = ribbonAlpha),
+                start = Offset(ribbonX + 3, ribbonBottom),
+                end = Offset(ribbonX, ribbonBottom - 4),
+                strokeWidth = 2f
+            )
+        }
+    }
 }

@@ -4,6 +4,15 @@ import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,18 +24,32 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.PathMeasure
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -59,20 +82,45 @@ fun NotificationPermissionScreen(
         }
     }
 
+    // Animated border phase for "Allow" button
+    val infiniteTransition = rememberInfiniteTransition(label = "border")
+    val borderPhase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "borderPhase"
+    )
+
+    // Diary open animation
+    val openProgress = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        openProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(1500, delayMillis = 300, easing = FastOutSlowInEasing)
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
+            .navigationBarsPadding()
             .padding(horizontal = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Spacer(modifier = Modifier.weight(0.3f))
+        Spacer(modifier = Modifier.weight(0.25f))
 
-        // App icon placeholder (simple circle with bell)
-        NotificationIcon(modifier = Modifier.size(80.dp))
+        // Animated diary icon that opens
+        DiaryOpenIcon(
+            modifier = Modifier.size(80.dp),
+            openProgress = openProgress.value
+        )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
         // Title
         Text(
@@ -87,20 +135,50 @@ fun NotificationPermissionScreen(
             )
         )
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
         // Two tab buttons side by side
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Allow button (blue, highlighted)
+            // Allow button — blue fill + animated border highlight
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(52.dp)
+                    .height(48.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .background(AllowBlue)
+                    .drawBehind {
+                        // Animated scanning line around border
+                        val cornerR = 8.dp.toPx()
+                        val borderPath = Path().apply {
+                            addRoundRect(
+                                RoundRect(
+                                    Rect(0f, 0f, size.width, size.height),
+                                    CornerRadius(cornerR)
+                                )
+                            )
+                        }
+                        val measure = PathMeasure()
+                        measure.setPath(borderPath, true)
+                        val totalLen = measure.length
+                        val segLen = totalLen * 0.25f
+                        val offset = totalLen * borderPhase
+
+                        drawPath(
+                            path = borderPath,
+                            color = Color.White.copy(alpha = 0.8f),
+                            style = Stroke(
+                                width = 2.5f,
+                                cap = StrokeCap.Round,
+                                pathEffect = PathEffect.dashPathEffect(
+                                    floatArrayOf(segLen, totalLen - segLen),
+                                    offset
+                                )
+                            )
+                        )
+                    }
                     .clickable {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -114,7 +192,7 @@ fun NotificationPermissionScreen(
                 Text(
                     text = "Allow",
                     style = TextStyle(
-                        fontSize = 16.sp,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White
                     )
@@ -125,7 +203,7 @@ fun NotificationPermissionScreen(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .height(52.dp)
+                    .height(48.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .border(
                         1.dp,
@@ -141,7 +219,7 @@ fun NotificationPermissionScreen(
                 Text(
                     text = "Don't Allow",
                     style = TextStyle(
-                        fontSize = 16.sp,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onBackground
                     )
@@ -149,54 +227,113 @@ fun NotificationPermissionScreen(
             }
         }
 
-        Spacer(modifier = Modifier.weight(0.4f))
+        Spacer(modifier = Modifier.weight(0.35f))
     }
 }
 
+/**
+ * Animated diary that opens — drawn with lines.
+ * Starts closed, cover rotates open to reveal pages.
+ */
 @Composable
-private fun NotificationIcon(modifier: Modifier = Modifier) {
+private fun DiaryOpenIcon(
+    modifier: Modifier = Modifier,
+    openProgress: Float // 0 = closed, 1 = open
+) {
     val inkColor = MaterialTheme.colorScheme.onBackground
+    val pageColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f)
+    val coverColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f)
 
-    androidx.compose.foundation.Canvas(modifier = modifier) {
+    Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
-        val cx = w / 2
-        val cy = h / 2
 
-        // Simple bell icon
-        val bellWidth = w * 0.45f
-        val bellHeight = h * 0.38f
-        val bellTop = cy - bellHeight * 0.4f
-        val bellLeft = cx - bellWidth / 2
+        val bookL = w * 0.15f
+        val bookR = w * 0.85f
+        val bookT = h * 0.1f
+        val bookB = h * 0.9f
+        val spine = bookL + 4f
 
-        // Bell dome
+        // Pages (visible as diary opens)
+        val pageAlpha = openProgress.coerceIn(0f, 1f)
+        // Right page
         drawRoundRect(
-            color = inkColor.copy(alpha = 0.12f),
-            topLeft = androidx.compose.ui.geometry.Offset(bellLeft, bellTop),
-            size = androidx.compose.ui.geometry.Size(bellWidth, bellHeight),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(bellWidth * 0.3f)
+            color = pageColor.copy(alpha = pageAlpha),
+            topLeft = Offset(spine + 2, bookT + 2),
+            size = Size(bookR - spine - 4, bookB - bookT - 4),
+            cornerRadius = CornerRadius(4f)
+        )
+
+        // Page lines (appear as it opens)
+        if (openProgress > 0.4f) {
+            val lineAlpha = ((openProgress - 0.4f) / 0.6f).coerceIn(0f, 1f) * 0.2f
+            val lineStart = spine + w * 0.12f
+            val lineEnd = bookR - w * 0.08f
+            for (i in 0..5) {
+                val y = bookT + h * 0.22f + i * h * 0.1f
+                drawLine(
+                    color = inkColor.copy(alpha = lineAlpha),
+                    start = Offset(lineStart, y),
+                    end = Offset(lineEnd, y),
+                    strokeWidth = 1f
+                )
+            }
+        }
+
+        // Back cover (always visible)
+        drawRoundRect(
+            color = coverColor,
+            topLeft = Offset(bookL, bookT),
+            size = Size(bookR - bookL, bookB - bookT),
+            cornerRadius = CornerRadius(6f)
         )
         drawRoundRect(
+            color = inkColor.copy(alpha = 0.4f),
+            topLeft = Offset(bookL, bookT),
+            size = Size(bookR - bookL, bookB - bookT),
+            cornerRadius = CornerRadius(6f),
+            style = Stroke(width = 1.5f)
+        )
+
+        // Front cover — rotates open (pivots from spine)
+        val coverOpenAngle = -openProgress * 160f // opens to the left
+        rotate(
+            degrees = coverOpenAngle,
+            pivot = Offset(spine, (bookT + bookB) / 2)
+        ) {
+            drawRoundRect(
+                color = coverColor.copy(alpha = 0.8f),
+                topLeft = Offset(spine, bookT),
+                size = Size(bookR - spine, bookB - bookT),
+                cornerRadius = CornerRadius(4f)
+            )
+            drawRoundRect(
+                color = inkColor.copy(alpha = 0.5f),
+                topLeft = Offset(spine, bookT),
+                size = Size(bookR - spine, bookB - bookT),
+                cornerRadius = CornerRadius(4f),
+                style = Stroke(width = 1.5f)
+            )
+
+            // Diary label on cover
+            val labelW = (bookR - spine) * 0.5f
+            val labelH = (bookB - bookT) * 0.08f
+            val labelX = spine + (bookR - spine - labelW) / 2
+            val labelY = bookT + (bookB - bookT) * 0.4f
+            drawRoundRect(
+                color = inkColor.copy(alpha = 0.15f),
+                topLeft = Offset(labelX, labelY),
+                size = Size(labelW, labelH),
+                cornerRadius = CornerRadius(2f)
+            )
+        }
+
+        // Spine
+        drawLine(
             color = inkColor.copy(alpha = 0.5f),
-            topLeft = androidx.compose.ui.geometry.Offset(bellLeft, bellTop),
-            size = androidx.compose.ui.geometry.Size(bellWidth, bellHeight),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(bellWidth * 0.3f),
-            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5f)
-        )
-
-        // Bell clapper
-        drawCircle(
-            color = inkColor.copy(alpha = 0.4f),
-            radius = w * 0.03f,
-            center = androidx.compose.ui.geometry.Offset(cx, bellTop + bellHeight + w * 0.04f)
-        )
-
-        // Bell handle
-        drawCircle(
-            color = inkColor.copy(alpha = 0.4f),
-            radius = w * 0.035f,
-            center = androidx.compose.ui.geometry.Offset(cx, bellTop - w * 0.02f),
-            style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.5f)
+            start = Offset(spine, bookT),
+            end = Offset(spine, bookB),
+            strokeWidth = 2f
         )
     }
 }
