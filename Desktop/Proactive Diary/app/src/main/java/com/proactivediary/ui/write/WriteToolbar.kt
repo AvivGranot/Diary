@@ -41,6 +41,7 @@ import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Mic
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Brush
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.filled.FormatColorText
@@ -89,6 +90,7 @@ fun WriteToolbar(
     onTemplatesClick: (() -> Unit)? = null,
     onShareClick: (() -> Unit)? = null,
     onDrawClick: (() -> Unit)? = null,
+    onSuggestionsClick: (() -> Unit)? = null,
     isDictating: Boolean = false,
     dictationSeconds: Int = 0,
     onStopDictation: (() -> Unit)? = null,
@@ -202,6 +204,15 @@ fun WriteToolbar(
                                 color = textColor,
                                 onClick = {
                                     onDrawClick?.invoke()
+                                    isExpanded = false
+                                }
+                            )
+                            InlineFeatureButton(
+                                icon = Icons.Outlined.AutoAwesome,
+                                label = "Inspire",
+                                color = textColor,
+                                onClick = {
+                                    onSuggestionsClick?.invoke()
                                     isExpanded = false
                                 }
                             )

@@ -506,6 +506,61 @@ class WriteViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Save entry even when title/content are blank, as long as images exist.
+     * Ensures drawings and photos on blank entries are persisted to Room.
+     */
+    private suspend fun forceSaveWithImages() {
+        val state = _uiState.value
+        if (state.images.isEmpty()) {
+            saveEntry(state.content)
+            return
+        }
+        // Images exist — force save regardless of blank content
+        _uiState.update { it.copy(isSaving = true, saveError = null) }
+        try {
+            withContext(Dispatchers.IO) {
+                val now = System.currentTimeMillis()
+                val tagsJson = gson.toJson(state.tags)
+                val contactsJson = gson.toJson(state.taggedContacts)
+                val imagesJson = gson.toJson(state.images)
+                val entry = EntryEntity(
+                    id = state.entryId,
+                    title = state.title,
+                    content = state.content,
+                    contentHtml = state.contentHtml,
+                    contentPlain = state.content,
+                    mood = null,
+                    tags = tagsJson,
+                    taggedContacts = contactsJson,
+                    images = imagesJson,
+                    latitude = state.latitude,
+                    longitude = state.longitude,
+                    locationName = state.locationName,
+                    weatherTemp = state.weatherTemp,
+                    weatherCondition = state.weatherCondition,
+                    weatherIcon = state.weatherIcon,
+                    templateId = state.templateId,
+                    audioPath = state.audioPath,
+                    fontColor = state.fontColor,
+                    wordCount = computeWordCount(state.content),
+                    createdAt = if (state.isNewEntry) now else {
+                        entryRepository.getByIdSync(state.entryId)?.createdAt ?: now
+                    },
+                    updatedAt = now
+                )
+                if (state.isNewEntry) {
+                    entryRepository.insert(entry)
+                } else {
+                    entryRepository.update(entry)
+                }
+            }
+            _uiState.update { it.copy(isSaving = false, isNewEntry = false) }
+        } catch (e: Exception) {
+            _uiState.update { it.copy(isSaving = false, saveError = "Failed to save entry.") }
+        }
+    }
+
     fun clearSaveError() {
         _uiState.value = _uiState.value.copy(saveError = null)
     }
@@ -654,8 +709,7 @@ class WriteViewModel @Inject constructor(
                 val state = _uiState.value
                 val metadata = imageStorageManager.saveImage(state.entryId, uri)
                 _uiState.update { it.copy(images = it.images + metadata) }
-                // Trigger save to persist images JSON
-                saveEntry(_uiState.value.content)
+                forceSaveWithImages()
                 analyticsService.logFeatureUsed("photo_attached")
             } catch (e: Exception) {
                 _uiState.update { it.copy(saveError = "Failed to attach photo.") }
@@ -704,7 +758,7 @@ class WriteViewModel @Inject constructor(
                     addedAt = System.currentTimeMillis()
                 )
                 _uiState.update { it.copy(images = it.images + metadata) }
-                saveEntry(_uiState.value.content)
+                forceSaveWithImages()
                 analyticsService.logFeatureUsed("drawing_added")
             } catch (e: Exception) {
                 _uiState.update { it.copy(saveError = "Failed to save drawing.") }
@@ -713,7 +767,12 @@ class WriteViewModel @Inject constructor(
     }
 
     fun startDictation() {
-        if (!_uiState.value.speechAvailable) return
+        if (!_uiState.value.speechAvailable) {
+            viewModelScope.launch {
+                _speechError.emit("Speech recognition is not available on this device")
+            }
+            return
+        }
         speechToTextService.startListening()
         _uiState.update { it.copy(isDictating = true) }
         analyticsService.logFeatureUsed("dictation_started")

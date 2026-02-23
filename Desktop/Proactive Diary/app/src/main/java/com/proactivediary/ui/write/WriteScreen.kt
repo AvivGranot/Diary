@@ -81,6 +81,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 
 @Composable
 fun WriteScreen(
@@ -89,12 +90,12 @@ fun WriteScreen(
     onShareStreak: ((Int) -> Unit)? = null,
     onEntrySaved: (() -> Unit)? = null,
     onNavigateToEntry: ((String) -> Unit)? = null,
+    onSuggestionsClick: (() -> Unit)? = null,
     notificationPrompt: String? = null,
     notificationStreak: Int = 0,
     onNotificationPromptConsumed: (() -> Unit)? = null
 ) {
     val state by viewModel.uiState.collectAsState()
-    val recommendationsState by viewModel.recommendations.collectAsState()
     val context = LocalContext.current
     val activity = context as? android.app.Activity
     var showTagDialog by remember { mutableStateOf(false) }
@@ -158,28 +159,6 @@ fun WriteScreen(
     ) { granted ->
         if (granted) {
             viewModel.startDictation()
-        }
-    }
-
-    // Photo permission launcher for recommendations panel
-    val photoPermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) {
-            viewModel.loadDevicePhotos()
-        }
-    }
-
-    // Check photo permission on launch
-    LaunchedEffect(Unit) {
-        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Manifest.permission.READ_MEDIA_IMAGES
-        } else {
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        }
-        val hasPermission = ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
-        if (hasPermission) {
-            viewModel.loadDevicePhotos()
         }
     }
 
@@ -407,25 +386,6 @@ fun WriteScreen(
                     Spacer(modifier = Modifier.height(6.dp))
                 }
 
-                // Apple Journal-style recommendations — always visible above editor
-                RecommendationsPanel(
-                    state = recommendationsState,
-                    colorKey = state.colorKey,
-                    onNearbyPlaceTapped = { viewModel.onNearbyPlaceTapped(it) },
-                    onPhotoTapped = { viewModel.addImage(it.uri) },
-                    onLocationTapped = { viewModel.onLocationSuggestionTapped(it) },
-                    onRecentEntryTapped = { entryId -> onNavigateToEntry?.invoke(entryId) },
-                    onRequestPhotoPermission = {
-                        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            Manifest.permission.READ_MEDIA_IMAGES
-                        } else {
-                            Manifest.permission.READ_EXTERNAL_STORAGE
-                        }
-                        photoPermissionLauncher.launch(permission)
-                    }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
                 // Title field — always visible, clean placeholder
                 BasicTextField(
                     value = state.title,
@@ -474,7 +434,11 @@ fun WriteScreen(
                         ) {
                             Box {
                                 AsyncImage(
-                                    model = imageFile,
+                                    model = ImageRequest.Builder(context)
+                                        .data(imageFile)
+                                        .memoryCacheKey("${image.id}_${image.addedAt}")
+                                        .diskCacheKey("${image.id}_${image.addedAt}")
+                                        .build(),
                                     contentDescription = "Photo",
                                     modifier = Modifier
                                         .then(
@@ -620,6 +584,7 @@ fun WriteScreen(
                 onTemplatesClick = { showTemplatePicker = true },
                 onShareClick = { contactPickerLauncher.launch(null) },
                 onDrawClick = { showDrawingCanvas = true },
+                onSuggestionsClick = { onSuggestionsClick?.invoke() },
                 isDictating = state.isDictating,
                 dictationSeconds = dictationSeconds,
                 onStopDictation = { viewModel.stopDictation() }

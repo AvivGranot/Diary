@@ -236,7 +236,11 @@ fun ProactiveDiaryNavHost(
                     }
                 )
             ) {
-                WriteScreen()
+                WriteScreen(
+                    onSuggestionsClick = {
+                        navController.navigate(Routes.SuggestionsFeed.route)
+                    }
+                )
             }
 
             // Settings (standalone, pushed from Profile tab gear icon)
