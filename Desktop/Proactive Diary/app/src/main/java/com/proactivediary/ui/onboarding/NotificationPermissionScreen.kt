@@ -232,115 +232,85 @@ fun NotificationPermissionScreen(
 }
 
 /**
- * Diary that opens from the middle like a real book — both covers spread outward.
+ * Thick ancient leather-bound book opening flat from the middle.
+ * Brown covers, gold accents, visible page thickness on both sides.
  */
 @Composable
 private fun DiaryOpenIcon(
     modifier: Modifier = Modifier,
     openProgress: Float
 ) {
-    val inkColor = MaterialTheme.colorScheme.onBackground
-    val pageColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f)
-    val coverColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.13f)
-    val lineStroke = Stroke(width = 1.5f, cap = StrokeCap.Round)
+    val leather = Color(0xFF5D4037)
+    val leatherDark = Color(0xFF3E2723)
+    val pageEdge = Color(0xFFF5E6D0)
+    val pageCream = Color(0xFFFAF3E8)
+    val goldAccent = Color(0xFFD4A843)
+    val spineColor = Color(0xFF4E342E)
 
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
         val cx = w / 2
-        val bookT = h * 0.08f
-        val bookB = h * 0.92f
+        val bookT = h * 0.05f
+        val bookB = h * 0.95f
         val bookH = bookB - bookT
-        val halfW = w * 0.38f
+        val halfW = w * 0.42f
+        val pageThick = bookH * 0.055f
 
-        // ── Left page (revealed as book opens) ──
-        val pageAlpha = (openProgress * 1.3f).coerceIn(0f, 1f)
-        drawRoundRect(
-            color = pageColor.copy(alpha = pageAlpha),
-            topLeft = Offset(cx - halfW + 4, bookT + 3),
-            size = Size(halfW - 6, bookH - 6),
-            cornerRadius = CornerRadius(3f)
-        )
-        // Right page
-        drawRoundRect(
-            color = pageColor.copy(alpha = pageAlpha),
-            topLeft = Offset(cx + 2, bookT + 3),
-            size = Size(halfW - 6, bookH - 6),
-            cornerRadius = CornerRadius(3f)
-        )
+        // ── Page blocks (thick stack of pages) ──
+        val pa = (openProgress * 1.5f).coerceIn(0f, 1f)
+        val leftL = cx - halfW + 5; val leftR = cx - 3
+        val rightL = cx + 3; val rightR = cx + halfW - 5
 
-        // Page lines on both sides
-        if (openProgress > 0.4f) {
-            val la = ((openProgress - 0.4f) / 0.6f).coerceIn(0f, 1f) * 0.18f
+        // Left pages
+        drawRect(pageCream.copy(alpha = pa * 0.9f), Offset(leftL, bookT + 3), Size(leftR - leftL, bookH - 6))
+        for (i in 0 until 18) {
+            val y = bookB - pageThick + pageThick * (i / 18f)
+            drawLine(pageEdge.copy(alpha = pa * (0.25f + i * 0.03f)), Offset(leftL, y), Offset(leftR, y), 0.5f)
+        }
+        // Right pages
+        drawRect(pageCream.copy(alpha = pa * 0.9f), Offset(rightL, bookT + 3), Size(rightR - rightL, bookH - 6))
+        for (i in 0 until 18) {
+            val y = bookB - pageThick + pageThick * (i / 18f)
+            drawLine(pageEdge.copy(alpha = pa * (0.25f + i * 0.03f)), Offset(rightL, y), Offset(rightR, y), 0.5f)
+        }
+
+        // Text lines
+        if (openProgress > 0.5f) {
+            val la = ((openProgress - 0.5f) / 0.5f).coerceIn(0f, 1f) * 0.18f
             for (i in 0..4) {
-                val y = bookT + bookH * (0.2f + i * 0.14f)
-                // Left page lines
-                drawLine(inkColor.copy(alpha = la), Offset(cx - halfW + 10, y), Offset(cx - 6, y), 0.8f)
-                // Right page lines
-                drawLine(inkColor.copy(alpha = la), Offset(cx + 6, y), Offset(cx + halfW - 10, y), 0.8f)
+                val y = bookT + bookH * (0.12f + i * 0.13f)
+                drawLine(leatherDark.copy(alpha = la), Offset(leftL + 6, y), Offset(leftR - 3, y), 0.7f)
+                drawLine(leatherDark.copy(alpha = la * 0.8f), Offset(rightL + 3, y), Offset(rightR - 6, y), 0.7f)
             }
         }
 
-        // ── Left cover — pivots open from center spine ──
-        val leftAngle = openProgress * 165f  // opens to the left
-        rotate(degrees = leftAngle, pivot = Offset(cx, (bookT + bookB) / 2)) {
-            drawRoundRect(
-                color = coverColor.copy(alpha = 0.85f),
-                topLeft = Offset(cx - halfW, bookT),
-                size = Size(halfW, bookH),
-                cornerRadius = CornerRadius(5f)
-            )
-            drawRoundRect(
-                color = inkColor.copy(alpha = 0.4f),
-                topLeft = Offset(cx - halfW, bookT),
-                size = Size(halfW, bookH),
-                cornerRadius = CornerRadius(5f),
-                style = lineStroke
-            )
+        // ── Left cover ──
+        rotate(openProgress * 170f, Offset(cx, (bookT + bookB) / 2)) {
+            drawRoundRect(leather, Offset(cx - halfW, bookT), Size(halfW, bookH), CornerRadius(4f))
+            drawRoundRect(leatherDark, Offset(cx - halfW, bookT), Size(halfW, bookH), CornerRadius(4f), style = Stroke(1.5f))
+            drawRoundRect(goldAccent.copy(alpha = 0.3f), Offset(cx - halfW + 5, bookT + 5), Size(halfW - 10, bookH - 10), CornerRadius(2f), style = Stroke(0.7f))
         }
 
-        // ── Right cover — pivots open from center spine ──
-        val rightAngle = -openProgress * 165f  // opens to the right
-        rotate(degrees = rightAngle, pivot = Offset(cx, (bookT + bookB) / 2)) {
-            drawRoundRect(
-                color = coverColor.copy(alpha = 0.85f),
-                topLeft = Offset(cx, bookT),
-                size = Size(halfW, bookH),
-                cornerRadius = CornerRadius(5f)
-            )
-            drawRoundRect(
-                color = inkColor.copy(alpha = 0.4f),
-                topLeft = Offset(cx, bookT),
-                size = Size(halfW, bookH),
-                cornerRadius = CornerRadius(5f),
-                style = lineStroke
-            )
-            // Title label on right cover
-            val labelW = halfW * 0.5f
-            val labelH = bookH * 0.07f
-            val labelX = cx + (halfW - labelW) / 2
-            val labelY = bookT + bookH * 0.42f
-            drawRoundRect(
-                color = inkColor.copy(alpha = 0.1f),
-                topLeft = Offset(labelX, labelY),
-                size = Size(labelW, labelH),
-                cornerRadius = CornerRadius(2f)
-            )
+        // ── Right cover ──
+        rotate(-openProgress * 170f, Offset(cx, (bookT + bookB) / 2)) {
+            drawRoundRect(leather, Offset(cx, bookT), Size(halfW, bookH), CornerRadius(4f))
+            drawRoundRect(leatherDark, Offset(cx, bookT), Size(halfW, bookH), CornerRadius(4f), style = Stroke(1.5f))
+            drawRoundRect(goldAccent.copy(alpha = 0.3f), Offset(cx + 5, bookT + 5), Size(halfW - 10, bookH - 10), CornerRadius(2f), style = Stroke(0.7f))
+            // Title
+            val lw = halfW * 0.5f; val lh = bookH * 0.07f
+            drawRoundRect(goldAccent.copy(alpha = 0.2f), Offset(cx + (halfW - lw) / 2, bookT + bookH * 0.4f), Size(lw, lh), CornerRadius(2f))
+            drawRoundRect(goldAccent.copy(alpha = 0.4f), Offset(cx + (halfW - lw) / 2, bookT + bookH * 0.4f), Size(lw, lh), CornerRadius(2f), style = Stroke(0.7f))
         }
 
-        // ── Center spine ──
-        drawLine(
-            color = inkColor.copy(alpha = 0.5f),
-            start = Offset(cx, bookT),
-            end = Offset(cx, bookB),
-            strokeWidth = 2f
-        )
+        // ── Spine with ridges ──
+        drawLine(spineColor, Offset(cx, bookT), Offset(cx, bookB), 3f)
+        for (i in 1..4) drawLine(leatherDark.copy(alpha = 0.5f), Offset(cx - 3, bookT + bookH * i / 5f), Offset(cx + 3, bookT + bookH * i / 5f), 1.5f)
 
-        // Bookmark ribbon from top
-        if (openProgress > 0.5f) {
-            val ra = ((openProgress - 0.5f) / 0.5f).coerceIn(0f, 1f) * 0.45f
-            val rx = cx + halfW * 0.5f
-            drawLine(Color(0xFFEF5350).copy(alpha = ra), Offset(rx, bookT - 2), Offset(rx, bookT + bookH * 0.15f), 2.5f)
+        // ── Bookmark ──
+        if (openProgress > 0.4f) {
+            val ra = ((openProgress - 0.4f) / 0.6f).coerceIn(0f, 1f) * 0.7f
+            drawLine(Color(0xFFC62828).copy(alpha = ra), Offset(cx + halfW * 0.45f, bookT - 3), Offset(cx + halfW * 0.45f, bookT + bookH * 0.17f), 2.5f, StrokeCap.Round)
         }
     }
 }
