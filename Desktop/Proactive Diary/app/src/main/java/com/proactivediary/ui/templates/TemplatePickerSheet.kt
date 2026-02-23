@@ -33,6 +33,13 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.theme.InstrumentSerif
 
+private val categoryDisplayNames = mapOf(
+    "shadow_work" to "Deep Self"
+)
+
+private fun categoryLabel(category: String): String =
+    categoryDisplayNames[category] ?: category.replaceFirstChar { it.uppercase() }
+
 @Composable
 fun TemplatePickerDialog(
     onDismiss: () -> Unit,
@@ -93,7 +100,7 @@ fun TemplatePickerDialog(
                     )
                     state.categories.forEach { category ->
                         CategoryChip(
-                            label = category.replaceFirstChar { it.uppercase() },
+                            label = categoryLabel(category),
                             selected = state.selectedCategory == category,
                             onClick = { viewModel.selectCategory(category) }
                         )

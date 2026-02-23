@@ -42,5 +42,7 @@ data class EntryEntity(
     @ColumnInfo(name = "is_bookmarked") val isBookmarked: Boolean = false,
     @ColumnInfo(name = "entry_date") val entryDate: Long? = null,
     // Phase 9: Font color
-    @ColumnInfo(name = "font_color") val fontColor: String? = null
+    @ColumnInfo(name = "font_color") val fontColor: String? = null,
+    // Time Capsule
+    @ColumnInfo(name = "capsule_open_date") val capsuleOpenDate: Long? = null
 )

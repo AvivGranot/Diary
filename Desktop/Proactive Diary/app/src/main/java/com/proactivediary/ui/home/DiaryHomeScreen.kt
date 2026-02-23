@@ -29,6 +29,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -61,6 +62,7 @@ import java.util.Locale
 fun DiaryHomeScreen(
     onSearchClick: () -> Unit = {},
     onWriteClick: () -> Unit = {},
+    onQuickCapture: () -> Unit = {},
     onEntryClick: (String) -> Unit = {},
     onNavigateToJournal: () -> Unit = {},
     viewModel: DiaryHomeViewModel = hiltViewModel()
@@ -195,6 +197,7 @@ fun DiaryHomeScreen(
                     TodaysPromptCard(
                         prompt = uiState.todayPrompt,
                         onWriteNow = onWriteClick,
+                        onQuickCapture = onQuickCapture,
                         modifier = Modifier.padding(
                             horizontal = DiarySpacing.screenHorizontal,
                             vertical = DiarySpacing.xs
@@ -280,10 +283,12 @@ fun DiaryHomeScreen(
 }
 
 // ── Today's Prompt Card ─────────────────────────────────────────────────────
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TodaysPromptCard(
     prompt: String,
     onWriteNow: () -> Unit,
+    onQuickCapture: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val extendedColors = LocalDiaryExtendedColors.current
@@ -336,24 +341,45 @@ private fun TodaysPromptCard(
 
             Spacer(modifier = Modifier.height(DiarySpacing.md))
 
-            // "Write now" CTA button
-            Button(
-                onClick = onWriteNow,
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = extendedColors.accent,
-                    contentColor = MaterialTheme.colorScheme.background
-                ),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
+            // CTA buttons row
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Write now",
-                    style = TextStyle(
-                        fontFamily = PlusJakartaSans,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
+                Button(
+                    onClick = onWriteNow,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = extendedColors.accent,
+                        contentColor = MaterialTheme.colorScheme.background
+                    ),
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = "Write now",
+                        style = TextStyle(
+                            fontFamily = PlusJakartaSans,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
                     )
-                )
+                }
+                Surface(
+                    onClick = onQuickCapture,
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant
+                ) {
+                    Text(
+                        text = "Quick thought",
+                        style = TextStyle(
+                            fontFamily = PlusJakartaSans,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        ),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+                    )
+                }
             }
         }
     }

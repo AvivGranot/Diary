@@ -54,6 +54,7 @@ import com.proactivediary.ui.settings.LayoutScreen
 import com.proactivediary.ui.insights.ThemeEvolutionScreen
 import com.proactivediary.ui.story.StoryGeneratorScreen
 import com.proactivediary.ui.write.WriteScreen
+import androidx.compose.runtime.LaunchedEffect
 
 // Onboarding routes where the bottom nav should be hidden
 private val onboardingRoutes = setOf(
@@ -74,6 +75,7 @@ fun ProactiveDiaryNavHost(
     deepLinkDestination: String? = null,
     deepLinkPrompt: String? = null,
     deepLinkGoalId: String? = null,
+    deepLinkEntryId: String? = null,
     onDeepLinkConsumed: () -> Unit = {}
 ) {
     val startDestination by viewModel.startDestination.collectAsState()
@@ -110,6 +112,14 @@ fun ProactiveDiaryNavHost(
             )
         }
         return
+    }
+
+    // Handle time capsule deep link
+    LaunchedEffect(deepLinkDestination, deepLinkEntryId) {
+        if (deepLinkDestination == "entry_detail" && deepLinkEntryId != null) {
+            navController.navigate(Routes.EntryDetail.createRoute(deepLinkEntryId))
+            onDeepLinkConsumed()
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -472,7 +482,18 @@ fun ProactiveDiaryNavHost(
 
             composable(Routes.SecuritySettings.route) {
                 com.proactivediary.ui.settings.SecuritySettingsScreen(
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onNavigateToPrivacyControls = {
+                        navController.navigate(Routes.PrivacyControls.route)
+                    }
+                )
+            }
+
+            // ── Privacy Controls ──
+
+            composable(Routes.PrivacyControls.route) {
+                com.proactivediary.ui.settings.PrivacyControlsScreen(
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 

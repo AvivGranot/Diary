@@ -1,6 +1,9 @@
 package com.proactivediary.ui.journal
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,9 +54,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material3.Icon
+import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material3.Surface
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.components.GlassCard
@@ -64,6 +68,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.outlined.Timelapse
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import com.proactivediary.data.db.entities.JournalEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,12 +79,17 @@ fun JournalScreen(
     onNavigateToRecentlyDeleted: (() -> Unit)? = null,
     onNavigateToMap: (() -> Unit)? = null,
     onBack: (() -> Unit)? = null,
-    viewModel: JournalViewModel = hiltViewModel()
+    viewModel: JournalViewModel = hiltViewModel(),
+    journalManageVM: JournalManageViewModel = hiltViewModel()
 ) {
     val state by viewModel.uiState.collectAsState()
+    val journalManageState by journalManageVM.uiState.collectAsState()
     var entryToDelete by remember { mutableStateOf<DiaryCardData?>(null) }
     var viewMode by remember { mutableStateOf("list") } // "list", "calendar", "gallery"
     var selectedDate by remember { mutableStateOf<java.time.LocalDate?>(null) }
+    var showSidebar by remember { mutableStateOf(false) }
+    var showCreateJournal by remember { mutableStateOf(false) }
+    var editingJournal by remember { mutableStateOf<JournalEntity?>(null) }
 
     Box(
         modifier = Modifier
@@ -132,13 +142,27 @@ fun JournalScreen(
             }
         }
 
-        // Pinned search bar
-        SearchBar(
-            query = state.searchQuery,
-            onQueryChanged = { viewModel.onSearchQueryChanged(it) },
-            onClear = { viewModel.clearSearch() },
-            modifier = Modifier.padding(top = 8.dp)
-        )
+        // Sidebar toggle + Pinned search bar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp, start = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = { showSidebar = !showSidebar }) {
+                Icon(
+                    imageVector = Icons.Outlined.MenuBook,
+                    contentDescription = "Journals",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            SearchBar(
+                query = state.searchQuery,
+                onQueryChanged = { viewModel.onSearchQueryChanged(it) },
+                onClear = { viewModel.clearSearch() },
+                modifier = Modifier.weight(1f)
+            )
+        }
 
         // View mode switcher
         if (!state.isLoading && !state.isEmpty) {
@@ -399,7 +423,83 @@ fun JournalScreen(
             }
         }
     }
+
+    // Sidebar scrim
+    if (showSidebar) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.4f))
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) { showSidebar = false }
+        )
+    }
+
+    // Sidebar — slides in from left
+    AnimatedVisibility(
+        visible = showSidebar,
+        enter = slideInHorizontally(initialOffsetX = { -it }),
+        exit = slideOutHorizontally(targetOffsetX = { -it })
+    ) {
+        JournalSidebar(
+            journals = journalManageState.journals,
+            selectedJournalId = journalManageState.selectedJournalId,
+            onJournalSelected = { id ->
+                journalManageVM.selectJournal(id)
+                viewModel.filterByJournal(id)
+                showSidebar = false
+            },
+            onCreateJournal = {
+                editingJournal = null
+                showCreateJournal = true
+            },
+            onEditJournal = { journal ->
+                editingJournal = journal
+                showCreateJournal = true
+            },
+            onClose = { showSidebar = false },
+            onReorder = { from, to ->
+                journalManageVM.reorderJournals(from, to)
+            }
+        )
+    }
+
     } // Close swipe-back Box
+
+    // Create/Edit journal sheet
+    if (showCreateJournal) {
+        CreateJournalSheet(
+            onDismiss = {
+                showCreateJournal = false
+                editingJournal = null
+            },
+            onSave = { title, emoji, colorKey ->
+                if (editingJournal != null) {
+                    journalManageVM.updateJournal(
+                        editingJournal!!.copy(
+                            title = title,
+                            emoji = emoji,
+                            colorKey = colorKey
+                        )
+                    )
+                } else {
+                    journalManageVM.createJournal(title, emoji, colorKey)
+                }
+                showCreateJournal = false
+                editingJournal = null
+            },
+            existingJournal = editingJournal,
+            onDelete = if (editingJournal != null) {
+                {
+                    journalManageVM.deleteJournal(editingJournal!!.id)
+                    showCreateJournal = false
+                    editingJournal = null
+                }
+            } else null
+        )
+    }
 
     // Delete confirmation dialog
     entryToDelete?.let { entry ->

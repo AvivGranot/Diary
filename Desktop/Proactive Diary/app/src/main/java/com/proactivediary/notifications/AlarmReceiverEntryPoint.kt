@@ -1,5 +1,6 @@
 package com.proactivediary.notifications
 
+import com.proactivediary.data.repository.EntryRepository
 import com.proactivediary.data.repository.StreakRepository
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
@@ -9,4 +10,5 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 interface AlarmReceiverEntryPoint {
     fun streakRepository(): StreakRepository
+    fun entryRepository(): EntryRepository
 }

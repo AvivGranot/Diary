@@ -50,7 +50,8 @@ data class EntryDetailUiState(
     val markFont: String = "serif",
     val isBookmarked: Boolean = false,
     val isLoaded: Boolean = false,
-    val isDeleted: Boolean = false
+    val isDeleted: Boolean = false,
+    val capsuleOpenDate: Long? = null
 )
 
 @HiltViewModel
@@ -146,7 +147,8 @@ class EntryDetailViewModel @Inject constructor(
                 wordCount = entry.wordCount,
                 dateHeader = dateHeader,
                 isBookmarked = entry.isBookmarked,
-                isLoaded = true
+                isLoaded = true,
+                capsuleOpenDate = entry.capsuleOpenDate
             )
         }
     }

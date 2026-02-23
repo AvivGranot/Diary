@@ -15,8 +15,10 @@ import com.proactivediary.data.location.LocationService
 import com.proactivediary.data.media.ImageMetadata
 import com.proactivediary.data.media.ImageStorageManager
 import com.proactivediary.data.repository.EntryRepository
+import com.proactivediary.data.repository.JournalRepository
 import com.proactivediary.data.weather.WeatherService
 import com.proactivediary.data.repository.StreakRepository
+import com.proactivediary.notifications.NotificationService
 import com.proactivediary.domain.WritingGoalService
 import com.proactivediary.domain.recommendations.NearbyPlace
 import com.proactivediary.domain.recommendations.LocationSuggestion
@@ -47,10 +49,20 @@ import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
 
+data class JournalPickerItem(
+    val id: String,
+    val title: String,
+    val emoji: String?
+)
+
 object WritingPrompts {
     val prompts = listOf(
+        "Even one word counts.",
+        "How are you? Really.",
+        "One sentence is enough.",
         "What's on your mind right now?",
         "One thing you're grateful for today.",
+        "Just a word. That's all you need.",
         "What would you tell yourself a year from now?",
         "Describe a moment that made you feel something today.",
         "What's something you're putting off? Why?",
@@ -134,7 +146,17 @@ data class WriteUiState(
     val partialTranscript: String = "",
     val speechAvailable: Boolean = false,
     val isFirstEverWrite: Boolean = false,
-    val fontColor: String? = null
+    val fontColor: String? = null,
+    val showFocusTimer: Boolean = false,
+    val focusTimerRunning: Boolean = false,
+    val focusTimerSeconds: Int = 300,
+    val showTimeCapsulePicker: Boolean = false,
+    val weeklyConsistencyLabel: String? = null,
+    val compassionateStreakMessage: String? = null,
+    val compassionateSaveMessage: String? = null,
+    val selectedJournalId: String? = null,
+    val selectedJournalName: String? = null,
+    val availableJournals: List<JournalPickerItem> = emptyList()
 )
 
 @OptIn(FlowPreview::class)
@@ -152,6 +174,8 @@ class WriteViewModel @Inject constructor(
     private val weatherService: WeatherService,
     private val insightDao: InsightDao,
     private val recommendationsProvider: RecommendationsProvider,
+    private val notificationService: NotificationService,
+    private val journalRepository: JournalRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -160,6 +184,7 @@ class WriteViewModel @Inject constructor(
 
     private val _contentFlow = MutableStateFlow("")
     private var titleSaveJob: Job? = null
+    private var focusTimerJob: Job? = null
     private val _transcribedTextFlow = MutableSharedFlow<String>(extraBufferCapacity = 20)
     val transcribedTextFlow: SharedFlow<String> = _transcribedTextFlow
 
@@ -185,6 +210,8 @@ class WriteViewModel @Inject constructor(
         setupAutoSave()
         loadGoalProgress()
         loadSmartPrompt()
+        loadWeeklyConsistency()
+        loadJournals()
         analyticsService.logWriteScreenViewed()
         loadRecommendations()
 
@@ -239,6 +266,7 @@ class WriteViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
+        focusTimerJob?.cancel()
         // Cancel any pending debounced title save — we'll force-save below
         titleSaveJob?.cancel()
         // Force-save any pending title/content changes before ViewModel is destroyed
@@ -342,6 +370,19 @@ class WriteViewModel @Inject constructor(
                         isNewEntry = false
                     )
                     _contentFlow.value = entry.content
+
+                    // Load journal assignment for existing entry
+                    val journalIds = journalRepository.getJournalIdsForEntry(entry.id)
+                    val firstJournalId = journalIds.firstOrNull()
+                    if (firstJournalId != null) {
+                        val journal = journalRepository.getById(firstJournalId)
+                        _uiState.update {
+                            it.copy(
+                                selectedJournalId = firstJournalId,
+                                selectedJournalName = journal?.title
+                            )
+                        }
+                    }
                 } else {
                     // Entry was deleted — fall through to create a new one
                     val newId = UUID.randomUUID().toString()
@@ -391,6 +432,12 @@ class WriteViewModel @Inject constructor(
                         isNewEntry = true
                     )
                     _contentFlow.value = ""
+
+                    // Focus timer is opt-in (off by default)
+                    val timerEnabled = preferenceDao.get("focus_timer_enabled")?.value == "true"
+                    if (timerEnabled) {
+                        _uiState.update { it.copy(showFocusTimer = true) }
+                    }
                 }
             }
         }
@@ -672,6 +719,14 @@ class WriteViewModel @Inject constructor(
                     if (isMilestone(streak)) {
                         streakMilestone = streak
                     }
+
+                    // Assign to journal if selected
+                    if (state.selectedJournalId != null) {
+                        journalRepository.addEntryToJournal(state.selectedJournalId!!, state.entryId)
+                    }
+
+                    // Check for time capsule template trigger
+                    // (handled below via showTimeCapsulePicker state)
                 } else {
                     entryRepository.update(entry)
 
@@ -685,6 +740,11 @@ class WriteViewModel @Inject constructor(
                 SaveResult(isFirstEntry, showDesignPrompt, goalMessage, goalProgress, streakMilestone)
             }
 
+            // Check if this is a capsule-eligible template (show picker on first save)
+            val isCapsuleTemplate = state.isNewEntry && state.templateId in listOf(
+                "tpl_letter_to_self", "tpl_inner_child_letter"
+            )
+
             // Apply all state changes atomically back on the calling dispatcher
             _uiState.update { current ->
                 current.copy(
@@ -695,7 +755,8 @@ class WriteViewModel @Inject constructor(
                     showDesignStudioPrompt = result.showDesignPrompt || current.showDesignStudioPrompt,
                     goalCompletedMessage = result.goalMessage ?: current.goalCompletedMessage,
                     weeklyGoalProgress = result.goalProgress ?: current.weeklyGoalProgress,
-                    showStreakCelebration = if (result.streakMilestone > 0) result.streakMilestone else current.showStreakCelebration
+                    showStreakCelebration = if (result.streakMilestone > 0) result.streakMilestone else current.showStreakCelebration,
+                    showTimeCapsulePicker = isCapsuleTemplate || current.showTimeCapsulePicker
                 )
             }
         } catch (e: Exception) {
@@ -846,12 +907,128 @@ class WriteViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(showFirstEntryCelebration = false)
     }
 
+    fun sealAsCapsule(openDateMs: Long) {
+        viewModelScope.launch {
+            val entryId = _uiState.value.entryId
+            withContext(Dispatchers.IO) {
+                entryRepository.setCapsuleOpenDate(entryId, openDateMs)
+                notificationService.scheduleTimeCapsuleAlarm(entryId, openDateMs)
+            }
+            _uiState.update { it.copy(showTimeCapsulePicker = false) }
+        }
+    }
+
+    fun dismissTimeCapsulePicker() {
+        _uiState.update { it.copy(showTimeCapsulePicker = false) }
+    }
+
+    private fun loadJournals() {
+        viewModelScope.launch {
+            journalRepository.getAll().collect { journals ->
+                _uiState.update {
+                    it.copy(
+                        availableJournals = journals.map { j ->
+                            JournalPickerItem(id = j.id, title = j.title, emoji = j.emoji)
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    fun assignToJournal(journalId: String?) {
+        val journal = _uiState.value.availableJournals.find { it.id == journalId }
+        _uiState.update {
+            it.copy(
+                selectedJournalId = journalId,
+                selectedJournalName = journal?.title
+            )
+        }
+    }
+
+    // --- Focus Timer ---
+
+    fun startFocusTimer() {
+        _uiState.update { it.copy(showFocusTimer = false, focusTimerRunning = true, focusTimerSeconds = 300) }
+        focusTimerJob = viewModelScope.launch {
+            while (_uiState.value.focusTimerSeconds > 0) {
+                delay(1000)
+                _uiState.update { it.copy(focusTimerSeconds = it.focusTimerSeconds - 1) }
+            }
+            // Timer done — UI handles "Well done!" display and calls dismissFocusTimer
+        }
+    }
+
+    fun skipFocusTimer() {
+        _uiState.update { it.copy(showFocusTimer = false) }
+    }
+
+    fun dismissFocusTimer() {
+        focusTimerJob?.cancel()
+        _uiState.update { it.copy(focusTimerRunning = false, focusTimerSeconds = 300) }
+    }
+
     private fun loadGoalProgress() {
         viewModelScope.launch {
             val progress = writingGoalService.getWritingGoalProgress()
             if (progress != null) {
                 _uiState.value = _uiState.value.copy(weeklyGoalProgress = progress)
             }
+        }
+    }
+
+    private fun loadWeeklyConsistency() {
+        viewModelScope.launch {
+            try {
+                val label = withContext(Dispatchers.IO) {
+                    streakRepository.getWeeklyConsistencyLabel()
+                }
+                val message = withContext(Dispatchers.IO) {
+                    streakRepository.getCompassionateMessage()
+                }
+                _uiState.update {
+                    it.copy(
+                        weeklyConsistencyLabel = label,
+                        compassionateStreakMessage = message
+                    )
+                }
+            } catch (_: Exception) { }
+        }
+    }
+
+    /**
+     * Quick capture: saves a minimal entry with just content.
+     */
+    fun saveQuickThought(text: String) {
+        if (text.isBlank()) return
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val now = System.currentTimeMillis()
+                val entry = EntryEntity(
+                    id = UUID.randomUUID().toString(),
+                    title = "",
+                    content = text,
+                    contentPlain = text,
+                    wordCount = computeWordCount(text),
+                    createdAt = now,
+                    updatedAt = now
+                )
+                entryRepository.insert(entry)
+            }
+        }
+    }
+
+    /**
+     * Compassionate save message based on word count.
+     */
+    fun getCompassionateSaveMessage(wordCount: Int): String {
+        return when {
+            wordCount <= 1 -> "that\u2019s a start"
+            wordCount <= 5 -> "every word counts"
+            wordCount <= 10 -> "that\u2019s all you need"
+            wordCount <= 30 -> "nice"
+            wordCount <= 50 -> "you\u2019re rolling"
+            else -> "you\u2019re in the flow"
         }
     }
 

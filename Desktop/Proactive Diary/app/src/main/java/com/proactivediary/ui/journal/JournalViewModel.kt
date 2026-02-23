@@ -5,9 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.proactivediary.data.db.dao.InsightDao
+import com.proactivediary.data.db.dao.JournalDao
 import com.proactivediary.data.db.entities.EntryEntity
 import com.proactivediary.data.repository.EntryRepository
 import com.proactivediary.data.repository.StreakRepository
+import com.proactivediary.domain.search.QueryType
 import com.proactivediary.domain.search.SearchEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.DayOfWeek
@@ -59,7 +62,8 @@ class JournalViewModel @Inject constructor(
     private val searchEngine: SearchEngine,
     private val streakRepository: StreakRepository,
     private val analyticsService: com.proactivediary.analytics.AnalyticsService,
-    private val insightDao: InsightDao
+    private val insightDao: InsightDao,
+    private val journalDao: JournalDao
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(JournalUiState())
@@ -76,6 +80,8 @@ class JournalViewModel @Inject constructor(
     }
 
     private var searchUsed = false
+    private var filterJournalId: String? = null
+    private var journalFilterJob: Job? = null
 
     init {
         loadInitialEntries()
@@ -100,9 +106,16 @@ class JournalViewModel @Inject constructor(
         loadJob = viewModelScope.launch {
             try {
                 val (entries, total) = withContext(Dispatchers.IO) {
-                    val page = entryRepository.getPage(PAGE_SIZE, 0)
-                    val total = entryRepository.getTotalCount()
-                    Pair(page, total)
+                    if (filterJournalId != null) {
+                        val entryIds = journalDao.getEntryIdsForJournal(filterJournalId!!).first()
+                        val idSet = entryIds.toSet()
+                        val all = entryRepository.getAllSync().filter { it.id in idSet }
+                        Pair(all, all.size)
+                    } else {
+                        val page = entryRepository.getPage(PAGE_SIZE, 0)
+                        val total = entryRepository.getTotalCount()
+                        Pair(page, total)
+                    }
                 }
                 totalEntryCount = total
                 currentOffset = entries.size
@@ -136,12 +149,21 @@ class JournalViewModel @Inject constructor(
                     // Skip during active search
                     if (currentState.searchQuery.isNotBlank()) return@collect
 
-                    totalEntryCount = entities.size
+                    val filteredEntities = if (filterJournalId != null) {
+                        val entryIds = withContext(Dispatchers.IO) {
+                            journalDao.getEntryIdsForJournal(filterJournalId!!).first()
+                        }
+                        entities.filter { it.id in entryIds.toSet() }
+                    } else {
+                        entities
+                    }
+
+                    totalEntryCount = filteredEntities.size
                     // Expand visible window when new entries arrive
-                    val visibleCount = maxOf(currentOffset, entities.size)
-                        .coerceAtMost(entities.size)
+                    val visibleCount = maxOf(currentOffset, filteredEntities.size)
+                        .coerceAtMost(filteredEntities.size)
                     currentOffset = visibleCount
-                    val cards = entities.take(visibleCount).map { it.toCardData() }
+                    val cards = filteredEntities.take(visibleCount).map { it.toCardData() }
                     val grouped = groupByDate(cards)
                     _uiState.value = currentState.copy(
                         entries = cards,
@@ -179,6 +201,12 @@ class JournalViewModel @Inject constructor(
         }
     }
 
+    fun filterByJournal(journalId: String?) {
+        journalFilterJob?.cancel()
+        filterJournalId = journalId
+        loadInitialEntries()
+    }
+
     fun onSearchQueryChanged(query: String) {
         _uiState.value = _uiState.value.copy(searchQuery = query)
 
@@ -209,66 +237,59 @@ class JournalViewModel @Inject constructor(
         loadJob?.cancel()
         _uiState.value = _uiState.value.copy(isSearching = true)
 
-        if (searchEngine.isDateQuery(query)) {
-            // Date-based search
-            val dateRange = searchEngine.parseDateRange(query)
-            if (dateRange != null) {
-                loadJob = viewModelScope.launch {
-                    entryRepository.getEntriesByDateRange(dateRange.first, dateRange.second)
-                        .catch {
-                            _uiState.value = _uiState.value.copy(
-                                isSearching = false,
-                                isSearchEmpty = true,
-                                entries = emptyList(),
-                                groupedEntries = emptyMap()
-                            )
-                        }
-                        .collect { entities ->
-                            val cards = entities.map { it.toCardData() }
-                            val grouped = groupByDate(cards)
-                            _uiState.value = _uiState.value.copy(
-                                entries = cards,
-                                groupedEntries = grouped,
-                                isSearching = false,
-                                isSearchEmpty = cards.isEmpty(),
-                                isEmpty = false
-                            )
-                        }
+        val parsed = searchEngine.parseNaturalQuery(query)
+
+        when (parsed.type) {
+            QueryType.DATE -> {
+                val dateRange = searchEngine.parseDateRange(query)
+                if (dateRange != null) {
+                    collectSearchResults(entryRepository.getEntriesByDateRange(dateRange.first, dateRange.second))
+                } else {
+                    emptySearchResult()
                 }
-            } else {
-                _uiState.value = _uiState.value.copy(
-                    isSearching = false,
-                    isSearchEmpty = true,
-                    entries = emptyList(),
-                    groupedEntries = emptyMap()
-                )
             }
-        } else {
-            // Content FTS search
-            val ftsQuery = searchEngine.buildFtsQuery(query)
-            loadJob = viewModelScope.launch {
-                entryRepository.searchContent(ftsQuery)
-                    .catch {
-                        _uiState.value = _uiState.value.copy(
-                            isSearching = false,
-                            isSearchEmpty = true,
-                            entries = emptyList(),
-                            groupedEntries = emptyMap()
-                        )
-                    }
-                    .collect { entities ->
-                        val cards = entities.map { it.toCardData() }
-                        val grouped = groupByDate(cards)
-                        _uiState.value = _uiState.value.copy(
-                            entries = cards,
-                            groupedEntries = grouped,
-                            isSearching = false,
-                            isSearchEmpty = cards.isEmpty(),
-                            isEmpty = false
-                        )
-                    }
+            QueryType.MOOD -> {
+                collectSearchResults(entryRepository.searchByMood(parsed.value))
+            }
+            QueryType.TAG -> {
+                collectSearchResults(entryRepository.searchByTag(parsed.value))
+            }
+            QueryType.LOCATION -> {
+                collectSearchResults(entryRepository.searchByLocation(parsed.value))
+            }
+            QueryType.TEXT -> {
+                val ftsQuery = searchEngine.buildFtsQuery(query)
+                collectSearchResults(entryRepository.searchContent(ftsQuery))
             }
         }
+    }
+
+    private fun collectSearchResults(flow: kotlinx.coroutines.flow.Flow<List<EntryEntity>>) {
+        loadJob = viewModelScope.launch {
+            flow.catch {
+                    emptySearchResult()
+                }
+                .collect { entities ->
+                    val cards = entities.map { it.toCardData() }
+                    val grouped = groupByDate(cards)
+                    _uiState.value = _uiState.value.copy(
+                        entries = cards,
+                        groupedEntries = grouped,
+                        isSearching = false,
+                        isSearchEmpty = cards.isEmpty(),
+                        isEmpty = false
+                    )
+                }
+        }
+    }
+
+    private fun emptySearchResult() {
+        _uiState.value = _uiState.value.copy(
+            isSearching = false,
+            isSearchEmpty = true,
+            entries = emptyList(),
+            groupedEntries = emptyMap()
+        )
     }
 
     private fun EntryEntity.toCardData(): DiaryCardData {
@@ -297,7 +318,8 @@ class JournalViewModel @Inject constructor(
             isBookmarked = isBookmarked,
             hasAudio = audioPath != null,
             hasLocation = latitude != null && longitude != null,
-            deletedAt = deletedAt
+            deletedAt = deletedAt,
+            capsuleOpenDate = capsuleOpenDate
         )
     }
 

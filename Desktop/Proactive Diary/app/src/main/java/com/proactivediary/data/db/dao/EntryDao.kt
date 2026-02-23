@@ -121,6 +121,38 @@ interface EntryDao {
     @Query("SELECT * FROM entries WHERE sync_status != 2 AND deleted_at IS NULL AND latitude IS NOT NULL AND longitude IS NOT NULL ORDER BY created_at DESC")
     suspend fun getEntriesWithLocationSync(): List<EntryEntity>
 
+    // ── Mood-aware suggestions ──
+
+    @Query("SELECT mood FROM entries WHERE sync_status != 2 AND deleted_at IS NULL AND mood IS NOT NULL ORDER BY created_at DESC LIMIT 1")
+    suspend fun getLatestMood(): String?
+
+    // ── Natural language search queries ──
+
+    @Query("SELECT * FROM entries WHERE sync_status != 2 AND deleted_at IS NULL AND mood = :moodKey ORDER BY created_at DESC LIMIT 50")
+    fun searchByMood(moodKey: String): Flow<List<EntryEntity>>
+
+    @Query("SELECT * FROM entries WHERE sync_status != 2 AND deleted_at IS NULL AND tags LIKE '%' || :tag || '%' ORDER BY created_at DESC LIMIT 50")
+    fun searchByTag(tag: String): Flow<List<EntryEntity>>
+
+    @Query("SELECT * FROM entries WHERE sync_status != 2 AND deleted_at IS NULL AND location_name LIKE '%' || :location || '%' ORDER BY created_at DESC LIMIT 50")
+    fun searchByLocation(location: String): Flow<List<EntryEntity>>
+
+    // ── Time Capsule ──
+
+    @Query("UPDATE entries SET capsule_open_date = :openDate WHERE id = :id")
+    suspend fun setCapsuleOpenDate(id: String, openDate: Long?)
+
+    @Query("SELECT * FROM entries WHERE sync_status != 2 AND deleted_at IS NULL AND capsule_open_date IS NOT NULL AND capsule_open_date <= :now ORDER BY capsule_open_date DESC")
+    fun getOpenedCapsules(now: Long): Flow<List<EntryEntity>>
+
+    @Query("SELECT * FROM entries WHERE sync_status != 2 AND deleted_at IS NULL AND capsule_open_date IS NOT NULL AND capsule_open_date > :now ORDER BY capsule_open_date ASC")
+    fun getPendingCapsules(now: Long): Flow<List<EntryEntity>>
+
+    // ── Backfill-aware day count (uses COALESCE for backdated entries) ──
+
+    @Query("SELECT COUNT(*) FROM entries WHERE sync_status != 2 AND deleted_at IS NULL AND COALESCE(entry_date, created_at) BETWEEN :startOfDay AND :endOfDay")
+    suspend fun countEntriesForDayWithBackfill(startOfDay: Long, endOfDay: Long): Int
+
     // ── Sync methods ──
 
     @Query("SELECT * FROM entries WHERE sync_status != 0")

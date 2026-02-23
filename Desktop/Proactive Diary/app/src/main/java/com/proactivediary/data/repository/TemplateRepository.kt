@@ -478,6 +478,92 @@ class TemplateRepository @Inject constructor(
                 category = "growth",
                 isBuiltIn = true,
                 createdAt = now
+            ),
+
+            // ── SHADOW WORK & INNER CHILD ──────────────────────────
+            TemplateEntity(
+                id = "tpl_shadow_exploration",
+                title = "Shadow Exploration",
+                description = "Explore hidden parts of yourself",
+                prompts = gson.toJson(listOf(
+                    "A quality I judge in others that might exist in me...",
+                    "Something I hide from the world, and why...",
+                    "A pattern I keep repeating — what's underneath it?",
+                    "What would change if I accepted this part of myself?"
+                )),
+                category = "shadow_work",
+                isBuiltIn = true,
+                createdAt = now
+            ),
+            TemplateEntity(
+                id = "tpl_inner_child_letter",
+                title = "Inner Child Letter",
+                description = "Write to your younger self with compassion",
+                prompts = gson.toJson(listOf(
+                    "Dear younger me,\n\nI want you to know...",
+                    "The thing you were most afraid of back then...",
+                    "What I wish someone had told you...",
+                    "You grew up to be someone who..."
+                )),
+                category = "shadow_work",
+                isBuiltIn = true,
+                createdAt = now
+            ),
+            TemplateEntity(
+                id = "tpl_boundary_check",
+                title = "Boundary Check",
+                description = "Examine the limits you set and honor",
+                prompts = gson.toJson(listOf(
+                    "A boundary I set recently — did I hold it?",
+                    "Where I said yes when I meant no...",
+                    "What I'm protecting by having this boundary...",
+                    "A boundary I need to set but haven't yet..."
+                )),
+                category = "shadow_work",
+                isBuiltIn = true,
+                createdAt = now
+            ),
+            TemplateEntity(
+                id = "tpl_forgiveness_practice",
+                title = "Forgiveness Practice",
+                description = "Release resentment, one layer at a time",
+                prompts = gson.toJson(listOf(
+                    "Someone or something I'm holding resentment toward...",
+                    "What this resentment costs me daily...",
+                    "What forgiveness would feel like — not for them, for me...",
+                    "One small thing I can release today..."
+                )),
+                category = "shadow_work",
+                isBuiltIn = true,
+                createdAt = now
+            ),
+            TemplateEntity(
+                id = "tpl_values_alignment",
+                title = "Values Alignment",
+                description = "Check if your actions match your values",
+                prompts = gson.toJson(listOf(
+                    "A value I say matters to me...",
+                    "A moment this week where my actions aligned with it...",
+                    "A moment where they didn't — what got in the way?",
+                    "One small adjustment I can make tomorrow..."
+                )),
+                category = "shadow_work",
+                isBuiltIn = true,
+                createdAt = now
+            ),
+            TemplateEntity(
+                id = "tpl_fear_inventory",
+                title = "Fear Inventory",
+                description = "Name your fears and shrink their power",
+                prompts = gson.toJson(listOf(
+                    "Three fears I'm carrying right now...",
+                    "Which of these is protecting me, and which is holding me back?",
+                    "The worst case — what would actually happen?",
+                    "What would I do today if this fear didn't exist?"
+                )),
+                category = "shadow_work",
+                isBuiltIn = true,
+                createdAt = now
             )
         )
     }

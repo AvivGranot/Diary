@@ -208,6 +208,10 @@ fun isMilestone(streak: Int): Boolean {
     return streak in listOf(7, 14, 21, 30, 50, 100, 365)
 }
 
+fun isWeeklyMilestone(weeksOnTarget: Int): Boolean {
+    return weeksOnTarget in listOf(4, 8, 12, 26, 52)
+}
+
 @Composable
 fun FirstEntryCelebration(
     onDismiss: () -> Unit

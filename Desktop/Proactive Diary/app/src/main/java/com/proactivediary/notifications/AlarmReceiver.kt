@@ -41,6 +41,13 @@ class AlarmReceiver : BroadcastReceiver() {
             return
         }
 
+        // Time capsule notifications are one-shot — don't reschedule
+        if (type == TYPE_TIME_CAPSULE) {
+            val entryId = intent.getStringExtra(EXTRA_ENTRY_ID)
+            if (entryId != null) showTimeCapsuleNotification(context, entryId)
+            return
+        }
+
         // Always reschedule tomorrow's exact alarm (since we no longer use setRepeating)
         rescheduleNextAlarm(context, intent, type, id)
 
@@ -58,6 +65,10 @@ class AlarmReceiver : BroadcastReceiver() {
 
             TYPE_FALLBACK -> {
                 handleFallbackCheck(context, id, label)
+            }
+
+            TYPE_ON_THIS_DAY -> {
+                handleOnThisDayCheck(context)
             }
         }
     }
@@ -257,6 +268,124 @@ class AlarmReceiver : BroadcastReceiver() {
         notificationManager.notify(notificationId, notification)
     }
 
+    /**
+     * Feature 3: On This Day — check if there are entries from this date in
+     * previous years and show a memory notification if found.
+     */
+    private fun handleOnThisDayCheck(context: Context) {
+        val pendingResult = goAsync()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val entryPoint = EntryPointAccessors.fromApplication(
+                    context.applicationContext,
+                    AlarmReceiverEntryPoint::class.java
+                )
+                val entryRepository = entryPoint.entryRepository()
+                val today = java.time.LocalDate.now()
+                val zone = java.time.ZoneId.systemDefault()
+
+                // Check last 5 years for entries on this date
+                var foundEntry: com.proactivediary.data.db.entities.EntryEntity? = null
+                var yearsAgo = 0
+
+                for (y in 1..5) {
+                    val pastDate = today.minusYears(y.toLong())
+                    val entry = try { entryRepository.getEntryForDate(pastDate) } catch (_: Exception) { null }
+                    if (entry != null) {
+                        foundEntry = entry
+                        yearsAgo = y
+                        break
+                    }
+                }
+
+                if (foundEntry != null) {
+                    showOnThisDayNotification(context, foundEntry, yearsAgo)
+                }
+            } catch (_: Exception) { }
+            finally {
+                pendingResult.finish()
+            }
+        }
+    }
+
+    private fun showOnThisDayNotification(
+        context: Context,
+        entry: com.proactivediary.data.db.entities.EntryEntity,
+        yearsAgo: Int
+    ) {
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val preview = (entry.contentPlain ?: entry.content).take(100).let {
+            if (it.length == 100) "$it..." else it
+        }
+
+        val title = "On this day, $yearsAgo year${if (yearsAgo > 1) "s" else ""} ago"
+        val body = if (entry.title.isNotBlank()) {
+            "\u201C${entry.title}\u201D \u2014 $preview"
+        } else {
+            preview
+        }
+
+        val tapIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_TAB, TAB_ON_THIS_DAY)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            ON_THIS_DAY_NOTIFICATION_ID,
+            tapIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, NotificationChannels.CHANNEL_MEMORIES)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle(title)
+            .setContentText(body)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(body))
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        notificationManager.notify(ON_THIS_DAY_NOTIFICATION_ID, notification)
+    }
+
+    private fun showTimeCapsuleNotification(context: Context, entryId: String) {
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val notificationId = (entryId.hashCode() and 0x7FFFFFFF) % 100 + TIME_CAPSULE_BASE_ID
+
+        val tapIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra(EXTRA_TAB, TAB_ENTRY_DETAIL)
+            putExtra(EXTRA_ENTRY_ID, entryId)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            notificationId,
+            tapIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, NotificationChannels.CHANNEL_MEMORIES)
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("A letter from your past self is ready")
+            .setContentText("Your time capsule has opened. Tap to read what you wrote.")
+            .setStyle(NotificationCompat.BigTextStyle()
+                .bigText("Your time capsule has opened. Tap to read what you wrote."))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        notificationManager.notify(notificationId, notification)
+    }
+
     private fun showTestNotification(context: Context) {
         val notificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -308,6 +437,7 @@ class AlarmReceiver : BroadcastReceiver() {
             TYPE_WRITING -> (id.hashCode() and 0x7FFFFFFF) % 100000
             TYPE_GOAL -> ((id.hashCode() and 0x7FFFFFFF) % 100000) + 100000
             TYPE_FALLBACK -> ((id.hashCode() and 0x7FFFFFFF) % 100000) + 200000
+            TYPE_ON_THIS_DAY -> 300000
             else -> return
         }
 
@@ -356,10 +486,18 @@ class AlarmReceiver : BroadcastReceiver() {
         const val TYPE_GOAL = "goal"
         const val TYPE_FALLBACK = "fallback_check"
         const val TYPE_TEST = "test"
+        const val TYPE_ON_THIS_DAY = "on_this_day"
+        const val TYPE_TIME_CAPSULE = "time_capsule"
 
         const val TAB_WRITE = "write"
         const val TAB_GOALS = "goals"
+        const val TAB_ON_THIS_DAY = "on_this_day"
+        const val TAB_ENTRY_DETAIL = "entry_detail"
+
+        const val EXTRA_ENTRY_ID = "capsule_entry_id"
 
         const val TEST_NOTIFICATION_ID = 9998
+        const val ON_THIS_DAY_NOTIFICATION_ID = 9997
+        const val TIME_CAPSULE_BASE_ID = 9900
     }
 }

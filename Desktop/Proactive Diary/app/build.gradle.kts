@@ -213,6 +213,10 @@ dependencies {
     implementation("com.google.maps.android:maps-compose-utils:4.3.3")
     implementation("com.google.android.gms:play-services-maps:19.0.0")
 
+    // SQLCipher (database encryption)
+    implementation("net.zetetic:android-database-sqlcipher:4.5.4")
+    implementation("androidx.sqlite:sqlite-ktx:2.4.0")
+
     // Phase 9: Video playback
     implementation("androidx.media3:media3-exoplayer:1.2.1")
     implementation("androidx.media3:media3-ui:1.2.1")

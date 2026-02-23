@@ -25,7 +25,7 @@ data class SubscriptionState(
     val totalWords: Int = 0
 )
 
-enum class Plan { TRIAL, MONTHLY, ANNUAL, EXPIRED }
+enum class Plan { TRIAL, ANNUAL, EXPIRED }
 
 @HiltViewModel
 class BillingViewModel @Inject constructor(
@@ -51,8 +51,8 @@ class BillingViewModel @Inject constructor(
     val isFirstPaywallView: StateFlow<Boolean> = _isFirstPaywallView
 
     companion object {
-        /** Show paywall after this many entries — disabled until 1K DAU (set to effectively infinite) */
-        const val ENTRY_GATE_THRESHOLD = 999_999
+        /** Show paywall after this many free entries */
+        const val ENTRY_GATE_THRESHOLD = 30
 
         // Preference keys for offline cache
         private const val KEY_CACHED_PLAN = "billing_cached_plan"
@@ -83,10 +83,7 @@ class BillingViewModel @Inject constructor(
             billingService.purchaseState.collect { result ->
                 _purchaseResult.value = result
                 if (result is PurchaseResult.Success) {
-                    val planType = when {
-                        billingService.isAnnual() -> "annual"
-                        else -> "monthly"
-                    }
+                    val planType = "annual"
                     analyticsService.logSubscriptionStarted(planType)
                     refreshSubscriptionState()
                 }
@@ -139,10 +136,7 @@ class BillingViewModel @Inject constructor(
     private fun getSubscriptionState(): SubscriptionState {
         // First check if user has an active paid subscription
         if (billingService.hasActiveSubscription()) {
-            val plan = when {
-                billingService.isAnnual() -> Plan.ANNUAL
-                else -> Plan.MONTHLY
-            }
+            val plan = Plan.ANNUAL
             return SubscriptionState(isActive = true, plan = plan, trialDaysLeft = 0)
         }
 

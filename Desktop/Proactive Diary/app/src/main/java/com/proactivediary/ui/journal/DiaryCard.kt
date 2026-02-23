@@ -51,7 +51,8 @@ data class DiaryCardData(
     val isBookmarked: Boolean = false,
     val hasAudio: Boolean = false,
     val hasLocation: Boolean = false,
-    val deletedAt: Long? = null
+    val deletedAt: Long? = null,
+    val capsuleOpenDate: Long? = null
 )
 
 @Composable
@@ -63,11 +64,20 @@ fun DiaryCard(
     // All entries use blue accent (mood feature removed)
     val accentColor = DarkPalette.primary
 
-    val displayTitle = data.title.ifBlank {
-        data.content.lines().firstOrNull()?.take(60) ?: ""
+    val isSealed = data.capsuleOpenDate != null && data.capsuleOpenDate > System.currentTimeMillis()
+
+    val displayTitle = if (isSealed) {
+        "\u2709\uFE0F  Time Capsule"
+    } else {
+        data.title.ifBlank {
+            data.content.lines().firstOrNull()?.take(60) ?: ""
+        }
     }
 
-    val contentPreview = if (data.title.isNotBlank()) {
+    val contentPreview = if (isSealed) {
+        val sdf = SimpleDateFormat("MMM d, yyyy", Locale.US)
+        "Opens on ${sdf.format(Date(data.capsuleOpenDate!!))}"
+    } else if (data.title.isNotBlank()) {
         data.content.trimStart().take(200)
     } else {
         val lines = data.content.lines()

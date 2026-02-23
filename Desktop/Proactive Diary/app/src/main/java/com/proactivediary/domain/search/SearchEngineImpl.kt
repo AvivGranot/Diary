@@ -157,6 +157,76 @@ class SearchEngineImpl @Inject constructor() : SearchEngine {
         return null
     }
 
+    // ── Natural language query parsing ─────────────────────────
+
+    private val moodKeywords = mapOf(
+        "great" to "great", "amazing" to "great", "fantastic" to "great", "wonderful" to "great",
+        "good" to "good", "happy" to "good", "fine" to "good", "nice" to "good",
+        "okay" to "okay", "ok" to "okay", "meh" to "okay", "alright" to "okay",
+        "bad" to "bad", "sad" to "bad", "down" to "bad", "upset" to "bad", "anxious" to "bad", "stressed" to "bad",
+        "awful" to "awful", "terrible" to "awful", "horrible" to "awful", "worst" to "awful"
+    )
+
+    private val moodPrefixes = listOf(
+        Regex("^(?:feeling|felt|mood[:\\s]+|when i (?:felt|was|feel))\\s+(.+)", RegexOption.IGNORE_CASE),
+        Regex("^(?:entries (?:where|when) i (?:felt|was|feel))\\s+(.+)", RegexOption.IGNORE_CASE)
+    )
+
+    private val tagPrefixes = listOf(
+        Regex("^#(\\w+)", RegexOption.IGNORE_CASE),
+        Regex("^(?:tagged?|tag[:\\s]+|about #)\\s*(.+)", RegexOption.IGNORE_CASE)
+    )
+
+    private val locationPrefixes = listOf(
+        Regex("^(?:(?:entries )?(?:in|at|near|from))\\s+(.+)", RegexOption.IGNORE_CASE),
+        Regex("^(?:location[:\\s]+)\\s*(.+)", RegexOption.IGNORE_CASE)
+    )
+
+    override fun parseNaturalQuery(query: String): NaturalLanguageQuery {
+        val trimmed = query.trim()
+        if (trimmed.isBlank()) return NaturalLanguageQuery(QueryType.TEXT, trimmed)
+
+        // 1. Check for date queries first (existing logic)
+        if (isDateQuery(trimmed)) {
+            return NaturalLanguageQuery(QueryType.DATE, trimmed)
+        }
+
+        // 2. Check mood queries: "feeling anxious", "mood: bad"
+        for (regex in moodPrefixes) {
+            val match = regex.find(trimmed)
+            if (match != null) {
+                val moodWord = match.groupValues[1].lowercase().trim()
+                val moodKey = moodKeywords[moodWord]
+                if (moodKey != null) {
+                    return NaturalLanguageQuery(QueryType.MOOD, moodKey)
+                }
+            }
+        }
+
+        // 3. Check tag queries: "#work", "tagged travel"
+        for (regex in tagPrefixes) {
+            val match = regex.find(trimmed)
+            if (match != null) {
+                return NaturalLanguageQuery(QueryType.TAG, match.groupValues[1].trim())
+            }
+        }
+
+        // 4. Check location queries: "in London", "at the park"
+        for (regex in locationPrefixes) {
+            val match = regex.find(trimmed)
+            if (match != null) {
+                val locationValue = match.groupValues[1].trim()
+                // Avoid false positives with very short location names
+                if (locationValue.length >= 3) {
+                    return NaturalLanguageQuery(QueryType.LOCATION, locationValue)
+                }
+            }
+        }
+
+        // 5. Default: text search
+        return NaturalLanguageQuery(QueryType.TEXT, trimmed)
+    }
+
     private fun dayRange(date: LocalDate, zone: ZoneId): Pair<Long, Long> {
         return Pair(
             date.atStartOfDay(zone).toInstant().toEpochMilli(),

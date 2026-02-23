@@ -19,8 +19,9 @@ import kotlinx.coroutines.flow.StateFlow
 class BillingService(private val context: Context) : PurchasesUpdatedListener {
 
     companion object {
-        const val MONTHLY_SKU = "pd_monthly"
         const val ANNUAL_SKU = "pd_annual"
+        /** @deprecated Monthly plan removed — annual-only pricing */
+        const val MONTHLY_SKU = "pd_monthly"
         private const val MAX_RETRY_COUNT = 3
     }
 

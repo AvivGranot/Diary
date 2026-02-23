@@ -37,4 +37,13 @@ interface EntryRepository {
     suspend fun updateEntryDate(entryId: String, entryDate: Long?)
     // Phase 6: Location entries
     fun getEntriesWithLocation(): Flow<List<EntryEntity>>
+    // Mood-aware suggestions
+    suspend fun getLatestMood(): String?
+    // Natural language search
+    fun searchByMood(moodKey: String): Flow<List<EntryEntity>>
+    fun searchByTag(tag: String): Flow<List<EntryEntity>>
+    fun searchByLocation(location: String): Flow<List<EntryEntity>>
+    // Time Capsule
+    suspend fun setCapsuleOpenDate(entryId: String, openDate: Long?)
+    fun getPendingCapsules(): Flow<List<EntryEntity>>
 }

@@ -11,6 +11,7 @@ object NotificationChannels {
     const val CHANNEL_DIGEST = "weekly_digest"
     const val CHANNEL_NOTES = "anonymous_notes"
     const val CHANNEL_SYDNEY = "sydney_listener"
+    const val CHANNEL_MEMORIES = "on_this_day_memories"
 
     fun createChannels(context: Context) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -64,6 +65,15 @@ object NotificationChannels {
         notificationManager.createNotificationChannel(lapsedChannel)
         notificationManager.createNotificationChannel(digestChannel)
         notificationManager.createNotificationChannel(notesChannel)
+
+        val memoriesChannel = NotificationChannel(
+            CHANNEL_MEMORIES,
+            "On This Day",
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = "Memories from past journal entries on this date"
+        }
+        notificationManager.createNotificationChannel(memoriesChannel)
 
         val sydneyChannel = NotificationChannel(
             CHANNEL_SYDNEY,

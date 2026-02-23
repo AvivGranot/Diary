@@ -117,7 +117,8 @@ class DiaryHomeViewModel @Inject constructor(
             wordCount = wordCount,
             createdAt = createdAt,
             imageCount = imageCount,
-            mood = null
+            mood = null,
+            capsuleOpenDate = capsuleOpenDate
         )
     }
 

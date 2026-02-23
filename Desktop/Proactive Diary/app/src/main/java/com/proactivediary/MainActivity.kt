@@ -2,12 +2,19 @@ package com.proactivediary
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.lifecycleScope
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.proactivediary.analytics.AnalyticsService
@@ -17,11 +24,15 @@ import com.proactivediary.data.repository.GoalRepository
 import com.proactivediary.data.repository.StreakRepository
 import com.proactivediary.navigation.ProactiveDiaryNavHost
 import com.proactivediary.playstore.InAppUpdateService
+import com.proactivediary.ui.lock.LockScreen
+import com.proactivediary.ui.lock.LockViewModel
 import com.proactivediary.ui.theme.ProactiveDiaryTheme
 
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -47,10 +58,13 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var streakRepository: StreakRepository
 
+    private val lockViewModel: LockViewModel by viewModels()
+
     private var sessionStartMs = 0L
     private val _deepLinkDestination = MutableStateFlow<String?>(null)
     private val _deepLinkPrompt = MutableStateFlow<String?>(null)
     private val _deepLinkGoalId = MutableStateFlow<String?>(null)
+    private val _deepLinkEntryId = MutableStateFlow<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -59,6 +73,29 @@ class MainActivity : ComponentActivity() {
         sessionStartMs = System.currentTimeMillis()
 
         handleDeepLink(intent)
+
+        // Feature 1: Apply FLAG_SECURE when "Hide in App Switcher" is enabled
+        lifecycleScope.launch {
+            preferenceDao.observe("hide_in_switcher")
+                .map { it?.value == "true" }
+                .collectLatest { hideContent ->
+                    if (hideContent) {
+                        window.setFlags(
+                            WindowManager.LayoutParams.FLAG_SECURE,
+                            WindowManager.LayoutParams.FLAG_SECURE
+                        )
+                    } else {
+                        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                    }
+                }
+        }
+
+        // Wire lock overlay: show LockScreen when app resumes with lock enabled
+        lifecycle.addObserver(LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                lockViewModel.onAppResumed()
+            }
+        })
 
         analyticsService.logAppOpened()
         inAppUpdateService.checkForUpdate(this)
@@ -114,6 +151,8 @@ class MainActivity : ComponentActivity() {
             val deepLink by _deepLinkDestination.collectAsState()
             val deepLinkPrompt by _deepLinkPrompt.collectAsState()
             val deepLinkGoalId by _deepLinkGoalId.collectAsState()
+            val deepLinkEntryId by _deepLinkEntryId.collectAsState()
+            val isLocked by lockViewModel.isLocked.collectAsState()
 
             // Observe theme preferences reactively (auto-recomposes on change)
             val themePref by preferenceDao.observe("theme_mode")
@@ -128,17 +167,26 @@ class MainActivity : ComponentActivity() {
                 darkTheme = isDarkTheme,
                 accentColorKey = accentKey
             ) {
-                ProactiveDiaryNavHost(
-                    analyticsService = analyticsService,
-                    deepLinkDestination = deepLink,
-                    deepLinkPrompt = deepLinkPrompt,
-                    deepLinkGoalId = deepLinkGoalId,
-                    onDeepLinkConsumed = {
-                        _deepLinkDestination.value = null
-                        _deepLinkPrompt.value = null
-                        _deepLinkGoalId.value = null
+                Box(modifier = Modifier.fillMaxSize()) {
+                    ProactiveDiaryNavHost(
+                        analyticsService = analyticsService,
+                        deepLinkDestination = deepLink,
+                        deepLinkPrompt = deepLinkPrompt,
+                        deepLinkGoalId = deepLinkGoalId,
+                        deepLinkEntryId = deepLinkEntryId,
+                        onDeepLinkConsumed = {
+                            _deepLinkDestination.value = null
+                            _deepLinkPrompt.value = null
+                            _deepLinkGoalId.value = null
+                            _deepLinkEntryId.value = null
+                        }
+                    )
+
+                    // Lock overlay on top of everything
+                    if (isLocked) {
+                        LockScreen(onUnlocked = { lockViewModel.unlock() })
                     }
-                )
+                }
             }
         }
     }
@@ -156,6 +204,7 @@ class MainActivity : ComponentActivity() {
             _deepLinkDestination.value = destination
             _deepLinkPrompt.value = intent.getStringExtra("notification_prompt")
             _deepLinkGoalId.value = intent.getStringExtra("notification_goal_id")
+            _deepLinkEntryId.value = intent.getStringExtra("capsule_entry_id")
         }
     }
 

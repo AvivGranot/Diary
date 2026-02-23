@@ -174,7 +174,7 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "AI Insights",
+                        text = "Weekly Insights",
                         style = TextStyle(
                             fontFamily = PlusJakartaSans,
                             fontSize = 15.sp,
@@ -182,7 +182,7 @@ fun SettingsScreen(
                         )
                     )
                     Text(
-                        text = "Weekly writing pattern analysis",
+                        text = "Your journal finds patterns in your writing (opt-in)",
                         style = TextStyle(
                             fontFamily = PlusJakartaSans,
                             fontSize = 12.sp,
@@ -259,7 +259,6 @@ fun SettingsScreen(
                 label = "Subscription",
                 value = when (subscriptionState.plan) {
                     Plan.TRIAL -> "Free (${subscriptionState.trialDaysLeft} left)"
-                    Plan.MONTHLY -> "Monthly"
                     Plan.ANNUAL -> "Annual"
                     Plan.EXPIRED -> "Expired"
                 },
@@ -371,8 +370,7 @@ fun SettingsScreen(
             onDismiss = { showPaywall = false },
             entryCount = subState.entryCount,
             totalWords = subState.totalWords,
-            monthlyPrice = billingViewModel.getMonthlyPrice()?.let { "$it/month" } ?: "$2/month",
-            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$15/year",
+            annualPrice = billingViewModel.getAnnualPrice()?.let { "$it/year" } ?: "$19.99/year",
             onSelectPlan = { sku ->
                 activity?.let { billingViewModel.launchPurchase(it, sku) }
                 showPaywall = false
@@ -423,7 +421,7 @@ fun SettingsScreen(
 
                     Text("Network Connections", style = sectionStyle)
                     Spacer(Modifier.height(4.dp))
-                    Text("Network connections: Google Play (subscriptions), Firebase (optional auth), Open-Meteo (weather data). If you enable AI Insights, your entry text is analyzed using the Google Gemini API. AI Insights are opt-in only.", style = bodyStyle)
+                    Text("Network connections: Google Play (subscriptions), Firebase (optional auth), Open-Meteo (weather data). If you enable Weekly Insights, your entry text is analyzed to find patterns using the Google Gemini API. This is opt-in only and never on by default.", style = bodyStyle)
                     Spacer(Modifier.height(12.dp))
 
                     Text("Personal Information", style = sectionStyle)

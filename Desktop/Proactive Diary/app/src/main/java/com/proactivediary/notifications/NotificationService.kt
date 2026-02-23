@@ -157,6 +157,71 @@ class NotificationService @Inject constructor(
     }
 
     /**
+     * Feature 3: Schedule a daily "On This Day" check at 9 AM.
+     * The alarm fires every day and the receiver checks for past entries.
+     */
+    fun scheduleOnThisDayCheck() {
+        if (!canScheduleAlarms()) return
+
+        val requestCode = 300000
+
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
+            putExtra(AlarmReceiver.EXTRA_TYPE, AlarmReceiver.TYPE_ON_THIS_DAY)
+            putExtra(AlarmReceiver.EXTRA_ID, "on_this_day")
+            putExtra(AlarmReceiver.EXTRA_DAYS, "[0,1,2,3,4,5,6]")
+            putExtra(AlarmReceiver.EXTRA_TIME, "09:00")
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val triggerTime = getNextTriggerTime(9, 0)
+        scheduleExact(triggerTime, pendingIntent)
+    }
+
+    /**
+     * Schedule a one-shot alarm to notify the user when a time capsule opens.
+     * Fires at 9 AM on the specified open date.
+     */
+    fun scheduleTimeCapsuleAlarm(entryId: String, openDateMs: Long) {
+        if (!canScheduleAlarms()) return
+
+        // Set to 9 AM on the open date
+        val calendar = Calendar.getInstance().apply {
+            timeInMillis = openDateMs
+            set(Calendar.HOUR_OF_DAY, 9)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }
+
+        // If the time is already past, don't schedule
+        if (calendar.timeInMillis <= System.currentTimeMillis()) return
+
+        val requestCode = (entryId.hashCode() and 0x7FFFFFFF) % 100000 + 400000
+
+        val intent = Intent(context, AlarmReceiver::class.java).apply {
+            putExtra(AlarmReceiver.EXTRA_TYPE, AlarmReceiver.TYPE_TIME_CAPSULE)
+            putExtra(AlarmReceiver.EXTRA_ID, entryId)
+            putExtra(AlarmReceiver.EXTRA_ENTRY_ID, entryId)
+        }
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        scheduleExact(calendar.timeInMillis, pendingIntent)
+        Log.d("NotificationService", "Time capsule alarm scheduled for entry=$entryId at ${calendar.time}")
+    }
+
+    /**
      * Re-schedule all active reminders and goals.
      * Called after device boot or when the app needs to restore alarms.
      */
@@ -179,6 +244,10 @@ class NotificationService @Inject constructor(
             Log.d("NotificationService", "  scheduling goal: id=${goal.id}, title=${goal.title}, time=${goal.reminderTime}")
             scheduleGoalReminder(goal)
         }
+
+        // Feature 3: Schedule On This Day daily check
+        scheduleOnThisDayCheck()
+        Log.d("NotificationService", "On This Day check scheduled at 9:00 AM daily")
     }
 
     /**

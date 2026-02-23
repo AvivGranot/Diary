@@ -177,6 +177,28 @@ class EntryRepositoryImpl @Inject constructor(
     override fun getEntriesWithLocation(): Flow<List<EntryEntity>> =
         entryDao.getEntriesWithLocation()
 
+    // Mood-aware suggestions
+    override suspend fun getLatestMood(): String? =
+        entryDao.getLatestMood()
+
+    // Natural language search
+    override fun searchByMood(moodKey: String): Flow<List<EntryEntity>> =
+        entryDao.searchByMood(moodKey)
+
+    override fun searchByTag(tag: String): Flow<List<EntryEntity>> =
+        entryDao.searchByTag(tag)
+
+    override fun searchByLocation(location: String): Flow<List<EntryEntity>> =
+        entryDao.searchByLocation(location)
+
+    // Time Capsule
+    override suspend fun setCapsuleOpenDate(entryId: String, openDate: Long?) {
+        entryDao.setCapsuleOpenDate(entryId, openDate)
+    }
+
+    override fun getPendingCapsules(): Flow<List<EntryEntity>> =
+        entryDao.getPendingCapsules(System.currentTimeMillis())
+
     private fun todayRange(): Pair<Long, Long> {
         val zone = ZoneId.systemDefault()
         val today = LocalDate.now()

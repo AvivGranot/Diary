@@ -64,11 +64,15 @@ import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.delay
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
 import com.proactivediary.domain.model.DiaryThemeConfig
 import com.proactivediary.ui.components.ImageViewer
 import com.proactivediary.ui.share.ShareCardDialog
@@ -418,6 +422,18 @@ fun WriteScreen(
                         }
                     }
                 )
+
+                // Journal picker chip (below title, when journals exist)
+                if (state.availableJournals.isNotEmpty()) {
+                    JournalPickerChip(
+                        selectedJournalId = state.selectedJournalId,
+                        selectedJournalName = state.selectedJournalName,
+                        journals = state.availableJournals,
+                        onJournalSelected = { viewModel.assignToJournal(it) },
+                        modifier = Modifier.padding(horizontal = horizontalPadding, vertical = 2.dp)
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // Inline images — adaptive sizing (portrait=60%, landscape=full width)
@@ -526,7 +542,11 @@ fun WriteScreen(
                     horizontalPadding = horizontalPadding,
                     fontSizeSp = state.fontSize,
                     lineHeightMultiplier = lineHeightMultiplier,
-                    placeholderText = state.dailyPrompt,
+                    placeholderText = if (state.isNewEntry && state.content.isEmpty()) {
+                        "Even one sentence counts today."
+                    } else {
+                        state.dailyPrompt
+                    },
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f)
@@ -605,6 +625,22 @@ fun WriteScreen(
             )
         }
 
+        // Focus Timer Badge (floating countdown, top-end)
+        AnimatedVisibility(
+            visible = state.focusTimerRunning,
+            enter = fadeIn(tween(400)) + scaleIn(tween(400), initialScale = 0.5f),
+            exit = fadeOut(tween(600)),
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 8.dp, end = 12.dp)
+        ) {
+            FocusTimerBadge(
+                remainingSeconds = state.focusTimerSeconds,
+                colorKey = state.colorKey,
+                onComplete = { viewModel.dismissFocusTimer() }
+            )
+        }
+
         // Goal completion message (top-left, below header area)
         if (state.goalCompletedMessage != null) {
             LaunchedEffect(state.goalCompletedMessage) {
@@ -659,6 +695,14 @@ fun WriteScreen(
     if (state.showFirstEntryCelebration) {
         FirstEntryCelebration(
             onDismiss = { viewModel.dismissFirstEntryCelebration() }
+        )
+    }
+
+    // Time Capsule date picker (shown after saving letter-to-self / inner child)
+    if (state.showTimeCapsulePicker) {
+        TimeCapsuleDatePicker(
+            onDateSelected = { openDateMs -> viewModel.sealAsCapsule(openDateMs) },
+            onDismiss = { viewModel.dismissTimeCapsulePicker() }
         )
     }
 
@@ -751,6 +795,15 @@ fun WriteScreen(
                 welcomeBackPrompt = null
                 onNotificationPromptConsumed?.invoke()
             }
+        )
+    }
+
+    // Focus Timer Overlay (full-screen)
+    if (state.showFocusTimer) {
+        FocusTimerOverlay(
+            colorKey = state.colorKey,
+            onStart = { viewModel.startFocusTimer() },
+            onSkip = { viewModel.skipFocusTimer() }
         )
     }
 

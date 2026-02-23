@@ -75,6 +75,9 @@ import com.proactivediary.ui.share.shareCardAsImage
 import androidx.compose.foundation.layout.navigationBarsPadding
 
 import com.proactivediary.ui.theme.InstrumentSerif
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,6 +100,48 @@ fun EntryDetailScreen(
     }
 
     if (!state.isLoaded) return
+
+    // Sealed time capsule gate
+    val capsuleDate = state.capsuleOpenDate
+    val isSealed = capsuleDate != null && capsuleDate > System.currentTimeMillis()
+
+    if (isSealed) {
+        val sdf = SimpleDateFormat("MMMM d, yyyy", Locale.US)
+        val openDateStr = sdf.format(Date(capsuleDate!!))
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(DiaryThemeConfig.colorForKey(state.colorKey))
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text("\u2709\uFE0F", fontSize = 64.sp)
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = "This letter opens on $openDateStr",
+                style = TextStyle(
+                    fontFamily = InstrumentSerif,
+                    fontSize = 22.sp,
+                    color = DiaryThemeConfig.textColorFor(state.colorKey)
+                )
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Be patient with yourself.",
+                style = TextStyle(
+                    fontSize = 15.sp,
+                    fontStyle = FontStyle.Italic,
+                    color = DiaryThemeConfig.secondaryTextColorFor(state.colorKey)
+                )
+            )
+            Spacer(modifier = Modifier.height(32.dp))
+            TextButton(onClick = onBack) {
+                Text("Go back")
+            }
+        }
+        return
+    }
 
     val bgColor = DiaryThemeConfig.colorForKey(state.colorKey)
     val textColor = DiaryThemeConfig.textColorFor(state.colorKey)
