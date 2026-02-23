@@ -2,7 +2,6 @@ package com.proactivediary.ui.story
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,9 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.MoreHoriz
-import androidx.compose.material.icons.outlined.Videocam
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,8 +25,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.proactivediary.R
 import com.proactivediary.domain.model.ShareChannel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,8 +54,8 @@ fun StoryShareSheet(
                 modifier = Modifier.padding(bottom = 20.dp)
             )
 
-            ShareRow(
-                icon = Icons.Outlined.CameraAlt,
+            ShareRowPainter(
+                painter = painterResource(R.drawable.ic_instagram),
                 label = "Instagram",
                 brandColor = Color(0xFFE4405F),
                 onClick = { onChannelSelected(ShareChannel.INSTAGRAM) }
@@ -63,8 +63,8 @@ fun StoryShareSheet(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            ShareRow(
-                icon = Icons.Outlined.Videocam,
+            ShareRowPainter(
+                painter = painterResource(R.drawable.ic_tiktok),
                 label = "TikTok",
                 brandColor = Color(0xFF000000),
                 onClick = { onChannelSelected(ShareChannel.TIKTOK) }
@@ -72,7 +72,7 @@ fun StoryShareSheet(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            ShareRow(
+            ShareRowVector(
                 icon = Icons.Outlined.MoreHoriz,
                 label = "More...",
                 brandColor = MaterialTheme.colorScheme.outline,
@@ -83,7 +83,43 @@ fun StoryShareSheet(
 }
 
 @Composable
-private fun ShareRow(
+private fun ShareRowPainter(
+    painter: Painter,
+    label: String,
+    brandColor: Color,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(brandColor),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painter,
+                contentDescription = label,
+                tint = Color.White,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge
+        )
+    }
+}
+
+@Composable
+private fun ShareRowVector(
     icon: ImageVector,
     label: String,
     brandColor: Color,

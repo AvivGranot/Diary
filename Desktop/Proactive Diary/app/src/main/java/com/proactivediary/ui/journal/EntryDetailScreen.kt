@@ -25,7 +25,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -148,17 +150,10 @@ fun EntryDetailScreen(
                         )
                     }
                 }
-                IconButton(onClick = { viewModel.toggleBookmark() }) {
+                IconButton(onClick = { onCreateStory(state.entryId) }) {
                     Icon(
-                        imageVector = if (state.isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
-                        contentDescription = if (state.isBookmarked) "Remove bookmark" else "Bookmark",
-                        tint = textColor
-                    )
-                }
-                IconButton(onClick = { showShareDialog = true }) {
-                    Icon(
-                        imageVector = Icons.Outlined.Share,
-                        contentDescription = "Share",
+                        imageVector = Icons.Outlined.AutoAwesome,
+                        contentDescription = "Create visual story",
                         tint = textColor
                     )
                 }
@@ -175,17 +170,17 @@ fun EntryDetailScreen(
                         onDismissRequest = { showMenu = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Share as image") },
+                            text = { Text("Bookmark") },
                             onClick = {
                                 showMenu = false
-                                showShareDialog = true
+                                viewModel.toggleBookmark()
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Create visual story") },
+                            text = { Text("Share") },
                             onClick = {
                                 showMenu = false
-                                onCreateStory(state.entryId)
+                                showShareDialog = true
                             }
                         )
                         DropdownMenuItem(

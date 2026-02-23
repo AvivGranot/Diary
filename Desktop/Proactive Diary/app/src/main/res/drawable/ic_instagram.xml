@@ -1,0 +1,18 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Rounded square -->
+    <path
+        android:pathData="M7.8,2L16.2,2C19.4,2 22,4.6 22,7.8L22,16.2C22,19.4 19.4,22 16.2,22L7.8,22C4.6,22 2,19.4 2,16.2L2,7.8C2,4.6 4.6,2 7.8,2ZM7.8,4C5.7,4 4,5.7 4,7.8L4,16.2C4,18.3 5.7,20 7.8,20L16.2,20C18.3,20 20,18.3 20,16.2L20,7.8C20,5.7 18.3,4 16.2,4L7.8,4Z"
+        android:fillColor="#FFFFFF" />
+    <!-- Circle (lens) -->
+    <path
+        android:pathData="M12,7.5C14.5,7.5 16.5,9.5 16.5,12C16.5,14.5 14.5,16.5 12,16.5C9.5,16.5 7.5,14.5 7.5,12C7.5,9.5 9.5,7.5 12,7.5ZM12,9.5C10.6,9.5 9.5,10.6 9.5,12C9.5,13.4 10.6,14.5 12,14.5C13.4,14.5 14.5,13.4 14.5,12C14.5,10.6 13.4,9.5 12,9.5Z"
+        android:fillColor="#FFFFFF" />
+    <!-- Dot (flash) -->
+    <path
+        android:pathData="M17.5,5.5m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0"
+        android:fillColor="#FFFFFF" />
+</vector>

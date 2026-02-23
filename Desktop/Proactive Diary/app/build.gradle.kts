@@ -21,6 +21,12 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+val localPropertiesFile = rootProject.file("local.properties")
+val localProperties = Properties()
+if (localPropertiesFile.exists()) {
+    localProperties.load(FileInputStream(localPropertiesFile))
+}
+
 android {
     namespace = "com.proactivediary"
     compileSdk = 36
@@ -41,21 +47,21 @@ android {
         buildConfigField(
             "String",
             "GEMINI_API_KEY",
-            "\"${project.findProperty("GEMINI_API_KEY") ?: ""}\""
+            "\"${localProperties.getProperty("GEMINI_API_KEY") ?: ""}\""
         )
 
         // Google Places API key injected from local.properties (gitignored)
         buildConfigField(
             "String",
             "PLACES_API_KEY",
-            "\"${project.findProperty("PLACES_API_KEY") ?: ""}\""
+            "\"${localProperties.getProperty("PLACES_API_KEY") ?: ""}\""
         )
 
         // Grok Imagine API key injected from local.properties (gitignored)
         buildConfigField(
             "String",
             "GROK_API_KEY",
-            "\"${project.findProperty("GROK_API_KEY") ?: ""}\""
+            "\"${localProperties.getProperty("GROK_API_KEY") ?: ""}\""
         )
 
         // Google Maps API key injected as manifest placeholder

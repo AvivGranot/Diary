@@ -59,7 +59,7 @@ fun SuggestionsFeedScreen(
                         style = MaterialTheme.typography.headlineSmall.copy(
                             fontFamily = InstrumentSerif
                         ),
-                        color = Color.White
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 },
                 navigationIcon = {
@@ -155,13 +155,13 @@ private fun EmptyState() {
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontFamily = InstrumentSerif
                 ),
-                color = Color.White
+                color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Suggestions will appear as you take photos, visit places, and build your journal. Pull down to refresh.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.White.copy(alpha = 0.7f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
         }

@@ -13,8 +13,7 @@ fun shareStoryImage(context: Context, imageFile: File, channel: ShareChannel? = 
         imageFile
     )
 
-    val shareIntent = Intent().apply {
-        action = Intent.ACTION_SEND
+    val shareIntent = Intent(Intent.ACTION_SEND).apply {
         putExtra(Intent.EXTRA_STREAM, uri)
         putExtra(
             Intent.EXTRA_TEXT,
@@ -27,18 +26,15 @@ fun shareStoryImage(context: Context, imageFile: File, channel: ShareChannel? = 
         }
     }
 
+    // Always use createChooser — it wraps the share in a system activity
+    // that properly returns to our app when the user presses back
+    val chooser = Intent.createChooser(shareIntent, "Share your story")
+
     try {
-        if (channel != null) {
-            context.startActivity(shareIntent)
-        } else {
-            context.startActivity(Intent.createChooser(shareIntent, "Share your story"))
-        }
+        context.startActivity(chooser)
     } catch (_: android.content.ActivityNotFoundException) {
-        // App not installed — fall back to system chooser
-        val fallback = Intent.createChooser(
-            shareIntent.apply { setPackage(null) },
-            "Share your story"
-        )
-        context.startActivity(fallback)
+        // Target app not installed — clear package and retry with open chooser
+        shareIntent.setPackage(null)
+        context.startActivity(Intent.createChooser(shareIntent, "Share your story"))
     }
 }
