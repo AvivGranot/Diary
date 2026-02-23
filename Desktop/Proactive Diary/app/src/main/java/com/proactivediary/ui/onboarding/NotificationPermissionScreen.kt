@@ -232,108 +232,115 @@ fun NotificationPermissionScreen(
 }
 
 /**
- * Animated diary that opens — drawn with lines.
- * Starts closed, cover rotates open to reveal pages.
+ * Diary that opens from the middle like a real book — both covers spread outward.
  */
 @Composable
 private fun DiaryOpenIcon(
     modifier: Modifier = Modifier,
-    openProgress: Float // 0 = closed, 1 = open
+    openProgress: Float
 ) {
     val inkColor = MaterialTheme.colorScheme.onBackground
-    val pageColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f)
-    val coverColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f)
+    val pageColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.05f)
+    val coverColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.13f)
+    val lineStroke = Stroke(width = 1.5f, cap = StrokeCap.Round)
 
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
+        val cx = w / 2
+        val bookT = h * 0.08f
+        val bookB = h * 0.92f
+        val bookH = bookB - bookT
+        val halfW = w * 0.38f
 
-        val bookL = w * 0.15f
-        val bookR = w * 0.85f
-        val bookT = h * 0.1f
-        val bookB = h * 0.9f
-        val spine = bookL + 4f
-
-        // Pages (visible as diary opens)
-        val pageAlpha = openProgress.coerceIn(0f, 1f)
+        // ── Left page (revealed as book opens) ──
+        val pageAlpha = (openProgress * 1.3f).coerceIn(0f, 1f)
+        drawRoundRect(
+            color = pageColor.copy(alpha = pageAlpha),
+            topLeft = Offset(cx - halfW + 4, bookT + 3),
+            size = Size(halfW - 6, bookH - 6),
+            cornerRadius = CornerRadius(3f)
+        )
         // Right page
         drawRoundRect(
             color = pageColor.copy(alpha = pageAlpha),
-            topLeft = Offset(spine + 2, bookT + 2),
-            size = Size(bookR - spine - 4, bookB - bookT - 4),
-            cornerRadius = CornerRadius(4f)
+            topLeft = Offset(cx + 2, bookT + 3),
+            size = Size(halfW - 6, bookH - 6),
+            cornerRadius = CornerRadius(3f)
         )
 
-        // Page lines (appear as it opens)
+        // Page lines on both sides
         if (openProgress > 0.4f) {
-            val lineAlpha = ((openProgress - 0.4f) / 0.6f).coerceIn(0f, 1f) * 0.2f
-            val lineStart = spine + w * 0.12f
-            val lineEnd = bookR - w * 0.08f
-            for (i in 0..5) {
-                val y = bookT + h * 0.22f + i * h * 0.1f
-                drawLine(
-                    color = inkColor.copy(alpha = lineAlpha),
-                    start = Offset(lineStart, y),
-                    end = Offset(lineEnd, y),
-                    strokeWidth = 1f
-                )
+            val la = ((openProgress - 0.4f) / 0.6f).coerceIn(0f, 1f) * 0.18f
+            for (i in 0..4) {
+                val y = bookT + bookH * (0.2f + i * 0.14f)
+                // Left page lines
+                drawLine(inkColor.copy(alpha = la), Offset(cx - halfW + 10, y), Offset(cx - 6, y), 0.8f)
+                // Right page lines
+                drawLine(inkColor.copy(alpha = la), Offset(cx + 6, y), Offset(cx + halfW - 10, y), 0.8f)
             }
         }
 
-        // Back cover (always visible)
-        drawRoundRect(
-            color = coverColor,
-            topLeft = Offset(bookL, bookT),
-            size = Size(bookR - bookL, bookB - bookT),
-            cornerRadius = CornerRadius(6f)
-        )
-        drawRoundRect(
-            color = inkColor.copy(alpha = 0.4f),
-            topLeft = Offset(bookL, bookT),
-            size = Size(bookR - bookL, bookB - bookT),
-            cornerRadius = CornerRadius(6f),
-            style = Stroke(width = 1.5f)
-        )
-
-        // Front cover — rotates open (pivots from spine)
-        val coverOpenAngle = -openProgress * 160f // opens to the left
-        rotate(
-            degrees = coverOpenAngle,
-            pivot = Offset(spine, (bookT + bookB) / 2)
-        ) {
+        // ── Left cover — pivots open from center spine ──
+        val leftAngle = openProgress * 165f  // opens to the left
+        rotate(degrees = leftAngle, pivot = Offset(cx, (bookT + bookB) / 2)) {
             drawRoundRect(
-                color = coverColor.copy(alpha = 0.8f),
-                topLeft = Offset(spine, bookT),
-                size = Size(bookR - spine, bookB - bookT),
-                cornerRadius = CornerRadius(4f)
+                color = coverColor.copy(alpha = 0.85f),
+                topLeft = Offset(cx - halfW, bookT),
+                size = Size(halfW, bookH),
+                cornerRadius = CornerRadius(5f)
             )
             drawRoundRect(
-                color = inkColor.copy(alpha = 0.5f),
-                topLeft = Offset(spine, bookT),
-                size = Size(bookR - spine, bookB - bookT),
-                cornerRadius = CornerRadius(4f),
-                style = Stroke(width = 1.5f)
+                color = inkColor.copy(alpha = 0.4f),
+                topLeft = Offset(cx - halfW, bookT),
+                size = Size(halfW, bookH),
+                cornerRadius = CornerRadius(5f),
+                style = lineStroke
             )
+        }
 
-            // Diary label on cover
-            val labelW = (bookR - spine) * 0.5f
-            val labelH = (bookB - bookT) * 0.08f
-            val labelX = spine + (bookR - spine - labelW) / 2
-            val labelY = bookT + (bookB - bookT) * 0.4f
+        // ── Right cover — pivots open from center spine ──
+        val rightAngle = -openProgress * 165f  // opens to the right
+        rotate(degrees = rightAngle, pivot = Offset(cx, (bookT + bookB) / 2)) {
             drawRoundRect(
-                color = inkColor.copy(alpha = 0.15f),
+                color = coverColor.copy(alpha = 0.85f),
+                topLeft = Offset(cx, bookT),
+                size = Size(halfW, bookH),
+                cornerRadius = CornerRadius(5f)
+            )
+            drawRoundRect(
+                color = inkColor.copy(alpha = 0.4f),
+                topLeft = Offset(cx, bookT),
+                size = Size(halfW, bookH),
+                cornerRadius = CornerRadius(5f),
+                style = lineStroke
+            )
+            // Title label on right cover
+            val labelW = halfW * 0.5f
+            val labelH = bookH * 0.07f
+            val labelX = cx + (halfW - labelW) / 2
+            val labelY = bookT + bookH * 0.42f
+            drawRoundRect(
+                color = inkColor.copy(alpha = 0.1f),
                 topLeft = Offset(labelX, labelY),
                 size = Size(labelW, labelH),
                 cornerRadius = CornerRadius(2f)
             )
         }
 
-        // Spine
+        // ── Center spine ──
         drawLine(
             color = inkColor.copy(alpha = 0.5f),
-            start = Offset(spine, bookT),
-            end = Offset(spine, bookB),
+            start = Offset(cx, bookT),
+            end = Offset(cx, bookB),
             strokeWidth = 2f
         )
+
+        // Bookmark ribbon from top
+        if (openProgress > 0.5f) {
+            val ra = ((openProgress - 0.5f) / 0.5f).coerceIn(0f, 1f) * 0.45f
+            val rx = cx + halfW * 0.5f
+            drawLine(Color(0xFFEF5350).copy(alpha = ra), Offset(rx, bookT - 2), Offset(rx, bookT + bookH * 0.15f), 2.5f)
+        }
     }
 }
