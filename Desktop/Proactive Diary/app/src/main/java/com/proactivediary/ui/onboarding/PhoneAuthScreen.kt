@@ -120,7 +120,7 @@ fun PhoneAuthScreen(
             )
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(24.dp))
 
         // "I already have an account" link
         Text(
@@ -162,7 +162,7 @@ fun PhoneAuthScreen(
             textAlign = TextAlign.Center
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.weight(1f))
     }
 }
 
