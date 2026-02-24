@@ -10,15 +10,15 @@
         android:pivotX="54"
         android:pivotY="54">
 
-        <!-- Left quotation mark -->
+        <!-- Left quotation mark — large asymmetric, tail to lower-left -->
         <path
-            android:fillColor="#3B82F6"
-            android:pathData="M43,42 C49,42 52,46 52,50 C52,55 47,60 39,66 C36,58 34,54 34,50 C34,46 37,42 43,42 Z" />
+            android:fillColor="#FFFFFF"
+            android:pathData="M34,32 C45,32 50,40 50,47 C50,56 41,65 27,76 C22,61 18,54 18,47 C18,40 23,32 34,32 Z" />
 
-        <!-- Right quotation mark -->
+        <!-- Right quotation mark — large asymmetric, tail to lower-left -->
         <path
-            android:fillColor="#3B82F6"
-            android:pathData="M65,42 C71,42 74,46 74,50 C74,55 69,60 61,66 C58,58 56,54 56,50 C56,46 59,42 65,42 Z" />
+            android:fillColor="#FFFFFF"
+            android:pathData="M74,32 C85,32 90,40 90,47 C90,56 81,65 67,76 C61,61 58,54 58,47 C58,40 63,32 74,32 Z" />
 
     </group>
 

@@ -3,7 +3,7 @@
     android:drawable="@drawable/ic_splash_foreground">
 
     <target
-        android:name="pen_group"
+        android:name="quotes_group"
         android:animation="@animator/splash_rotate_scale" />
 
 </animated-vector>
