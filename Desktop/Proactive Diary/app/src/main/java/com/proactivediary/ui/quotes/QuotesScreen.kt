@@ -193,40 +193,38 @@ fun QuotesScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // ── Weekly Leaderboard ──
-            if (state.trendingQuotes.isNotEmpty()) {
-                item(key = "leaderboard_label") {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "\uD83C\uDFC6 WEEKLY LEADERBOARD",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                letterSpacing = 1.5.sp
-                            ),
-                            fontWeight = FontWeight.Bold,
-                            color = Gold
-                        )
-                        Text(
-                            text = "Swipe to see top 10 \u2192",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
-                }
-
-                item(key = "leaderboard_cards") {
-                    LeaderboardCardsRow(
-                        quotes = state.trendingQuotes.take(10),
-                        onQuoteClick = { onQuoteClick(it.id) }
+            // ── Weekly Leaderboard (always visible — sample data if Firestore empty) ──
+            item(key = "leaderboard_label") {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "\uD83C\uDFC6 WEEKLY LEADERBOARD",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            letterSpacing = 1.5.sp
+                        ),
+                        fontWeight = FontWeight.Bold,
+                        color = Gold
                     )
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Text(
+                        text = "Swipe to see top 10 \u2192",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
                 }
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+
+            item(key = "leaderboard_cards") {
+                LeaderboardCardsRow(
+                    quotes = state.trendingQuotes.take(10),
+                    onQuoteClick = { onQuoteClick(it.id) }
+                )
+                Spacer(modifier = Modifier.height(20.dp))
             }
 
             // ── Quote Feed ──
