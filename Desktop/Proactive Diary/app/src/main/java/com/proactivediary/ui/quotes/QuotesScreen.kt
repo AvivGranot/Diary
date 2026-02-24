@@ -44,10 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -144,15 +141,6 @@ fun QuotesScreen(
                 }
             }
 
-            // ── Stories Row ──
-            item(key = "stories_row") {
-                StoriesRow(
-                    quotes = state.trendingQuotes,
-                    onYourQuoteTap = { viewModel.showComposeSheet() },
-                    onAuthorTap = { /* future: scroll to author's quote */ }
-                )
-            }
-
             // ── Tab pills: Trending / New / Following (centered) ──
             item(key = "tabs") {
                 Row(
@@ -193,7 +181,7 @@ fun QuotesScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            // ── Weekly Leaderboard (always visible — sample data if Firestore empty) ──
+            // ── Weekly Leaderboard (always visible) ──
             item(key = "leaderboard_label") {
                 Row(
                     modifier = Modifier
@@ -213,7 +201,7 @@ fun QuotesScreen(
                     Text(
                         text = "Swipe to see top 10 \u2192",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
                     )
                 }
                 Spacer(modifier = Modifier.height(10.dp))
@@ -253,7 +241,7 @@ fun QuotesScreen(
                             text = "Write up to 25 words and inspire thousands",
                             style = MaterialTheme.typography.bodyLarge,
                             fontStyle = FontStyle.Italic,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                             textAlign = TextAlign.Center,
                             modifier = Modifier.padding(horizontal = 32.dp)
                         )
@@ -277,7 +265,6 @@ fun QuotesScreen(
                     )
                 }
 
-                // Bottom spacer for nav bar clearance
                 item { Spacer(modifier = Modifier.height(20.dp)) }
             }
         }
@@ -293,132 +280,6 @@ fun QuotesScreen(
             onContentChange = { viewModel.updateComposeContent(it) },
             onSubmit = { viewModel.submitQuote() },
             onDismiss = { viewModel.hideComposeSheet() }
-        )
-    }
-}
-
-// ── Stories Row ──
-@Composable
-private fun StoriesRow(
-    quotes: List<Quote>,
-    onYourQuoteTap: () -> Unit,
-    onAuthorTap: (String) -> Unit
-) {
-    val uniqueAuthors = remember(quotes) {
-        quotes.distinctBy { it.authorId }.take(15)
-    }
-
-    val accentColor = MaterialTheme.colorScheme.primary
-    val ringGradient = Brush.sweepGradient(
-        listOf(accentColor.copy(alpha = 0.6f), accentColor, accentColor.copy(alpha = 0.6f))
-    )
-
-    Column {
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 14.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            // "You" story — always first
-            item(key = "story_you") {
-                StoryItem(
-                    label = "Your quote",
-                    photoUrl = null,
-                    authorName = "+",
-                    ringBrush = ringGradient,
-                    isYourStory = true,
-                    onClick = onYourQuoteTap
-                )
-            }
-
-            // Friend stories from trending authors
-            items(uniqueAuthors, key = { "story_${it.authorId}" }) { quote ->
-                StoryItem(
-                    label = quote.authorName.split(" ").first(),
-                    photoUrl = quote.authorPhotoUrl,
-                    authorName = quote.authorName,
-                    ringBrush = ringGradient,
-                    isYourStory = false,
-                    onClick = { onAuthorTap(quote.authorId) }
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(0.5.dp)
-                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-    }
-}
-
-// ── Single Story Item ──
-@Composable
-private fun StoryItem(
-    label: String,
-    photoUrl: String?,
-    authorName: String,
-    ringBrush: Brush,
-    isYourStory: Boolean,
-    onClick: () -> Unit
-) {
-    val ringStrokeWidth = 2.dp
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .width(60.dp)
-            .clickable(onClick = onClick)
-    ) {
-        // Outer ring with gradient stroke
-        Box(
-            modifier = Modifier
-                .size(56.dp)
-                .drawBehind {
-                    drawCircle(
-                        brush = ringBrush,
-                        radius = size.minDimension / 2,
-                        style = Stroke(width = ringStrokeWidth.toPx())
-                    )
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            if (isYourStory) {
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        contentDescription = "Add your quote",
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            } else {
-                AuthorAvatar(
-                    photoUrl = photoUrl,
-                    authorName = authorName,
-                    size = 48
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.width(52.dp)
         )
     }
 }
@@ -439,7 +300,7 @@ private fun LeaderboardCardsRow(
                 0 -> Gold
                 1 -> Silver
                 2 -> Bronze
-                else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                else -> MaterialTheme.colorScheme.onBackground.copy(alpha = 0.35f)
             }
 
             Column(
@@ -452,11 +313,7 @@ private fun LeaderboardCardsRow(
                             .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(14.dp))
                         else Modifier
                             .background(MaterialTheme.colorScheme.surface)
-                            .border(
-                                1.dp,
-                                MaterialTheme.colorScheme.outlineVariant,
-                                RoundedCornerShape(14.dp)
-                            )
+                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp))
                     )
                     .clickable { onQuoteClick(quote) }
                     .padding(12.dp),
@@ -480,7 +337,6 @@ private fun LeaderboardCardsRow(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Author avatar
                 AuthorAvatar(
                     photoUrl = quote.authorPhotoUrl,
                     authorName = quote.authorName,
@@ -489,7 +345,6 @@ private fun LeaderboardCardsRow(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Username
                 Text(
                     text = quote.authorName.split(" ").firstOrNull() ?: "",
                     style = MaterialTheme.typography.labelSmall,
@@ -501,7 +356,6 @@ private fun LeaderboardCardsRow(
 
                 Spacer(modifier = Modifier.height(2.dp))
 
-                // Quote text
                 Text(
                     text = "\u201C${quote.content}\u201D",
                     style = MaterialTheme.typography.bodySmall.copy(
@@ -509,7 +363,7 @@ private fun LeaderboardCardsRow(
                         fontSize = 11.sp,
                         lineHeight = 14.sp
                     ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center
@@ -517,19 +371,18 @@ private fun LeaderboardCardsRow(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // Like count
                 Text(
                     text = "\u2764\uFE0F ${quote.likeCount}",
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                     fontWeight = if (isFirst) FontWeight.Bold else FontWeight.SemiBold,
-                    color = if (isFirst) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    color = if (isFirst) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
                 )
             }
         }
     }
 }
 
-// ── Feed Post Card (Twitter-style) ──
+// ── Feed Post Card ──
 @Composable
 private fun FeedPostCard(
     quote: Quote,
@@ -571,7 +424,7 @@ private fun FeedPostCard(
                     Text(
                         text = "@${quote.authorName.lowercase().replace(" ", "")}",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -581,13 +434,13 @@ private fun FeedPostCard(
             Text(
                 text = dateFormat.format(Date(quote.createdAt)),
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f)
             )
         }
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Quote text — Instrument Serif, larger
+        // Quote text
         Text(
             text = "\u201C${quote.content}\u201D",
             style = MaterialTheme.typography.bodyLarge.copy(
@@ -601,7 +454,7 @@ private fun FeedPostCard(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Actions row: heart, comment, share, bookmark
+        // Actions row
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -614,14 +467,14 @@ private fun FeedPostCard(
                 Icon(
                     imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = "Like",
-                    tint = if (isLiked) RedAccent else MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = if (isLiked) RedAccent else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "${quote.likeCount}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
             }
 
@@ -630,14 +483,14 @@ private fun FeedPostCard(
                 Icon(
                     Icons.Default.ChatBubbleOutline,
                     contentDescription = "Comments",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "${quote.commentCount}",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
             }
 
@@ -645,7 +498,7 @@ private fun FeedPostCard(
             Icon(
                 Icons.Default.Share,
                 contentDescription = "Share",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                 modifier = Modifier
                     .size(18.dp)
                     .clickable(onClick = onShare)
@@ -657,7 +510,7 @@ private fun FeedPostCard(
             Icon(
                 Icons.Outlined.BookmarkBorder,
                 contentDescription = "Bookmark",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                 modifier = Modifier.size(16.dp)
             )
         }
@@ -668,7 +521,7 @@ private fun FeedPostCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(0.5.dp)
-                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                .background(MaterialTheme.colorScheme.outlineVariant)
         )
     }
 }

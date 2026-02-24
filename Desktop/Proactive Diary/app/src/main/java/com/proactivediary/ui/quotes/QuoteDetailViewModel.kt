@@ -45,11 +45,22 @@ class QuoteDetailViewModel @Inject constructor(
 
     private fun loadQuote() {
         viewModelScope.launch {
-            // Load from leaderboard or new quotes
+            // Check sample quotes first (they don't exist in Firestore)
+            val sampleQuote = QuotesViewModel.SAMPLE_QUOTES.find { it.id == quoteId }
+            if (sampleQuote != null) {
+                _state.value = _state.value.copy(
+                    quote = sampleQuote,
+                    isLiked = false,
+                    isLoading = false
+                )
+                return@launch
+            }
+
+            // Load real quote from Firestore
             val result = quotesRepository.getLeaderboard("all_time", 50)
             result.onSuccess { quotes ->
                 val quote = quotes.find { it.id == quoteId }
-                val liked = quotesRepository.hasLiked(quoteId)
+                val liked = if (quote != null) quotesRepository.hasLiked(quoteId) else false
                 _state.value = _state.value.copy(
                     quote = quote,
                     isLiked = liked,
