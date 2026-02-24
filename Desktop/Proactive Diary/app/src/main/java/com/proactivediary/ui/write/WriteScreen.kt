@@ -23,6 +23,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -654,7 +655,7 @@ fun WriteScreen(
                     fontFamily = InstrumentSerif,
                     fontSize = 13.sp,
                     fontStyle = FontStyle.Italic,
-                    color = Color(0xFF3B82F6).copy(alpha = 0.8f)
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
                 ),
                 modifier = Modifier
                     .align(Alignment.TopStart)

@@ -125,17 +125,32 @@ fun ProactiveDiaryTheme(
 
     // Apply user-chosen accent color globally
     val accentOption = accentColorOptions.firstOrNull { it.key == accentColorKey }
-    val extendedColors = if (accentOption != null && accentOption.key != "blue") {
+    val isCustomAccent = accentOption != null && accentOption.key != "blue"
+    val extendedColors = if (isCustomAccent) {
         baseExtendedColors.copy(
-            accent = accentOption.color,
+            accent = accentOption!!.color,
             accentDark = accentOption.color,
+            accentContainer = accentOption.color.copy(alpha = 0.12f),
             cardSideLine = accentOption.color,
             bottomNavIndicator = accentOption.color,
-            success = accentOption.color,
             gradientStart = accentOption.color.copy(alpha = 0.15f)
         )
     } else {
         baseExtendedColors
+    }
+
+    // Also update MaterialTheme colorScheme so all primary-based components respond
+    val finalColorScheme = if (isCustomAccent) {
+        colorScheme.copy(
+            primary = accentOption!!.color,
+            primaryContainer = accentOption.color.copy(alpha = 0.12f),
+            onPrimaryContainer = accentOption.color,
+            tertiary = accentOption.color,
+            onTertiary = colorScheme.onPrimary,
+            inversePrimary = accentOption.color
+        )
+    } else {
+        colorScheme
     }
 
     // Set status bar color to match background
@@ -143,7 +158,7 @@ fun ProactiveDiaryTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.background.toArgb()
+            window.statusBarColor = finalColorScheme.background.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }
@@ -152,7 +167,7 @@ fun ProactiveDiaryTheme(
         LocalDiaryExtendedColors provides extendedColors
     ) {
         MaterialTheme(
-            colorScheme = colorScheme,
+            colorScheme = finalColorScheme,
             typography = DiaryTypography,
             shapes = DiaryShapes,
             content = content

@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,7 +49,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-private val AccentBlue = Color(0xFF3B82F6)
 private val DarkSurface = Color(0xFF1A1A1A)
 private val DimBackground = Color(0xCC000000)
 
@@ -110,7 +110,7 @@ private fun CaptureCard(
         // Title
         Text(
             text = "Sydney",
-            color = AccentBlue,
+            color = MaterialTheme.colorScheme.primary,
             fontSize = 20.sp,
             fontWeight = FontWeight.SemiBold
         )
@@ -169,14 +169,14 @@ private fun ListeningContent(state: SydneyUiState, onStop: () -> Unit) {
             modifier = Modifier
                 .size(72.dp)
                 .scale(scale)
-                .background(AccentBlue.copy(alpha = glowAlpha), CircleShape)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = glowAlpha), CircleShape)
         )
         // Mic button
         IconButton(
             onClick = onStop,
             modifier = Modifier
                 .size(56.dp)
-                .background(AccentBlue, CircleShape)
+                .background(MaterialTheme.colorScheme.primary, CircleShape)
         ) {
             Icon(
                 Icons.Default.Mic,
@@ -230,13 +230,13 @@ private fun SavedContent() {
     Icon(
         Icons.Default.Check,
         contentDescription = "Saved",
-        tint = AccentBlue,
+        tint = MaterialTheme.colorScheme.primary,
         modifier = Modifier.size(48.dp)
     )
     Spacer(Modifier.height(8.dp))
     Text(
         text = "Got it",
-        color = AccentBlue,
+        color = MaterialTheme.colorScheme.primary,
         fontSize = 16.sp,
         fontWeight = FontWeight.Medium
     )

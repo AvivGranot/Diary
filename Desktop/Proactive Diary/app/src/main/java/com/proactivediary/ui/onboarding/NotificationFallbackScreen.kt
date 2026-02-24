@@ -46,8 +46,6 @@ import androidx.compose.ui.unit.sp
 import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.ui.theme.InstrumentSerif
 
-private val AccentBlue = Color(0xFF3897F0)
-
 @Composable
 fun NotificationFallbackScreen(
     onTurnOn: () -> Unit,
@@ -115,7 +113,7 @@ fun NotificationFallbackScreen(
                 .fillMaxWidth()
                 .height(48.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(AccentBlue)
+                .background(MaterialTheme.colorScheme.primary)
                 .clickable {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -221,7 +219,7 @@ private fun BenefitRow(text: String) {
                 .width(6.dp)
                 .height(6.dp)
                 .clip(CircleShape)
-                .background(AccentBlue.copy(alpha = 0.6f))
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
         )
         Spacer(modifier = Modifier.width(10.dp))
         Text(

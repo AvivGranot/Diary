@@ -46,8 +46,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.analytics.AnalyticsService
 
-private val InstagramBlue = Color(0xFF3897F0)
-
 @Composable
 fun PhoneAuthScreen(
     onOtpSent: () -> Unit,
@@ -175,7 +173,7 @@ private fun PhoneModeContent(
             style = TextStyle(
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = InstagramBlue
+                color = MaterialTheme.colorScheme.primary
             ),
             modifier = Modifier.clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -349,7 +347,7 @@ private fun NextButton(
             .fillMaxWidth()
             .height(48.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(InstagramBlue)
+            .background(MaterialTheme.colorScheme.primary)
             .clickable(enabled = !isLoading, onClick = onClick),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically

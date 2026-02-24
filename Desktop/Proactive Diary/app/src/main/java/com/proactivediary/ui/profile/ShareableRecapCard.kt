@@ -34,23 +34,28 @@ object ShareableRecapCard {
     /**
      * Draw the recap card to a Bitmap, save to cache, and launch a share intent.
      */
-    fun shareRecap(context: Context, data: RecapData) {
-        val bitmap = renderCard(context, data)
+    fun shareRecap(context: Context, data: RecapData, accentColorArgb: Int = 0xFF3B82F6.toInt()) {
+        val bitmap = renderCard(context, data, accentColorArgb)
         val file = saveBitmapToCache(context, bitmap)
         launchShareIntent(context, file)
     }
 
     // ── Card renderer ────────────────────────────────────────────────────
 
-    private fun renderCard(context: Context, data: RecapData): Bitmap {
+    private fun renderCard(context: Context, data: RecapData, accentArgb: Int = 0xFF3B82F6.toInt()): Bitmap {
         val bmp = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)
 
-        // Background gradient (dark navy → blue)
+        // Derive dark/light variants from accent
+        val accentDark = blendColor(accentArgb, 0xFF000000.toInt(), 0.6f)
+        val accentLight = blendColor(accentArgb, 0xFFFFFFFF.toInt(), 0.4f)
+        val accentVeryDark = blendColor(accentArgb, 0xFF000000.toInt(), 0.85f)
+
+        // Background gradient (very dark accent → dark accent → accent)
         val bgPaint = Paint().apply {
             shader = LinearGradient(
                 0f, 0f, 0f, H.toFloat(),
-                intArrayOf(0xFF0F172A.toInt(), 0xFF1E3A5F.toInt(), 0xFF3B82F6.toInt()),
+                intArrayOf(accentVeryDark, accentDark, accentArgb),
                 floatArrayOf(0f, 0.6f, 1f),
                 Shader.TileMode.CLAMP
             )
@@ -112,7 +117,7 @@ object ShareableRecapCard {
                     data.entriesThisYear > 5 -> "Top 20% of writers"
                     else -> "Keep going!"
                 },
-                gradientColors = intArrayOf(0xFF1E3A5F.toInt(), 0xFF2563EB.toInt(), 0xFF60A5FA.toInt())
+                gradientColors = intArrayOf(accentDark, accentArgb, accentLight)
             ),
             CardInfo(
                 bigText = "${data.totalLikesReceived}",
@@ -137,7 +142,7 @@ object ShareableRecapCard {
                 subtitle = if (data.bestWritingDay.isNotBlank())
                     "${data.bestWritingDayPercent}% of entries on ${data.bestWritingDay}s"
                 else "Write more to discover",
-                gradientColors = intArrayOf(0xFF1E3A5F.toInt(), 0xFF3B82F6.toInt(), 0xFF93C5FD.toInt())
+                gradientColors = intArrayOf(accentDark, accentArgb, accentLight)
             )
         )
 
@@ -256,5 +261,14 @@ object ShareableRecapCard {
         words >= 1_000_000 -> "${words / 1_000_000}.${(words % 1_000_000) / 100_000}M"
         words >= 1_000 -> "${words / 1_000}.${(words % 1_000) / 100}k"
         else -> "$words"
+    }
+
+    /** Blend two ARGB colors. ratio=0 → color1, ratio=1 → color2. */
+    private fun blendColor(color1: Int, color2: Int, ratio: Float): Int {
+        val inv = 1f - ratio
+        val r = ((color1 shr 16 and 0xFF) * inv + (color2 shr 16 and 0xFF) * ratio).toInt()
+        val g = ((color1 shr 8 and 0xFF) * inv + (color2 shr 8 and 0xFF) * ratio).toInt()
+        val b = ((color1 and 0xFF) * inv + (color2 and 0xFF) * ratio).toInt()
+        return (0xFF shl 24) or (r shl 16) or (g shl 8) or b
     }
 }

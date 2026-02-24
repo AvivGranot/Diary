@@ -316,8 +316,8 @@ private fun ActivityIcon(iconType: ActivityIconType) {
         )
         ActivityIconType.CHAT -> IconConfig(
             icon = Icons.Default.ChatBubble,
-            backgroundColor = Color(0xFF172554), // dark blue
-            tintColor = Color(0xFF3B82F6)        // blue
+            backgroundColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+            tintColor = MaterialTheme.colorScheme.primary
         )
         ActivityIconType.TROPHY -> IconConfig(
             icon = Icons.Default.EmojiEvents,

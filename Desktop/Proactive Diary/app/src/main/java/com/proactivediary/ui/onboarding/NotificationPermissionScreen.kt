@@ -58,8 +58,6 @@ import androidx.compose.ui.unit.sp
 import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.ui.theme.InstrumentSerif
 
-private val AllowBlue = Color(0xFF3897F0)
-
 @Composable
 fun NotificationPermissionScreen(
     onContinue: () -> Unit,
@@ -148,7 +146,7 @@ fun NotificationPermissionScreen(
                     .weight(1f)
                     .height(48.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(AllowBlue)
+                    .background(MaterialTheme.colorScheme.primary)
                     .drawBehind {
                         // Animated scanning line around border
                         val cornerR = 8.dp.toPx()

@@ -37,11 +37,6 @@ object DynamicColors {
     @Deprecated("Use isSystemInDarkTheme() from Theme.kt", replaceWith = ReplaceWith("true"))
     fun isNightMode(): Boolean = true // Always dark mode during migration
 
-    fun accentForTime(timePeriod: TimePeriod = currentTimePeriod()): Color {
-        // All time periods now return blue accent
-        return Color(0xFF3B82F6)
-    }
-
     fun textColorForTime(timePeriod: TimePeriod = currentTimePeriod()): Color {
         return Color(0xFFE0E0E0) // Always light text on dark background
     }

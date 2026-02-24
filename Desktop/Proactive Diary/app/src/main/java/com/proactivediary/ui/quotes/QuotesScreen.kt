@@ -64,14 +64,10 @@ import java.util.Date
 import java.util.Locale
 
 // Theme colors
-private val AccentBlue = Color(0xFF3B82F6)
-private val AccentBlueGlow = Color(0xFF3B82F6).copy(alpha = 0.12f)
 private val Gold = Color(0xFFFFD700)
 private val Silver = Color(0xFFC0C0C0)
 private val Bronze = Color(0xFFCD7F32)
 private val RedAccent = Color(0xFFFF3B5C)
-private val BlueGradientStart = Color(0xFF60A5FA)
-private val BlueGradientEnd = Color(0xFF2563EB)
 
 @Composable
 fun QuotesScreen(
@@ -107,7 +103,7 @@ fun QuotesScreen(
                             imageVector = Icons.Default.Add,
                             contentDescription = "Write a quote",
                             modifier = Modifier.size(24.dp),
-                            tint = AccentBlue
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
 
@@ -172,7 +168,7 @@ fun QuotesScreen(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(20.dp))
                                 .background(
-                                    if (isSelected) AccentBlue
+                                    if (isSelected) MaterialTheme.colorScheme.primary
                                     else MaterialTheme.colorScheme.surfaceVariant
                                 )
                                 .clickable { viewModel.selectTab(tab) }
@@ -314,9 +310,10 @@ private fun StoriesRow(
         quotes.distinctBy { it.authorId }.take(15)
     }
 
-    val blueGradient = remember {
-        Brush.sweepGradient(listOf(BlueGradientStart, BlueGradientEnd, BlueGradientStart))
-    }
+    val accentColor = MaterialTheme.colorScheme.primary
+    val ringGradient = Brush.sweepGradient(
+        listOf(accentColor.copy(alpha = 0.6f), accentColor, accentColor.copy(alpha = 0.6f))
+    )
 
     Column {
         LazyRow(
@@ -329,7 +326,7 @@ private fun StoriesRow(
                     label = "Your quote",
                     photoUrl = null,
                     authorName = "+",
-                    ringBrush = blueGradient,
+                    ringBrush = ringGradient,
                     isYourStory = true,
                     onClick = onYourQuoteTap
                 )
@@ -341,7 +338,7 @@ private fun StoriesRow(
                     label = quote.authorName.split(" ").first(),
                     photoUrl = quote.authorPhotoUrl,
                     authorName = quote.authorName,
-                    ringBrush = blueGradient,
+                    ringBrush = ringGradient,
                     isYourStory = false,
                     onClick = { onAuthorTap(quote.authorId) }
                 )
@@ -395,13 +392,13 @@ private fun StoryItem(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .background(AccentBlue.copy(alpha = 0.1f)),
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Default.Add,
                         contentDescription = "Add your quote",
-                        tint = AccentBlue,
+                        tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -453,8 +450,8 @@ private fun LeaderboardCardsRow(
                     .clip(RoundedCornerShape(14.dp))
                     .then(
                         if (isFirst) Modifier
-                            .background(AccentBlueGlow)
-                            .border(1.dp, AccentBlue.copy(alpha = 0.3f), RoundedCornerShape(14.dp))
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+                            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(14.dp))
                         else Modifier
                             .background(MaterialTheme.colorScheme.surface)
                             .border(
@@ -527,7 +524,7 @@ private fun LeaderboardCardsRow(
                     text = "\u2764\uFE0F ${quote.likeCount}",
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
                     fontWeight = if (isFirst) FontWeight.Bold else FontWeight.SemiBold,
-                    color = if (isFirst) AccentBlue else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    color = if (isFirst) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                 )
             }
         }

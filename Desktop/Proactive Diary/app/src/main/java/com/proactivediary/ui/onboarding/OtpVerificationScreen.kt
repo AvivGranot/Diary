@@ -48,8 +48,6 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.analytics.AnalyticsService
 
-private val InstagramBlue = Color(0xFF3897F0)
-
 @Composable
 fun OtpVerificationScreen(
     onVerified: () -> Unit,
@@ -149,7 +147,7 @@ fun OtpVerificationScreen(
         if (state.isVerifying) {
             Spacer(modifier = Modifier.height(16.dp))
             CircularProgressIndicator(
-                color = InstagramBlue,
+                color = MaterialTheme.colorScheme.primary,
                 strokeWidth = 2.dp,
                 modifier = Modifier
                     .size(24.dp)
@@ -178,7 +176,7 @@ fun OtpVerificationScreen(
                     style = TextStyle(
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = InstagramBlue
+                        color = MaterialTheme.colorScheme.primary
                     ),
                     modifier = Modifier.clickable(
                         interactionSource = remember { MutableInteractionSource() },

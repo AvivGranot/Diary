@@ -48,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -234,7 +235,7 @@ fun ProfileScreen(
                 RecapCard(
                     modifier = Modifier.weight(1f),
                     gradient = Brush.linearGradient(
-                        colors = listOf(Color(0xFF1E3A5F), Color(0xFF2563EB), Color(0xFF60A5FA))
+                        colors = listOf(extendedColors.accent.copy(alpha = 0.3f), extendedColors.accent, extendedColors.accent.copy(alpha = 0.6f))
                     ),
                     bigText = "${state.entriesThisYear}",
                     label = "Entries this year",
@@ -276,7 +277,7 @@ fun ProfileScreen(
                 RecapCard(
                     modifier = Modifier.weight(1f),
                     gradient = Brush.linearGradient(
-                        colors = listOf(Color(0xFF1E3A5F), Color(0xFF3B82F6), Color(0xFF93C5FD))
+                        colors = listOf(extendedColors.accent.copy(alpha = 0.3f), extendedColors.accent, extendedColors.accent.copy(alpha = 0.6f))
                     ),
                     bigText = state.bestWritingDay.take(3).ifBlank { "--" },
                     label = "Best writing day",
@@ -304,7 +305,8 @@ fun ProfileScreen(
                             totalWords = state.totalWords,
                             bestWritingDay = state.bestWritingDay,
                             bestWritingDayPercent = state.bestWritingDayPercent
-                        )
+                        ),
+                        accentColorArgb = extendedColors.accent.toArgb()
                     )
                 }
                 .padding(vertical = 10.dp),
