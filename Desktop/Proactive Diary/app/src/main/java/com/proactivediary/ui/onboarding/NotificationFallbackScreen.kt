@@ -36,11 +36,6 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.PathMeasure
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.TextStyle
@@ -333,14 +328,5 @@ private fun OpenDiaryIllustration(
         drawLine(spineColor, Offset(cx, bookT), Offset(cx, bookB), 3f)
         for (i in 1..4) drawLine(leatherDark.copy(alpha = 0.5f), Offset(cx - 3, bookT + bookH * i / 5f), Offset(cx + 3, bookT + bookH * i / 5f), 1.5f)
 
-        // ── Bookmark ribbon ──
-        if (openProgress > 0.4f) {
-            val ra = ((openProgress - 0.4f) / 0.6f).coerceIn(0f, 1f) * 0.7f
-            val rx = cx + halfW * 0.5f
-            val rBot = bookT + bookH * 0.17f
-            drawLine(Color(0xFFC62828).copy(alpha = ra), Offset(rx, bookT - 3), Offset(rx, rBot), 2.5f, StrokeCap.Round)
-            drawLine(Color(0xFFC62828).copy(alpha = ra), Offset(rx - 3, rBot), Offset(rx, rBot - 4), 1.5f)
-            drawLine(Color(0xFFC62828).copy(alpha = ra), Offset(rx + 3, rBot), Offset(rx, rBot - 4), 1.5f)
-        }
     }
 }

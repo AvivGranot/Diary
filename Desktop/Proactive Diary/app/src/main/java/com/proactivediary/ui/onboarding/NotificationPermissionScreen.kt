@@ -307,10 +307,5 @@ private fun DiaryOpenIcon(
         drawLine(spineColor, Offset(cx, bookT), Offset(cx, bookB), 3f)
         for (i in 1..4) drawLine(leatherDark.copy(alpha = 0.5f), Offset(cx - 3, bookT + bookH * i / 5f), Offset(cx + 3, bookT + bookH * i / 5f), 1.5f)
 
-        // ── Bookmark ──
-        if (openProgress > 0.4f) {
-            val ra = ((openProgress - 0.4f) / 0.6f).coerceIn(0f, 1f) * 0.7f
-            drawLine(Color(0xFFC62828).copy(alpha = ra), Offset(cx + halfW * 0.45f, bookT - 3), Offset(cx + halfW * 0.45f, bookT + bookH * 0.17f), 2.5f, StrokeCap.Round)
-        }
     }
 }

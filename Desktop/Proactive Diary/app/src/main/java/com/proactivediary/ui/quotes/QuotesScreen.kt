@@ -16,12 +16,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -131,7 +129,7 @@ fun QuotesScreen(
                 }
 
                 // ── Horizontal Leaderboard Cards ──
-                if (state.trendingQuotes.size >= 3) {
+                if (state.trendingQuotes.isNotEmpty()) {
                     item(key = "leaderboard_label") {
                         Row(
                             modifier = Modifier
@@ -166,16 +164,16 @@ fun QuotesScreen(
                     }
                 }
 
-                // ── Tab pills: Trending / New / Following ──
+                // ── Tab pills: New / Trending / Following (centered) ──
                 item(key = "tabs") {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
                             .padding(horizontal = 20.dp),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        horizontalArrangement = Arrangement.Center
                     ) {
-                        QuotesTab.entries.forEach { tab ->
+                        val tabOrder = listOf(QuotesTab.NEW, QuotesTab.TRENDING, QuotesTab.FOLLOWING)
+                        tabOrder.forEachIndexed { index, tab ->
                             val isSelected = state.selectedTab == tab
                             Box(
                                 modifier = Modifier
@@ -189,7 +187,7 @@ fun QuotesScreen(
                             ) {
                                 Text(
                                     text = when (tab) {
-                                        QuotesTab.TRENDING -> "\uD83D\uDD25 Trending"
+                                        QuotesTab.TRENDING -> "Trending"
                                         QuotesTab.NEW -> "New"
                                         QuotesTab.FOLLOWING -> "Following"
                                     },
@@ -197,6 +195,9 @@ fun QuotesScreen(
                                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                                     color = if (isSelected) Color.White else MaterialTheme.colorScheme.onBackground
                                 )
+                            }
+                            if (index < tabOrder.lastIndex) {
+                                Spacer(modifier = Modifier.width(6.dp))
                             }
                         }
                     }
