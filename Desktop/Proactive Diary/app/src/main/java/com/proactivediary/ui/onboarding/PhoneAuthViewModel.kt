@@ -63,9 +63,6 @@ class PhoneAuthViewModel @Inject constructor(
         _state.value = _state.value.copy(email = email, error = null)
     }
 
-    private val nameValid: Boolean
-        get() = _state.value.firstName.isNotBlank() && _state.value.lastName.isNotBlank()
-
     fun selectCountry(country: Country) {
         _state.value = _state.value.copy(
             countryCode = country.code,
