@@ -16,6 +16,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class PhoneAuthState(
+    val firstName: String = "",
+    val lastName: String = "",
     val phoneNumber: String = "",
     val countryCode: String = "+972",
     val countryName: String = "Israel",
@@ -45,6 +47,14 @@ class PhoneAuthViewModel @Inject constructor(
 
     private var countdownJob: Job? = null
 
+    fun updateFirstName(name: String) {
+        _state.value = _state.value.copy(firstName = name, error = null)
+    }
+
+    fun updateLastName(name: String) {
+        _state.value = _state.value.copy(lastName = name, error = null)
+    }
+
     fun updatePhoneNumber(number: String) {
         _state.value = _state.value.copy(phoneNumber = number, error = null)
     }
@@ -52,6 +62,9 @@ class PhoneAuthViewModel @Inject constructor(
     fun updateEmail(email: String) {
         _state.value = _state.value.copy(email = email, error = null)
     }
+
+    private val nameValid: Boolean
+        get() = _state.value.firstName.isNotBlank() && _state.value.lastName.isNotBlank()
 
     fun selectCountry(country: Country) {
         _state.value = _state.value.copy(
@@ -73,6 +86,11 @@ class PhoneAuthViewModel @Inject constructor(
         val s = _state.value
         val fullNumber = "${s.countryCode}${s.phoneNumber.trimStart('0')}"
 
+        if (s.firstName.isBlank() || s.lastName.isBlank()) {
+            _state.value = s.copy(error = "Please enter your first and last name.")
+            return
+        }
+
         if (s.phoneNumber.length < 7) {
             _state.value = s.copy(error = "Please enter a valid phone number.")
             return
@@ -85,7 +103,9 @@ class PhoneAuthViewModel @Inject constructor(
             result.fold(
                 onSuccess = { phoneAuthResult ->
                     if (phoneAuthResult.verificationId == "auto_verified") {
-                        // Auto-verified — check auth state
+                        // Auto-verified — set display name then check auth state
+                        val fullName = "${s.firstName.trim()} ${s.lastName.trim()}".trim()
+                        if (fullName.isNotBlank()) authService.updateDisplayName(fullName)
                         _state.value = _state.value.copy(
                             isSending = false,
                             isSignedIn = authService.isAuthenticated
@@ -114,6 +134,11 @@ class PhoneAuthViewModel @Inject constructor(
         val s = _state.value
         val email = s.email.trim()
 
+        if (s.firstName.isBlank() || s.lastName.isBlank()) {
+            _state.value = s.copy(error = "Please enter your first and last name.")
+            return
+        }
+
         if (email.isEmpty() || !email.contains("@")) {
             _state.value = s.copy(error = "Please enter a valid email address.")
             return
@@ -122,16 +147,19 @@ class PhoneAuthViewModel @Inject constructor(
         _state.value = s.copy(isSending = true, error = null)
 
         viewModelScope.launch {
+            val fullName = "${s.firstName.trim()} ${s.lastName.trim()}".trim()
             // Try sign in first, if fails try create
             val signInResult = authService.signInWithEmail(email, "proactive_temp_${email.hashCode()}")
             signInResult.fold(
                 onSuccess = {
+                    if (fullName.isNotBlank()) authService.updateDisplayName(fullName)
                     _state.value = _state.value.copy(isSending = false, isSignedIn = true)
                 },
                 onFailure = {
                     val createResult = authService.createAccountWithEmail(email, "proactive_temp_${email.hashCode()}")
                     createResult.fold(
                         onSuccess = {
+                            if (fullName.isNotBlank()) authService.updateDisplayName(fullName)
                             _state.value = _state.value.copy(isSending = false, isSignedIn = true)
                         },
                         onFailure = { e ->
@@ -170,6 +198,11 @@ class PhoneAuthViewModel @Inject constructor(
             val result = authService.verifyOtp(verificationId, s.otpCode)
             result.fold(
                 onSuccess = {
+                    // Set display name from first + last name entered during signup
+                    val fullName = "${s.firstName.trim()} ${s.lastName.trim()}".trim()
+                    if (fullName.isNotBlank()) {
+                        authService.updateDisplayName(fullName)
+                    }
                     _state.value = _state.value.copy(isVerifying = false, isSignedIn = true)
                 },
                 onFailure = { e ->

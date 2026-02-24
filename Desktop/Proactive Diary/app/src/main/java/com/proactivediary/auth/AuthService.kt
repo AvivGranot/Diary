@@ -304,6 +304,23 @@ class AuthService @Inject constructor(
         }
     }
 
+    /**
+     * Updates the Firebase Auth display name for the current user.
+     * Call after phone/email auth when the user provides their name.
+     */
+    suspend fun updateDisplayName(name: String) {
+        val user = auth.currentUser ?: return
+        try {
+            val profileUpdates = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                .setDisplayName(name)
+                .build()
+            user.updateProfile(profileUpdates).await()
+            _currentUser.value = auth.currentUser
+            // Re-sync profile with updated name
+            syncUserProfile(auth.currentUser!!)
+        } catch (_: Exception) { }
+    }
+
     fun signOut() {
         auth.signOut()
         _currentUser.value = null

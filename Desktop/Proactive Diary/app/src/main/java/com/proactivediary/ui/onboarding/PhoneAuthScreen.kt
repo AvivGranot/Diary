@@ -101,6 +101,8 @@ fun PhoneAuthScreen(
         if (state.isPhoneMode) {
             PhoneModeContent(
                 state = state,
+                onFirstNameChange = viewModel::updateFirstName,
+                onLastNameChange = viewModel::updateLastName,
                 onPhoneChange = viewModel::updatePhoneNumber,
                 onChangeCountry = { showCountryPicker = true },
                 onNext = { activity?.let { viewModel.sendOtp(it) } },
@@ -109,6 +111,8 @@ fun PhoneAuthScreen(
         } else {
             EmailModeContent(
                 state = state,
+                onFirstNameChange = viewModel::updateFirstName,
+                onLastNameChange = viewModel::updateLastName,
                 onEmailChange = viewModel::updateEmail,
                 onNext = { viewModel.sendEmailAuth(context) },
                 onToggleMode = viewModel::toggleMode,
@@ -126,6 +130,8 @@ fun PhoneAuthScreen(
 @Composable
 private fun PhoneModeContent(
     state: PhoneAuthState,
+    onFirstNameChange: (String) -> Unit,
+    onLastNameChange: (String) -> Unit,
     onPhoneChange: (String) -> Unit,
     onChangeCountry: () -> Unit,
     onNext: () -> Unit,
@@ -133,7 +139,7 @@ private fun PhoneModeContent(
 ) {
     // Title
     Text(
-        text = "What's your mobile\nnumber?",
+        text = "What's your name?",
         style = TextStyle(
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
@@ -145,7 +151,7 @@ private fun PhoneModeContent(
     Spacer(modifier = Modifier.height(12.dp))
 
     Text(
-        text = "Enter the mobile number where you can be contacted. No one will see this on your profile.",
+        text = "Enter your name and mobile number to get started.",
         style = TextStyle(
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -153,7 +159,58 @@ private fun PhoneModeContent(
         )
     )
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(20.dp))
+
+    // Name fields row
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        OutlinedTextField(
+            value = state.firstName,
+            onValueChange = onFirstNameChange,
+            modifier = Modifier.weight(1f),
+            placeholder = {
+                Text(
+                    "First name",
+                    style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                )
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next
+            ),
+            singleLine = true,
+            shape = RoundedCornerShape(8.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f)
+            )
+        )
+        OutlinedTextField(
+            value = state.lastName,
+            onValueChange = onLastNameChange,
+            modifier = Modifier.weight(1f),
+            placeholder = {
+                Text(
+                    "Last name",
+                    style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                )
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next
+            ),
+            singleLine = true,
+            shape = RoundedCornerShape(8.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f)
+            )
+        )
+    }
+
+    Spacer(modifier = Modifier.height(16.dp))
 
     // Country code row
     Row(
@@ -251,6 +308,8 @@ private fun PhoneModeContent(
 @Composable
 private fun EmailModeContent(
     state: PhoneAuthState,
+    onFirstNameChange: (String) -> Unit,
+    onLastNameChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
     onNext: () -> Unit,
     onToggleMode: () -> Unit,
@@ -269,7 +328,7 @@ private fun EmailModeContent(
     Spacer(modifier = Modifier.height(12.dp))
 
     Text(
-        text = "Enter your email address, or continue with Google.",
+        text = "Enter your name and email address, or continue with Google.",
         style = TextStyle(
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -277,7 +336,58 @@ private fun EmailModeContent(
         )
     )
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(20.dp))
+
+    // Name fields row
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        OutlinedTextField(
+            value = state.firstName,
+            onValueChange = onFirstNameChange,
+            modifier = Modifier.weight(1f),
+            placeholder = {
+                Text(
+                    "First name",
+                    style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                )
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next
+            ),
+            singleLine = true,
+            shape = RoundedCornerShape(8.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f)
+            )
+        )
+        OutlinedTextField(
+            value = state.lastName,
+            onValueChange = onLastNameChange,
+            modifier = Modifier.weight(1f),
+            placeholder = {
+                Text(
+                    "Last name",
+                    style = TextStyle(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+                )
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next
+            ),
+            singleLine = true,
+            shape = RoundedCornerShape(8.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+                unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f)
+            )
+        )
+    }
+
+    Spacer(modifier = Modifier.height(12.dp))
 
     OutlinedTextField(
         value = state.email,
