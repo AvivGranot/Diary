@@ -73,7 +73,7 @@ class StreakRepository @Inject constructor(
         return when {
             streak == 0 && daysThisWeek == 0 -> "Welcome back. Pick up where you left off."
             streak == 0 && daysThisWeek > 0 -> "You wrote $daysThisWeek day${if (daysThisWeek > 1) "s" else ""} this week. That counts."
-            streak == 1 -> "Day 1. Every journey starts here."
+            streak == 1 -> "Your first entry. Every journey starts here."
             streak < 7 -> "$streak days in a row. Keep going."
             else -> "$streak day streak. You\u2019re doing this."
         }

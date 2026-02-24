@@ -28,11 +28,6 @@ sealed class Routes(val route: String) {
     object ExportData : Routes("export_data")
 
     // Social features
-    object ComposeNote : Routes("compose_note")
-    object NoteInbox : Routes("note_inbox")
-    object EnvelopeReveal : Routes("envelope/{noteId}") {
-        fun createRoute(noteId: String) = "envelope/$noteId"
-    }
     object Quotes : Routes("quotes")
     object QuoteDetail : Routes("quote/{quoteId}") {
         fun createRoute(quoteId: String) = "quote/$quoteId"

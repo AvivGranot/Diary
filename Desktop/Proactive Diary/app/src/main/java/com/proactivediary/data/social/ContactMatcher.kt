@@ -1,6 +1,7 @@
 package com.proactivediary.data.social
 
-import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -12,42 +13,62 @@ data class MatchedContact(
 
 @Singleton
 class ContactMatcher @Inject constructor(
-    private val functions: FirebaseFunctions
+    private val firestore: FirebaseFirestore,
+    private val auth: FirebaseAuth
 ) {
 
     /**
      * Check if a single contact (by phone or email) is a registered user.
      * Uses hashing for privacy — raw values never sent to server.
+     * Queries Firestore directly instead of Cloud Function.
      */
     suspend fun resolveContact(
         phone: String? = null,
         email: String? = null
     ): MatchedContact? {
         if (phone == null && email == null) return null
-
-        val data = hashMapOf<String, Any>()
-        if (phone != null) {
-            data["phoneHashes"] = listOf(UserProfileRepository.hashValue(normalizePhone(phone)))
-        }
-        if (email != null) {
-            data["emailHashes"] = listOf(UserProfileRepository.hashValue(email.lowercase().trim()))
-        }
+        val myUid = auth.currentUser?.uid ?: return null
 
         return try {
-            val result = functions.getHttpsCallable("resolveContacts")
-                .call(data)
-                .await()
+            // Try phone hash first
+            if (phone != null) {
+                val phoneHash = UserProfileRepository.hashValue(normalizePhone(phone))
+                val snap = firestore.collection("users")
+                    .whereEqualTo("phoneHash", phoneHash)
+                    .limit(1)
+                    .get()
+                    .await()
 
-            @Suppress("UNCHECKED_CAST")
-            val resultData = result.data as? Map<String, Any>
-            val matches = resultData?.get("matches") as? List<Map<String, Any>> ?: emptyList()
-
-            matches.firstOrNull()?.let {
-                MatchedContact(
-                    userId = it["userId"] as String,
-                    displayName = it["displayName"] as String
-                )
+                snap.documents.firstOrNull()?.let { doc ->
+                    if (doc.id != myUid) {
+                        return MatchedContact(
+                            userId = doc.id,
+                            displayName = doc.data?.get("displayName") as? String ?: "Anonymous"
+                        )
+                    }
+                }
             }
+
+            // Try email hash
+            if (email != null) {
+                val emailHash = UserProfileRepository.hashValue(email.lowercase().trim())
+                val snap = firestore.collection("users")
+                    .whereEqualTo("emailHash", emailHash)
+                    .limit(1)
+                    .get()
+                    .await()
+
+                snap.documents.firstOrNull()?.let { doc ->
+                    if (doc.id != myUid) {
+                        return MatchedContact(
+                            userId = doc.id,
+                            displayName = doc.data?.get("displayName") as? String ?: "Anonymous"
+                        )
+                    }
+                }
+            }
+
+            null
         } catch (e: Exception) {
             null
         }

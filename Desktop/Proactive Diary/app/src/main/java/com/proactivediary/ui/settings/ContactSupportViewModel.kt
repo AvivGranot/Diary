@@ -5,8 +5,8 @@ import android.os.Build
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.functions.ktx.functions
-import com.google.firebase.ktx.Firebase
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
 import com.proactivediary.BuildConfig
 import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.db.dao.PreferenceDao
@@ -105,21 +105,27 @@ class ContactSupportViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                // Try Cloud Function first
+                // Write support request directly to Firestore
                 val data = hashMapOf(
                     "category" to state.category,
                     "email" to state.email,
                     "subject" to state.subject,
                     "description" to state.description,
-                    "appVersion" to state.deviceInfo.appVersion,
-                    "androidVersion" to state.deviceInfo.androidVersion,
-                    "deviceModel" to state.deviceInfo.deviceModel,
-                    "planType" to state.deviceInfo.planType,
-                    "totalEntries" to state.deviceInfo.totalEntries
+                    "deviceInfo" to hashMapOf(
+                        "appVersion" to state.deviceInfo.appVersion,
+                        "androidVersion" to state.deviceInfo.androidVersion,
+                        "deviceModel" to state.deviceInfo.deviceModel,
+                        "planType" to state.deviceInfo.planType,
+                        "totalEntries" to state.deviceInfo.totalEntries
+                    ),
+                    "status" to "new",
+                    "createdAt" to FieldValue.serverTimestamp(),
+                    "resolution" to null,
+                    "resolvedAt" to null
                 )
-                Firebase.functions
-                    .getHttpsCallable("submitSupportRequest")
-                    .call(data)
+                FirebaseFirestore.getInstance()
+                    .collection("support_requests")
+                    .add(data)
                     .await()
 
                 analyticsService.logSupportRequestSubmitted(state.category)

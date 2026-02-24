@@ -33,9 +33,6 @@ import com.proactivediary.ui.activity.ActivityViewModel
 import com.proactivediary.ui.components.DiaryBottomNav
 import com.proactivediary.ui.journal.EntryDetailScreen
 import com.proactivediary.ui.notes.NoteInboxViewModel
-import com.proactivediary.ui.notes.ComposeNoteScreen
-import com.proactivediary.ui.notes.EnvelopeRevealScreen
-import com.proactivediary.ui.notes.NoteInboxScreen
 import com.proactivediary.ui.onboarding.NotificationFallbackScreen
 import com.proactivediary.ui.onboarding.NotificationPermissionScreen
 import com.proactivediary.ui.onboarding.OnboardingGoalsScreen
@@ -483,39 +480,6 @@ fun ProactiveDiaryNavHost(
                     analyticsService = analyticsService,
                     quotesRepository = quotesPreviewVM.quotesRepository,
                     userProfileRepository = quotesPreviewVM.userProfileRepository
-                )
-            }
-
-            // ── Anonymous Notes (standalone routes) ──
-
-            composable(Routes.ComposeNote.route) {
-                ComposeNoteScreen(
-                    onBack = { navController.popBackStack() },
-                    onNoteSent = { navController.popBackStack() }
-                )
-            }
-
-            composable(Routes.NoteInbox.route) {
-                NoteInboxScreen(
-                    onBack = { navController.popBackStack() },
-                    onNoteClick = { noteId ->
-                        navController.navigate(Routes.EnvelopeReveal.createRoute(noteId))
-                    },
-                    onComposeNote = {
-                        navController.navigate(Routes.ComposeNote.route)
-                    }
-                )
-            }
-
-            composable(
-                route = Routes.EnvelopeReveal.route,
-                arguments = listOf(navArgument("noteId") { type = NavType.StringType })
-            ) {
-                EnvelopeRevealScreen(
-                    onBack = { navController.popBackStack() },
-                    onSendOneBack = {
-                        navController.navigate(Routes.ComposeNote.route)
-                    }
                 )
             }
 

@@ -1,9 +1,9 @@
 package com.proactivediary.data.social
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
-import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -16,13 +16,12 @@ import javax.inject.Singleton
 @Singleton
 class UserProfileRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val functions: FirebaseFunctions,
     private val auth: FirebaseAuth
 ) {
 
     /**
      * Fast client-side write: guarantee the user doc exists (~100ms).
-     * Called before the slow Cloud Function path so downstream .set(merge) calls never fail.
+     * Called before the slow profile creation path so downstream .set(merge) calls never fail.
      */
     suspend fun ensureMinimalProfile(
         displayName: String?,
@@ -42,32 +41,68 @@ class UserProfileRepository @Inject constructor(
             .await()
     }
 
+    /**
+     * Create or update user profile directly in Firestore.
+     * Also increments global user counter for new users and sends welcome note.
+     */
     suspend fun createOrUpdateProfile(
         displayName: String?,
         phone: String? = null,
         email: String? = null,
         photoUrl: String? = null
     ): Result<Boolean> {
+        val uid = auth.currentUser?.uid ?: return Result.failure(Exception("Not signed in"))
         return try {
-            val data = hashMapOf<String, Any?>(
-                "displayName" to (displayName ?: "Anonymous"),
-                "phoneHash" to phone?.let { hashValue(normalizePhone(it)) },
-                "emailHash" to email?.let { hashValue(it.lowercase().trim()) },
-                "fcmToken" to null,
-                "photoUrl" to photoUrl
-            )
+            val userRef = firestore.collection("users").document(uid)
+            val existing = userRef.get().await()
 
-            val result = functions.getHttpsCallable("createUserProfile")
-                .call(data)
-                .await()
+            if (existing.exists() && existing.data?.containsKey("createdAt") == true) {
+                // Returning user — just update mutable fields
+                val updates = mutableMapOf<String, Any?>()
+                if (displayName != null) updates["displayName"] = displayName
+                if (photoUrl != null) updates["photoUrl"] = photoUrl
+                if (updates.isNotEmpty()) userRef.update(updates).await()
 
-            // Update FCM token in background — not needed during onboarding
-            CoroutineScope(Dispatchers.IO).launch { updateFcmToken() }
+                CoroutineScope(Dispatchers.IO).launch { updateFcmToken() }
+                Result.success(false)
+            } else {
+                // New user — create profile + counter + welcome note
+                val batch = firestore.batch()
 
-            @Suppress("UNCHECKED_CAST")
-            val resultData = result.data as? Map<String, Any>
-            val created = resultData?.get("created") as? Boolean ?: false
-            Result.success(created)
+                batch.set(userRef, mapOf(
+                    "displayName" to (displayName ?: "Anonymous"),
+                    "phoneHash" to phone?.let { hashValue(normalizePhone(it)) },
+                    "emailHash" to email?.let { hashValue(it.lowercase().trim()) },
+                    "photoUrl" to photoUrl,
+                    "fcmToken" to null,
+                    "noteCount" to 0,
+                    "quoteCount" to 0,
+                    "createdAt" to FieldValue.serverTimestamp()
+                ), SetOptions.merge())
+
+                // Increment global user counter
+                val counterRef = firestore.collection("counters").document("global")
+                batch.set(counterRef,
+                    mapOf("userCount" to FieldValue.increment(1)),
+                    SetOptions.merge())
+
+                // Send welcome note
+                val welcomeRef = firestore.collection("notes").document()
+                batch.set(welcomeRef, mapOf(
+                    "senderId" to "system",
+                    "senderName" to "Proactive Diary",
+                    "recipientId" to uid,
+                    "content" to "Welcome. Someone out there is glad you\u2019re here. This is your space to think, write, and grow. \u2728",
+                    "status" to "delivered",
+                    "createdAt" to FieldValue.serverTimestamp(),
+                    "readAt" to null
+                ))
+
+                batch.commit().await()
+
+                CoroutineScope(Dispatchers.IO).launch { updateFcmToken() }
+                Result.success(true)
+            }
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -85,13 +120,16 @@ class UserProfileRepository @Inject constructor(
         }
     }
 
+    /**
+     * Read global counters directly from Firestore (public read).
+     */
     suspend fun getGlobalCounters(): Pair<Long, Long> {
         return try {
-            val result = functions.getHttpsCallable("getCounters")
-                .call()
+            val doc = firestore.collection("counters").document("global")
+                .get()
                 .await()
-            @Suppress("UNCHECKED_CAST")
-            val data = result.data as? Map<String, Any> ?: emptyMap()
+            if (!doc.exists()) return Pair(0L, 0L)
+            val data = doc.data ?: return Pair(0L, 0L)
             val userCount = (data["userCount"] as? Number)?.toLong() ?: 0L
             val quoteCount = (data["quoteCount"] as? Number)?.toLong() ?: 0L
             Pair(userCount, quoteCount)

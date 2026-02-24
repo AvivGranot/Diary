@@ -77,6 +77,9 @@ fun MainScreen(
     // Overlay sub-screen (Goals & Reminders) — shown on top of pager
     var showGoalsAndReminders by remember { mutableStateOf(false) }
 
+    // Compose tab request from QuotesScreen "Send a note" CTA
+    var composeTabRequested by remember { mutableStateOf(false) }
+
     // Notification prompt carried through deep link
     var activeNotificationPrompt by remember { mutableStateOf<String?>(null) }
 
@@ -140,7 +143,7 @@ fun MainScreen(
                     showGoalsAndReminders = true
                 }
                 "note_inbox" -> {
-                    rootNavController.navigate(Routes.NoteInbox.route)
+                    pagerState.animateScrollToPage(PAGE_NOTES)
                 }
             }
             onDeepLinkConsumed()
@@ -163,24 +166,21 @@ fun MainScreen(
                                 rootNavController.navigate(Routes.QuoteDetail.createRoute(quoteId))
                             },
                             onSendNote = {
-                                rootNavController.navigate(Routes.ComposeNote.route)
+                                composeTabRequested = true
+                                scope.launch { pagerState.animateScrollToPage(PAGE_NOTES) }
                             },
                             unreadNoteCount = unreadNoteCount,
                             onNotificationBellClick = {
                                 analyticsService.logNoteInboxOpened(unreadNoteCount)
-                                rootNavController.navigate(Routes.NoteInbox.route)
+                                scope.launch { pagerState.animateScrollToPage(PAGE_NOTES) }
                             }
                         )
                     }
                     PAGE_NOTES -> {
                         NoteInboxScreen(
-                            onBack = null, // No back button — it's a tab
-                            onNoteClick = { noteId ->
-                                rootNavController.navigate(Routes.EnvelopeReveal.createRoute(noteId))
-                            },
-                            onComposeNote = {
-                                rootNavController.navigate(Routes.ComposeNote.route)
-                            }
+                            onBack = null,
+                            composeRequested = composeTabRequested,
+                            onComposeRequestHandled = { composeTabRequested = false }
                         )
                     }
                     PAGE_DIARY -> {

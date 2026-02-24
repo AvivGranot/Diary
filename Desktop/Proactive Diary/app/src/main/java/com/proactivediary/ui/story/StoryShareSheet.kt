@@ -29,7 +29,6 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.proactivediary.R
 import com.proactivediary.domain.model.ShareChannel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,18 +54,18 @@ fun StoryShareSheet(
             )
 
             ShareRowPainter(
-                painter = painterResource(R.drawable.ic_instagram),
+                painter = painterResource(ShareChannel.INSTAGRAM.iconRes),
                 label = "Instagram",
-                brandColor = Color(0xFFE4405F),
+                brandColor = ShareChannel.INSTAGRAM.brandColor,
                 onClick = { onChannelSelected(ShareChannel.INSTAGRAM) }
             )
 
             Spacer(modifier = Modifier.height(4.dp))
 
             ShareRowPainter(
-                painter = painterResource(R.drawable.ic_tiktok),
+                painter = painterResource(ShareChannel.TIKTOK.iconRes),
                 label = "TikTok",
-                brandColor = Color(0xFF000000),
+                brandColor = ShareChannel.TIKTOK.brandColor,
                 onClick = { onChannelSelected(ShareChannel.TIKTOK) }
             )
 

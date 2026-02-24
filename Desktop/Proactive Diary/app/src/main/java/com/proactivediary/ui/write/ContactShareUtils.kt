@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.ContactsContract
+import com.proactivediary.domain.model.ShareChannel
 import com.proactivediary.domain.model.TaggedContact
 
 /**
@@ -60,6 +61,41 @@ fun resolveContact(context: Context, contactUri: Uri): TaggedContact? {
         email = email,
         phone = phone
     )
+}
+
+/**
+ * Shares the diary entry via a specific platform (WhatsApp, Telegram, etc.).
+ * Falls back to the system chooser if the app is not installed.
+ */
+fun shareEntryViaPlatform(context: Context, state: WriteUiState, channel: ShareChannel) {
+    val entryText = buildString {
+        if (state.title.isNotBlank()) {
+            appendLine(state.title)
+            appendLine()
+        }
+        appendLine(state.content)
+        appendLine()
+        appendLine("---")
+        appendLine("Written in Proactive Diary")
+        appendLine("https://play.google.com/store/apps/details?id=com.proactivediary")
+    }
+
+    val shareIntent = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, entryText)
+        putExtra(Intent.EXTRA_SUBJECT, state.title.ifBlank { "My diary entry" })
+        setPackage(channel.packageName)
+    }
+
+    // If the target app is installed, open it directly; otherwise fall back to chooser
+    if (shareIntent.resolveActivity(context.packageManager) != null) {
+        context.startActivity(shareIntent)
+    } else {
+        shareIntent.setPackage(null)
+        context.startActivity(
+            Intent.createChooser(shareIntent, "Share via ${channel.displayName}")
+        )
+    }
 }
 
 /**

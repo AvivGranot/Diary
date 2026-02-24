@@ -81,6 +81,7 @@ import com.proactivediary.ui.share.ShareCardData
 import com.proactivediary.ui.share.StreakShareData
 import com.proactivediary.ui.share.StreakCardPreview
 import com.proactivediary.ui.share.shareCardAsImage
+import com.proactivediary.ui.notes.ChannelPickerSheet
 
 import com.proactivediary.ui.theme.InstrumentSerif
 import androidx.compose.foundation.shape.CircleShape
@@ -195,6 +196,7 @@ fun WriteScreen(
     var viewingImageId by remember { mutableStateOf<String?>(null) }
     var showTemplatePicker by remember { mutableStateOf(false) }
     var showDrawingCanvas by remember { mutableStateOf(false) }
+    var showChannelPicker by remember { mutableStateOf(false) }
 
     // Auto-show template picker for first-ever write
     LaunchedEffect(state.isFirstEverWrite) {
@@ -605,9 +607,10 @@ fun WriteScreen(
                     }
                 },
                 onTemplatesClick = { showTemplatePicker = true },
-                onShareClick = { contactPickerLauncher.launch(null) },
+                onShareClick = { showChannelPicker = true },
                 onDrawClick = { showDrawingCanvas = true },
-                onSuggestionsClick = { onSuggestionsClick?.invoke() }
+                onSuggestionsClick = { onSuggestionsClick?.invoke() },
+                onTimerClick = { viewModel.showFocusTimerOverlay() }
             )
 
             // Clearance for persistent bottom nav (64dp height)
@@ -816,6 +819,21 @@ fun WriteScreen(
                 showDrawingCanvas = false
             },
             onDismiss = { showDrawingCanvas = false }
+        )
+    }
+
+    // Channel picker for share flow — platform first, then optional contact
+    if (showChannelPicker) {
+        ChannelPickerSheet(
+            onChannelSelected = { channel ->
+                showChannelPicker = false
+                shareEntryViaPlatform(context, viewModel.uiState.value, channel)
+            },
+            onBrowseContacts = {
+                showChannelPicker = false
+                contactPickerLauncher.launch(null)
+            },
+            onDismiss = { showChannelPicker = false }
         )
     }
 }

@@ -1,9 +1,9 @@
 package com.proactivediary.data.social
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -34,87 +34,154 @@ data class QuoteComment(
 @Singleton
 class QuotesRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val functions: FirebaseFunctions,
     private val auth: FirebaseAuth
 ) {
 
+    /**
+     * Submit a quote directly to Firestore.
+     * Firestore rules enforce: authorId == auth.uid.
+     */
     suspend fun submitQuote(content: String): Result<String> {
+        val user = auth.currentUser ?: return Result.failure(Exception("Not signed in"))
         return try {
-            val data = hashMapOf("content" to content)
-            val result = functions.getHttpsCallable("submitQuote")
-                .call(data)
-                .await()
-
-            @Suppress("UNCHECKED_CAST")
-            val resultData = result.data as? Map<String, Any>
-            val quoteId = resultData?.get("quoteId") as? String ?: ""
-            Result.success(quoteId)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun toggleLike(quoteId: String): Result<Boolean> {
-        return try {
-            val data = hashMapOf("quoteId" to quoteId)
-            val result = functions.getHttpsCallable("toggleLike")
-                .call(data)
-                .await()
-
-            @Suppress("UNCHECKED_CAST")
-            val resultData = result.data as? Map<String, Any>
-            val liked = resultData?.get("liked") as? Boolean ?: false
-            Result.success(liked)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun addComment(quoteId: String, content: String): Result<Unit> {
-        return try {
-            val data = hashMapOf(
-                "quoteId" to quoteId,
-                "content" to content
+            val quoteData = hashMapOf(
+                "authorId" to user.uid,
+                "authorName" to (user.displayName ?: "Anonymous"),
+                "authorPhotoUrl" to user.photoUrl?.toString(),
+                "content" to content.trim(),
+                "likeCount" to 0,
+                "commentCount" to 0,
+                "createdAt" to FieldValue.serverTimestamp(),
+                "reported" to false
             )
-            functions.getHttpsCallable("addComment")
-                .call(data)
+
+            val docRef = firestore.collection("quotes")
+                .add(quoteData)
                 .await()
+
+            // Increment global quote counter (best-effort)
+            try {
+                firestore.collection("counters").document("global")
+                    .update("quoteCount", FieldValue.increment(1))
+                    .await()
+            } catch (_: Exception) {
+                // Counter doc may not exist yet — create it
+                firestore.collection("counters").document("global")
+                    .set(hashMapOf("quoteCount" to 1, "userCount" to 0), com.google.firebase.firestore.SetOptions.merge())
+                    .await()
+            }
+
+            Result.success(docRef.id)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Toggle like on a quote — direct Firestore write.
+     * Rules enforce: likes/{userId} can be created/deleted by that userId.
+     */
+    suspend fun toggleLike(quoteId: String): Result<Boolean> {
+        val uid = auth.currentUser?.uid ?: return Result.failure(Exception("Not signed in"))
+        return try {
+            val likeRef = firestore.collection("quotes")
+                .document(quoteId)
+                .collection("likes")
+                .document(uid)
+
+            val likeDoc = likeRef.get().await()
+
+            if (likeDoc.exists()) {
+                // Unlike
+                likeRef.delete().await()
+                firestore.collection("quotes").document(quoteId)
+                    .update("likeCount", FieldValue.increment(-1)).await()
+                Result.success(false)
+            } else {
+                // Like
+                likeRef.set(hashMapOf("createdAt" to FieldValue.serverTimestamp())).await()
+                firestore.collection("quotes").document(quoteId)
+                    .update("likeCount", FieldValue.increment(1)).await()
+                Result.success(true)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Add a comment to a quote — direct Firestore write.
+     * Rules enforce: comments/{commentId} authorId == auth.uid.
+     */
+    suspend fun addComment(quoteId: String, content: String): Result<Unit> {
+        val user = auth.currentUser ?: return Result.failure(Exception("Not signed in"))
+        return try {
+            val commentData = hashMapOf(
+                "authorId" to user.uid,
+                "authorName" to (user.displayName ?: "Anonymous"),
+                "content" to content.trim(),
+                "createdAt" to FieldValue.serverTimestamp()
+            )
+
+            firestore.collection("quotes")
+                .document(quoteId)
+                .collection("comments")
+                .add(commentData)
+                .await()
+
+            // Increment comment count
+            firestore.collection("quotes").document(quoteId)
+                .update("commentCount", FieldValue.increment(1)).await()
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
+    /**
+     * Get leaderboard — direct Firestore query instead of Cloud Function.
+     */
     suspend fun getLeaderboard(
         period: String = "weekly",
         limit: Int = 20
     ): Result<List<Quote>> {
         return try {
-            val data = hashMapOf(
-                "period" to period,
-                "limit" to limit
-            )
-            val result = functions.getHttpsCallable("getLeaderboard")
-                .call(data)
-                .await()
+            var query = firestore.collection("quotes")
+                .whereEqualTo("reported", false)
 
-            @Suppress("UNCHECKED_CAST")
-            val resultData = result.data as? Map<String, Any>
-            val quotesData = resultData?.get("quotes") as? List<Map<String, Any>> ?: emptyList()
+            if (period == "weekly" || period == "daily") {
+                val cutoff = java.util.Calendar.getInstance().apply {
+                    if (period == "weekly") add(java.util.Calendar.DAY_OF_YEAR, -7)
+                    else add(java.util.Calendar.DAY_OF_YEAR, -1)
+                }.time
+                val cutoffTs = com.google.firebase.Timestamp(cutoff)
 
-            val quotes = quotesData.map { q ->
-                Quote(
-                    id = q["id"] as? String ?: "",
-                    authorId = q["authorId"] as? String ?: "",
-                    authorName = q["authorName"] as? String ?: "Anonymous",
-                    authorPhotoUrl = q["authorPhotoUrl"] as? String,
-                    content = q["content"] as? String ?: "",
-                    likeCount = (q["likeCount"] as? Number)?.toInt() ?: 0,
-                    commentCount = (q["commentCount"] as? Number)?.toInt() ?: 0,
-                    createdAt = (q["createdAt"] as? Number)?.toLong() ?: 0L
-                )
+                // Fetch by recency, then sort by likes in memory
+                val snapshot = query
+                    .whereGreaterThanOrEqualTo("createdAt", cutoffTs)
+                    .orderBy("createdAt", Query.Direction.DESCENDING)
+                    .limit((limit * 3).toLong())
+                    .get()
+                    .await()
+
+                val quotes = snapshot.documents.mapNotNull { doc ->
+                    docToQuote(doc)
+                }.sortedByDescending { it.likeCount }
+                    .take(limit)
+
+                return Result.success(quotes)
             }
 
+            // all_time: sort by likes directly
+            val snapshot = query
+                .orderBy("likeCount", Query.Direction.DESCENDING)
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .limit(limit.toLong())
+                .get()
+                .await()
+
+            val quotes = snapshot.documents.mapNotNull { doc -> docToQuote(doc) }
             Result.success(quotes)
         } catch (e: Exception) {
             Result.failure(e)
@@ -136,17 +203,7 @@ class QuotesRepository @Inject constructor(
                 }
 
                 val quotes = snapshot?.documents?.mapNotNull { doc ->
-                    val data = doc.data ?: return@mapNotNull null
-                    Quote(
-                        id = doc.id,
-                        authorId = data["authorId"] as? String ?: "",
-                        authorName = data["authorName"] as? String ?: "Anonymous",
-                        authorPhotoUrl = data["authorPhotoUrl"] as? String,
-                        content = data["content"] as? String ?: "",
-                        likeCount = (data["likeCount"] as? Number)?.toInt() ?: 0,
-                        commentCount = (data["commentCount"] as? Number)?.toInt() ?: 0,
-                        createdAt = (data["createdAt"] as? com.google.firebase.Timestamp)?.toDate()?.time ?: 0L
-                    )
+                    docToQuote(doc)
                 } ?: emptyList()
 
                 trySend(quotes)
@@ -175,17 +232,7 @@ class QuotesRepository @Inject constructor(
                 }
 
                 val quotes = snapshot?.documents?.mapNotNull { doc ->
-                    val data = doc.data ?: return@mapNotNull null
-                    Quote(
-                        id = doc.id,
-                        authorId = data["authorId"] as? String ?: "",
-                        authorName = data["authorName"] as? String ?: "Anonymous",
-                        authorPhotoUrl = data["authorPhotoUrl"] as? String,
-                        content = data["content"] as? String ?: "",
-                        likeCount = (data["likeCount"] as? Number)?.toInt() ?: 0,
-                        commentCount = (data["commentCount"] as? Number)?.toInt() ?: 0,
-                        createdAt = (data["createdAt"] as? com.google.firebase.Timestamp)?.toDate()?.time ?: 0L
-                    )
+                    docToQuote(doc)
                 } ?: emptyList()
 
                 trySend(quotes)
@@ -241,5 +288,19 @@ class QuotesRepository @Inject constructor(
         } catch (e: Exception) {
             false
         }
+    }
+
+    private fun docToQuote(doc: com.google.firebase.firestore.DocumentSnapshot): Quote? {
+        val data = doc.data ?: return null
+        return Quote(
+            id = doc.id,
+            authorId = data["authorId"] as? String ?: "",
+            authorName = data["authorName"] as? String ?: "Anonymous",
+            authorPhotoUrl = data["authorPhotoUrl"] as? String,
+            content = data["content"] as? String ?: "",
+            likeCount = (data["likeCount"] as? Number)?.toInt() ?: 0,
+            commentCount = (data["commentCount"] as? Number)?.toInt() ?: 0,
+            createdAt = (data["createdAt"] as? com.google.firebase.Timestamp)?.toDate()?.time ?: 0L
+        )
     }
 }

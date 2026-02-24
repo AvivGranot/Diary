@@ -8,17 +8,19 @@
     <group
         android:name="quotes_group"
         android:pivotX="54"
-        android:pivotY="54">
+        android:pivotY="54"
+        android:scaleX="0.75"
+        android:scaleY="0.75">
 
-        <!-- Left quotation mark — 180° rotated, tail up-right -->
+        <!-- Left opening quote mark -->
         <path
-            android:fillColor="#FFFFFF"
-            android:pathData="M34,76 C23,76 18,68 18,61 C18,52 27,43 41,32 C47,47 50,54 50,61 C50,68 45,76 34,76 Z" />
+            android:fillColor="#90CAF9"
+            android:pathData="M49.9,27.9 L49.9,35.4 L44.7,37.4 L39.8,40.3 L35.8,44.7 L33.6,49.7 L40.7,49.1 L43.6,49.7 L47.5,51.3 L50.6,54.1 L52.1,56.1 L53.9,61.4 L54.1,64.4 L53.5,68.6 L51.2,73.9 L48.2,77.0 L43.1,79.6 L37.8,80.1 L33.4,79.4 L29.0,77.2 L25.3,73.5 L23.8,71.0 L22.6,67.3 L22.0,60.3 L23.3,51.7 L25.5,45.8 L29.5,39.8 L34.3,35.2 L42.0,30.6 L49.7,28.1 Z" />
 
-        <!-- Right quotation mark — 180° rotated, tail up-right -->
+        <!-- Right opening quote mark -->
         <path
-            android:fillColor="#FFFFFF"
-            android:pathData="M74,76 C63,76 58,68 58,61 C58,52 67,43 81,32 C86,47 90,54 90,61 C90,68 85,76 74,76 Z" />
+            android:fillColor="#90CAF9"
+            android:pathData="M82.0,27.9 L82.0,35.4 L76.8,37.4 L71.5,40.5 L67.5,45.1 L65.5,49.7 L72.8,49.1 L76.1,49.9 L80.7,52.3 L83.8,55.7 L85.5,59.6 L86.0,64.7 L84.9,70.4 L82.2,75.2 L79.2,77.8 L74.3,79.8 L69.5,80.1 L63.8,78.9 L60.0,76.5 L56.8,72.8 L54.8,68.2 L54.6,54.6 L56.3,48.6 L59.0,43.1 L62.0,39.2 L66.7,34.8 L71.3,31.9 L75.2,30.1 Z" />
 
     </group>
 

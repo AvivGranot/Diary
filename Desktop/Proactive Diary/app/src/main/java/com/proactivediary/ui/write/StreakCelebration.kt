@@ -264,7 +264,7 @@ fun FirstEntryCelebration(
             )
             Spacer(Modifier.height(16.dp))
             Text(
-                text = "day one",
+                text = "first entry",
                 style = TextStyle(
                     fontFamily = PlusJakartaSans,
                     fontSize = 36.sp,

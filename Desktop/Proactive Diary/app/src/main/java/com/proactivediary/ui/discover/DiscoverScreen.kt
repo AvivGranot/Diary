@@ -391,7 +391,7 @@ private fun WelcomeBackBanner(
 
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Day 1 of a new practice.",
+                    text = "The start of a new practice.",
                     style = TextStyle(
                         fontFamily = InstrumentSerif,
                         fontSize = 16.sp,

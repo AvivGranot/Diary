@@ -92,7 +92,7 @@ fun WriteFirstNoteScreen(
     LaunchedEffect(state.isSent, inviteSent) {
         if (state.isSent || inviteSent) {
             analyticsService.logOnboardingFirstNoteComplete(
-                wordCount = state.wordCount,
+                wordCount = state.charCount,
                 durationMs = System.currentTimeMillis() - screenStartTime
             )
         }
@@ -198,7 +198,7 @@ fun WriteFirstNoteScreen(
                         horizontalArrangement = Arrangement.End
                     ) {
                         Text(
-                            text = "${state.wordCount}/100 words",
+                            text = "${state.charCount}/${com.proactivediary.ui.notes.ComposeNoteViewModel.MAX_CHARS}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -336,7 +336,7 @@ fun WriteFirstNoteScreen(
         ChannelPickerSheet(
             onChannelSelected = { channel ->
                 showChannelPicker = false
-                analyticsService.logShareViaChannel(channel.key, state.wordCount)
+                analyticsService.logShareViaChannel(channel.key, state.charCount)
                 ShareIntentLauncher.launch(context, channel, state.content)
                 inviteSent = true
             },

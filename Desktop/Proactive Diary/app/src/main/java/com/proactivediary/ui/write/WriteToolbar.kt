@@ -43,6 +43,7 @@ import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Brush
+import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.filled.FormatColorText
 
@@ -91,6 +92,7 @@ fun WriteToolbar(
     onShareClick: (() -> Unit)? = null,
     onDrawClick: (() -> Unit)? = null,
     onSuggestionsClick: (() -> Unit)? = null,
+    onTimerClick: (() -> Unit)? = null,
     isDictating: Boolean = false,
     dictationSeconds: Int = 0,
     onStopDictation: (() -> Unit)? = null,
@@ -213,6 +215,15 @@ fun WriteToolbar(
                                 color = textColor,
                                 onClick = {
                                     onSuggestionsClick?.invoke()
+                                    isExpanded = false
+                                }
+                            )
+                            InlineFeatureButton(
+                                icon = Icons.Outlined.HourglassEmpty,
+                                label = "Timer",
+                                color = textColor,
+                                onClick = {
+                                    onTimerClick?.invoke()
                                     isExpanded = false
                                 }
                             )

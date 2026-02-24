@@ -3,7 +3,7 @@ name: Auto Bug Resolution
 on:
   schedule:
     - cron: '*/30 * * * *' # Every 30 minutes
-  workflow_dispatch: {} # Allow manual trigger from GitHub UI
+  workflow_dispatch: {} # Allow manual trigger
 
 jobs:
   resolve-bugs:
@@ -20,11 +20,15 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        run: cd scripts && npm install
+        run: |
+          cd scripts
+          npm install
 
       - name: Process new bug reports
         env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           FIREBASE_PROJECT_ID: proactive-diary
-        run: cd scripts && node resolve-bugs.js
+        run: |
+          cd scripts
+          node resolve-bugs.js

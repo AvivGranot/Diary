@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 data class ComposeNoteState(
     val content: String = "",
-    val wordCount: Int = 0,
+    val charCount: Int = 0,
     val recipientName: String? = null,
     val recipientId: String? = null,
     val recipientPhone: String? = null,
@@ -41,11 +41,10 @@ class ComposeNoteViewModel @Inject constructor(
     val state: StateFlow<ComposeNoteState> = _state.asStateFlow()
 
     fun updateContent(text: String) {
-        val words = if (text.isBlank()) 0 else text.trim().split("\\s+".toRegex()).size
-        if (words <= MAX_WORDS) {
+        if (text.length <= MAX_CHARS) {
             _state.value = _state.value.copy(
                 content = text,
-                wordCount = words,
+                charCount = text.length,
                 moderationError = null,
                 error = null
             )
@@ -94,7 +93,7 @@ class ComposeNoteViewModel @Inject constructor(
             val result = notesRepository.sendNote(recipientId, current.content)
             result.fold(
                 onSuccess = {
-                    analyticsService.logNoteSent(current.wordCount)
+                    analyticsService.logNoteSent(current.charCount)
                     _state.value = _state.value.copy(isSending = false, isSent = true)
                 },
                 onFailure = { e ->
@@ -129,7 +128,11 @@ class ComposeNoteViewModel @Inject constructor(
         _state.value = _state.value.copy(error = null, moderationError = null)
     }
 
+    fun resetState() {
+        _state.value = ComposeNoteState()
+    }
+
     companion object {
-        const val MAX_WORDS = 150
+        const val MAX_CHARS = 100
     }
 }

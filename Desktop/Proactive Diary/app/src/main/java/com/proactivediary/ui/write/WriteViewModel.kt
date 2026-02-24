@@ -433,11 +433,6 @@ class WriteViewModel @Inject constructor(
                     )
                     _contentFlow.value = ""
 
-                    // Focus timer is opt-in (off by default)
-                    val timerEnabled = preferenceDao.get("focus_timer_enabled")?.value == "true"
-                    if (timerEnabled) {
-                        _uiState.update { it.copy(showFocusTimer = true) }
-                    }
                 }
             }
         }
@@ -947,6 +942,10 @@ class WriteViewModel @Inject constructor(
     }
 
     // --- Focus Timer ---
+
+    fun showFocusTimerOverlay() {
+        _uiState.update { it.copy(showFocusTimer = true) }
+    }
 
     fun startFocusTimer() {
         _uiState.update { it.copy(showFocusTimer = false, focusTimerRunning = true, focusTimerSeconds = 300) }

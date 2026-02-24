@@ -1,9 +1,9 @@
 package com.proactivediary.data.social
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.functions.FirebaseFunctions
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -22,28 +22,30 @@ data class Note(
 @Singleton
 class NotesRepository @Inject constructor(
     private val firestore: FirebaseFirestore,
-    private val functions: FirebaseFunctions,
     private val auth: FirebaseAuth
 ) {
 
     /**
-     * Send an anonymous positive note to a registered user.
-     * Content moderation happens server-side via Gemini.
+     * Send an anonymous positive note directly to Firestore.
+     * Firestore rules enforce: senderId == auth.uid + required fields present.
      */
     suspend fun sendNote(recipientId: String, content: String): Result<String> {
+        val uid = auth.currentUser?.uid ?: return Result.failure(Exception("Not signed in"))
         return try {
-            val data = hashMapOf(
+            val noteData = hashMapOf(
+                "senderId" to uid,
                 "recipientId" to recipientId,
-                "content" to content
+                "content" to content.trim(),
+                "status" to "delivered",
+                "createdAt" to FieldValue.serverTimestamp(),
+                "readAt" to null
             )
-            val result = functions.getHttpsCallable("sendNote")
-                .call(data)
+
+            val docRef = firestore.collection("notes")
+                .add(noteData)
                 .await()
 
-            @Suppress("UNCHECKED_CAST")
-            val resultData = result.data as? Map<String, Any>
-            val noteId = resultData?.get("noteId") as? String ?: ""
-            Result.success(noteId)
+            Result.success(docRef.id)
         } catch (e: Exception) {
             Result.failure(e)
         }

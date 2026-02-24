@@ -428,11 +428,6 @@ object DailyWisdom {
             "Essayist"
         ),
         WisdomQuote(
-            "One day or day one. You decide.",
-            "Paulo Coelho",
-            "Author"
-        ),
-        WisdomQuote(
             "What we achieve inwardly will change outer reality.",
             "Plutarch",
             "Greek Historian"
