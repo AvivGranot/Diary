@@ -28,10 +28,10 @@ import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,18 +40,23 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.proactivediary.data.social.Quote
 import com.proactivediary.ui.quotes.components.AuthorAvatar
 import com.proactivediary.ui.theme.InstrumentSerif
 import java.text.SimpleDateFormat
@@ -65,6 +70,8 @@ private val Gold = Color(0xFFFFD700)
 private val Silver = Color(0xFFC0C0C0)
 private val Bronze = Color(0xFFCD7F32)
 private val RedAccent = Color(0xFFFF3B5C)
+private val BlueGradientStart = Color(0xFF60A5FA)
+private val BlueGradientEnd = Color(0xFF2563EB)
 
 @Composable
 fun QuotesScreen(
@@ -80,194 +87,204 @@ fun QuotesScreen(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                // ── Header: centered title + notification bell ──
-                item(key = "header") {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 24.dp)
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            // ── Header: + button | centered title | notification bell ──
+            item(key = "header") {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 24.dp)
+                ) {
+                    IconButton(
+                        onClick = { viewModel.showComposeSheet() },
+                        modifier = Modifier.align(Alignment.CenterStart)
                     ) {
-                        Text(
-                            text = "Quotes",
-                            style = MaterialTheme.typography.displaySmall.copy(
-                                fontFamily = InstrumentSerif,
-                                fontSize = 36.sp
-                            ),
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.align(Alignment.Center)
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Write a quote",
+                            modifier = Modifier.size(24.dp),
+                            tint = AccentBlue
                         )
+                    }
 
-                        IconButton(
-                            onClick = onNotificationBellClick,
-                            modifier = Modifier.align(Alignment.CenterEnd)
-                        ) {
-                            BadgedBox(
-                                badge = {
-                                    if (unreadNoteCount > 0) {
-                                        Badge {
-                                            Text(
-                                                text = if (unreadNoteCount > 9) "9+" else "$unreadNoteCount",
-                                                fontSize = 10.sp
-                                            )
-                                        }
+                    Text(
+                        text = "Quotes",
+                        style = MaterialTheme.typography.displaySmall.copy(
+                            fontFamily = InstrumentSerif,
+                            fontSize = 36.sp
+                        ),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+
+                    IconButton(
+                        onClick = onNotificationBellClick,
+                        modifier = Modifier.align(Alignment.CenterEnd)
+                    ) {
+                        BadgedBox(
+                            badge = {
+                                if (unreadNoteCount > 0) {
+                                    Badge {
+                                        Text(
+                                            text = if (unreadNoteCount > 9) "9+" else "$unreadNoteCount",
+                                            fontSize = 10.sp
+                                        )
                                     }
                                 }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Notifications,
-                                    contentDescription = "Notes Inbox",
-                                    modifier = Modifier.size(24.dp),
-                                    tint = MaterialTheme.colorScheme.onBackground
-                                )
                             }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Notifications,
+                                contentDescription = "Notes Inbox",
+                                modifier = Modifier.size(24.dp),
+                                tint = MaterialTheme.colorScheme.onBackground
+                            )
                         }
                     }
                 }
+            }
 
-                // ── Horizontal Leaderboard Cards ──
-                if (state.trendingQuotes.isNotEmpty()) {
-                    item(key = "leaderboard_label") {
-                        Row(
+            // ── Stories Row ──
+            item(key = "stories_row") {
+                StoriesRow(
+                    quotes = state.trendingQuotes,
+                    onYourQuoteTap = { viewModel.showComposeSheet() },
+                    onAuthorTap = { /* future: scroll to author's quote */ }
+                )
+            }
+
+            // ── Tab pills: Trending / New / Following (centered) ──
+            item(key = "tabs") {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    val tabOrder = listOf(QuotesTab.TRENDING, QuotesTab.NEW, QuotesTab.FOLLOWING)
+                    tabOrder.forEachIndexed { index, tab ->
+                        val isSelected = state.selectedTab == tab
+                        Box(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(
+                                    if (isSelected) AccentBlue
+                                    else MaterialTheme.colorScheme.surfaceVariant
+                                )
+                                .clickable { viewModel.selectTab(tab) }
+                                .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
                             Text(
-                                text = "\uD83C\uDFC6 WEEKLY LEADERBOARD",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    letterSpacing = 1.5.sp
-                                ),
-                                fontWeight = FontWeight.Bold,
-                                color = Gold
-                            )
-                            Text(
-                                text = "Swipe to see top 10 \u2192",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                                text = when (tab) {
+                                    QuotesTab.TRENDING -> "\uD83D\uDD25 Trending"
+                                    QuotesTab.NEW -> "New"
+                                    QuotesTab.FOLLOWING -> "Following"
+                                },
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                color = if (isSelected) Color.White else MaterialTheme.colorScheme.onBackground
                             )
                         }
-                        Spacer(modifier = Modifier.height(10.dp))
-                    }
-
-                    item(key = "leaderboard_cards") {
-                        LeaderboardCardsRow(
-                            quotes = state.trendingQuotes.take(10),
-                            onQuoteClick = { onQuoteClick(it.id) }
-                        )
-                        Spacer(modifier = Modifier.height(20.dp))
+                        if (index < tabOrder.lastIndex) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                        }
                     }
                 }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
-                // ── Tab pills: New / Trending / Following (centered) ──
-                item(key = "tabs") {
+            // ── Weekly Leaderboard ──
+            if (state.trendingQuotes.isNotEmpty()) {
+                item(key = "leaderboard_label") {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp),
-                        horizontalArrangement = Arrangement.Center
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val tabOrder = listOf(QuotesTab.NEW, QuotesTab.TRENDING, QuotesTab.FOLLOWING)
-                        tabOrder.forEachIndexed { index, tab ->
-                            val isSelected = state.selectedTab == tab
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(20.dp))
-                                    .background(
-                                        if (isSelected) AccentBlue
-                                        else MaterialTheme.colorScheme.surfaceVariant
-                                    )
-                                    .clickable { viewModel.selectTab(tab) }
-                                    .padding(horizontal = 14.dp, vertical = 8.dp)
-                            ) {
-                                Text(
-                                    text = when (tab) {
-                                        QuotesTab.TRENDING -> "Trending"
-                                        QuotesTab.NEW -> "New"
-                                        QuotesTab.FOLLOWING -> "Following"
-                                    },
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onBackground
-                                )
-                            }
-                            if (index < tabOrder.lastIndex) {
-                                Spacer(modifier = Modifier.width(6.dp))
-                            }
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-
-                // ── Quote Feed ──
-                val currentQuotes = when (state.selectedTab) {
-                    QuotesTab.TRENDING -> state.trendingQuotes
-                    QuotesTab.NEW -> state.newQuotes
-                    QuotesTab.FOLLOWING -> state.myQuotes
-                }
-
-                if (currentQuotes.isEmpty() && !state.isLoading) {
-                    item(key = "empty") {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 60.dp, bottom = 80.dp)
-                        ) {
-                            Text(
-                                text = "The stage is yours",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                text = "Write up to 25 words and inspire thousands",
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontStyle = FontStyle.Italic,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(horizontal = 32.dp)
-                            )
-                        }
-                    }
-                } else {
-                    items(currentQuotes, key = { it.id }) { quote ->
-                        FeedPostCard(
-                            quote = quote,
-                            isLiked = state.likedQuoteIds.contains(quote.id),
-                            onLike = { viewModel.toggleLike(quote.id) },
-                            onClick = { onQuoteClick(quote.id) },
-                            onShare = {
-                                val shareText = "\u201C${quote.content}\u201D\n\u2014 ${quote.authorName}\n\nShared from Proactive Diary"
-                                val sendIntent = Intent(Intent.ACTION_SEND).apply {
-                                    putExtra(Intent.EXTRA_TEXT, shareText)
-                                    type = "text/plain"
-                                }
-                                context.startActivity(Intent.createChooser(sendIntent, "Share quote"))
-                            }
+                        Text(
+                            text = "\uD83C\uDFC6 WEEKLY LEADERBOARD",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                letterSpacing = 1.5.sp
+                            ),
+                            fontWeight = FontWeight.Bold,
+                            color = Gold
+                        )
+                        Text(
+                            text = "Swipe to see top 10 \u2192",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
                         )
                     }
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
 
-                    // Bottom spacer for FAB clearance
-                    item { Spacer(modifier = Modifier.height(80.dp)) }
+                item(key = "leaderboard_cards") {
+                    LeaderboardCardsRow(
+                        quotes = state.trendingQuotes.take(10),
+                        onQuoteClick = { onQuoteClick(it.id) }
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
                 }
             }
 
-            // FAB at bottom-start
-            FloatingActionButton(
-                onClick = { viewModel.showComposeSheet() },
-                containerColor = AccentBlue,
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 16.dp, bottom = 72.dp)
-            ) {
-                Icon(Icons.Default.Add, "Write a quote", tint = Color.White)
+            // ── Quote Feed ──
+            val currentQuotes = when (state.selectedTab) {
+                QuotesTab.TRENDING -> state.trendingQuotes
+                QuotesTab.NEW -> state.newQuotes
+                QuotesTab.FOLLOWING -> state.myQuotes
+            }
+
+            if (currentQuotes.isEmpty() && !state.isLoading) {
+                item(key = "empty") {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 60.dp, bottom = 80.dp)
+                    ) {
+                        Text(
+                            text = "The stage is yours",
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "Write up to 25 words and inspire thousands",
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontStyle = FontStyle.Italic,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(horizontal = 32.dp)
+                        )
+                    }
+                }
+            } else {
+                items(currentQuotes, key = { it.id }) { quote ->
+                    FeedPostCard(
+                        quote = quote,
+                        isLiked = state.likedQuoteIds.contains(quote.id),
+                        onLike = { viewModel.toggleLike(quote.id) },
+                        onClick = { onQuoteClick(quote.id) },
+                        onShare = {
+                            val shareText = "\u201C${quote.content}\u201D\n\u2014 ${quote.authorName}\n\nShared from Proactive Diary"
+                            val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                putExtra(Intent.EXTRA_TEXT, shareText)
+                                type = "text/plain"
+                            }
+                            context.startActivity(Intent.createChooser(sendIntent, "Share quote"))
+                        }
+                    )
+                }
+
+                // Bottom spacer for nav bar clearance
+                item { Spacer(modifier = Modifier.height(20.dp)) }
             }
         }
     }
@@ -286,11 +303,136 @@ fun QuotesScreen(
     }
 }
 
+// ── Stories Row ──
+@Composable
+private fun StoriesRow(
+    quotes: List<Quote>,
+    onYourQuoteTap: () -> Unit,
+    onAuthorTap: (String) -> Unit
+) {
+    val uniqueAuthors = remember(quotes) {
+        quotes.distinctBy { it.authorId }.take(15)
+    }
+
+    val blueGradient = remember {
+        Brush.sweepGradient(listOf(BlueGradientStart, BlueGradientEnd, BlueGradientStart))
+    }
+
+    Column {
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // "You" story — always first
+            item(key = "story_you") {
+                StoryItem(
+                    label = "Your quote",
+                    photoUrl = null,
+                    authorName = "+",
+                    ringBrush = blueGradient,
+                    isYourStory = true,
+                    onClick = onYourQuoteTap
+                )
+            }
+
+            // Friend stories from trending authors
+            items(uniqueAuthors, key = { "story_${it.authorId}" }) { quote ->
+                StoryItem(
+                    label = quote.authorName.split(" ").first(),
+                    photoUrl = quote.authorPhotoUrl,
+                    authorName = quote.authorName,
+                    ringBrush = blueGradient,
+                    isYourStory = false,
+                    onClick = { onAuthorTap(quote.authorId) }
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(0.5.dp)
+                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+    }
+}
+
+// ── Single Story Item ──
+@Composable
+private fun StoryItem(
+    label: String,
+    photoUrl: String?,
+    authorName: String,
+    ringBrush: Brush,
+    isYourStory: Boolean,
+    onClick: () -> Unit
+) {
+    val ringStrokeWidth = 2.dp
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .width(60.dp)
+            .clickable(onClick = onClick)
+    ) {
+        // Outer ring with gradient stroke
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .drawBehind {
+                    drawCircle(
+                        brush = ringBrush,
+                        radius = size.minDimension / 2,
+                        style = Stroke(width = ringStrokeWidth.toPx())
+                    )
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            if (isYourStory) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(AccentBlue.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = "Add your quote",
+                        tint = AccentBlue,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            } else {
+                AuthorAvatar(
+                    photoUrl = photoUrl,
+                    authorName = authorName,
+                    size = 48
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.width(52.dp)
+        )
+    }
+}
+
 // ── Horizontal Leaderboard Cards ──
 @Composable
 private fun LeaderboardCardsRow(
-    quotes: List<com.proactivediary.data.social.Quote>,
-    onQuoteClick: (com.proactivediary.data.social.Quote) -> Unit
+    quotes: List<Quote>,
+    onQuoteClick: (Quote) -> Unit
 ) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 20.dp),
@@ -395,7 +537,7 @@ private fun LeaderboardCardsRow(
 // ── Feed Post Card (Twitter-style) ──
 @Composable
 private fun FeedPostCard(
-    quote: com.proactivediary.data.social.Quote,
+    quote: Quote,
     isLiked: Boolean,
     onLike: () -> Unit,
     onClick: () -> Unit,
@@ -407,7 +549,7 @@ private fun FeedPostCard(
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        // Header: avatar + name + timestamp
+        // Header: avatar + name + @username + timestamp
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth()
@@ -419,21 +561,33 @@ private fun FeedPostCard(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = quote.authorName,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                val dateFormat = SimpleDateFormat("MMM d", Locale.getDefault())
-                Text(
-                    text = dateFormat.format(Date(quote.createdAt)),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = quote.authorName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = "@${quote.authorName.lowercase().replace(" ", "")}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
+            val dateFormat = remember { SimpleDateFormat("MMM d", Locale.getDefault()) }
+            Text(
+                text = dateFormat.format(Date(quote.createdAt)),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            )
         }
 
         Spacer(modifier = Modifier.height(10.dp))
@@ -503,6 +657,14 @@ private fun FeedPostCard(
             )
 
             Spacer(modifier = Modifier.weight(1f))
+
+            // Bookmark
+            Icon(
+                Icons.Outlined.BookmarkBorder,
+                contentDescription = "Bookmark",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp)
+            )
         }
 
         // Divider
@@ -511,7 +673,7 @@ private fun FeedPostCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(0.5.dp)
-                .background(Color.White.copy(alpha = 0.08f))
+                .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
         )
     }
 }
