@@ -1,6 +1,7 @@
 package com.proactivediary.ui.onboarding
 
 import android.app.Activity
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -14,15 +15,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -43,7 +41,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -116,51 +113,13 @@ fun PhoneAuthScreen(
                 state = state,
                 onEmailChange = viewModel::updateEmail,
                 onNext = { viewModel.sendEmailAuth(context) },
-                onToggleMode = viewModel::toggleMode
+                onToggleMode = viewModel::toggleMode,
+                onGoogleSignIn = {
+                    analyticsService.logOnboardingAuthStart()
+                    viewModel.signInWithGoogle(context)
+                }
             )
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // "I already have an account" link
-        Text(
-            text = "I already have an account",
-            style = TextStyle(
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = InstagramBlue
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = { /* same flow, cosmetic difference */ }
-                )
-                .padding(vertical = 8.dp),
-            textAlign = TextAlign.Center
-        )
-
-        // Continue with Google
-        Text(
-            text = "Continue with Google",
-            style = TextStyle(
-                fontSize = 13.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = {
-                        analyticsService.logOnboardingAuthStart()
-                        viewModel.signInWithGoogle(context)
-                    }
-                )
-                .padding(vertical = 8.dp),
-            textAlign = TextAlign.Center
-        )
 
         Spacer(modifier = Modifier.weight(1f))
     }
@@ -284,9 +243,9 @@ private fun PhoneModeContent(
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    // Toggle to email mode
+    // Toggle to email/Google mode
     ToggleModeButton(
-        text = "Sign up with email",
+        text = "Sign up with email or Google",
         onClick = onToggleMode
     )
 }
@@ -296,10 +255,11 @@ private fun EmailModeContent(
     state: PhoneAuthState,
     onEmailChange: (String) -> Unit,
     onNext: () -> Unit,
-    onToggleMode: () -> Unit
+    onToggleMode: () -> Unit,
+    onGoogleSignIn: () -> Unit
 ) {
     Text(
-        text = "What's your email?",
+        text = "Sign up with email\nor Google",
         style = TextStyle(
             fontSize = 24.sp,
             fontWeight = FontWeight.Bold,
@@ -311,7 +271,7 @@ private fun EmailModeContent(
     Spacer(modifier = Modifier.height(12.dp))
 
     Text(
-        text = "Enter the email address where you can be contacted. No one will see this on your profile.",
+        text = "Enter your email address, or continue with Google.",
         style = TextStyle(
             fontSize = 14.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -352,13 +312,23 @@ private fun EmailModeContent(
         )
     }
 
-    Spacer(modifier = Modifier.height(24.dp))
+    Spacer(modifier = Modifier.height(20.dp))
 
     NextButton(
         text = "Next",
         isLoading = state.isSending,
         onClick = onNext
     )
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // "or" divider
+    OrDivider()
+
+    Spacer(modifier = Modifier.height(16.dp))
+
+    // Prominent Google sign-in button
+    GoogleSignInButton(onClick = onGoogleSignIn)
 
     Spacer(modifier = Modifier.height(16.dp))
 
@@ -425,6 +395,121 @@ private fun ToggleModeButton(
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onBackground
             )
+        )
+    }
+}
+
+@Composable
+private fun OrDivider() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Spacer(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f))
+        )
+        Text(
+            text = "or",
+            style = TextStyle(
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+            ),
+            modifier = Modifier.padding(horizontal = 16.dp)
+        )
+        Spacer(
+            modifier = Modifier
+                .weight(1f)
+                .height(1.dp)
+                .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f))
+        )
+    }
+}
+
+@Composable
+private fun GoogleSignInButton(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .border(1.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f), RoundedCornerShape(8.dp))
+            .clickable(onClick = onClick),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        GoogleGIcon(modifier = Modifier.size(18.dp))
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(
+            text = "Continue with Google",
+            style = TextStyle(
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        )
+    }
+}
+
+@Composable
+private fun GoogleGIcon(modifier: Modifier = Modifier) {
+    val red = Color(0xFFEA4335)
+    val yellow = Color(0xFFFBBC05)
+    val green = Color(0xFF34A853)
+    val blue = Color(0xFF4285F4)
+
+    Canvas(modifier = modifier) {
+        val w = size.width
+        val h = size.height
+        val cx = w / 2f
+        val cy = h / 2f
+        val r = w * 0.45f
+        val strokeW = w * 0.18f
+
+        // Draw colored arcs (the "G" shape)
+        drawArc(
+            color = red,
+            startAngle = -30f,
+            sweepAngle = -120f,
+            useCenter = false,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeW),
+            topLeft = androidx.compose.ui.geometry.Offset(cx - r, cy - r),
+            size = androidx.compose.ui.geometry.Size(r * 2, r * 2)
+        )
+        drawArc(
+            color = yellow,
+            startAngle = 150f,
+            sweepAngle = -60f,
+            useCenter = false,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeW),
+            topLeft = androidx.compose.ui.geometry.Offset(cx - r, cy - r),
+            size = androidx.compose.ui.geometry.Size(r * 2, r * 2)
+        )
+        drawArc(
+            color = green,
+            startAngle = 90f,
+            sweepAngle = -60f,
+            useCenter = false,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeW),
+            topLeft = androidx.compose.ui.geometry.Offset(cx - r, cy - r),
+            size = androidx.compose.ui.geometry.Size(r * 2, r * 2)
+        )
+        drawArc(
+            color = blue,
+            startAngle = 30f,
+            sweepAngle = -60f,
+            useCenter = false,
+            style = androidx.compose.ui.graphics.drawscope.Stroke(width = strokeW),
+            topLeft = androidx.compose.ui.geometry.Offset(cx - r, cy - r),
+            size = androidx.compose.ui.geometry.Size(r * 2, r * 2)
+        )
+        // Blue horizontal bar (the crossbar of the G)
+        drawRect(
+            color = blue,
+            topLeft = androidx.compose.ui.geometry.Offset(cx, cy - strokeW / 2f),
+            size = androidx.compose.ui.geometry.Size(r + strokeW / 2f, strokeW)
         )
     }
 }
