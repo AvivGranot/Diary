@@ -25,6 +25,8 @@ class NotesRepository @Inject constructor(
     private val auth: FirebaseAuth
 ) {
 
+    fun currentUserId(): String = auth.currentUser?.uid ?: ""
+
     /**
      * Send an anonymous positive note directly to Firestore.
      * Firestore rules enforce: senderId == auth.uid + required fields present.
