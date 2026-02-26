@@ -19,10 +19,14 @@ enum class ShareChannel(
     TIKTOK("tiktok", "TikTok", "com.zhiliaoapp.musically", Color(0xFF000000), R.drawable.ic_tiktok),
     LINKEDIN("linkedin", "LinkedIn", "com.linkedin.android", Color(0xFF0A66C2), R.drawable.ic_linkedin),
     MESSAGES("messages", "Messages", "com.google.android.apps.messaging", Color(0xFF1A73E8), R.drawable.ic_messages),
-    GMAIL("gmail", "Gmail", "com.google.android.gm", Color(0xFFEA4335), R.drawable.ic_gmail),
+    GMAIL("gmail", "Gmail", "com.google.android.gm", Color(0xFFE8EAED), R.drawable.ic_gmail),
     TELEGRAM("telegram", "Telegram", "org.telegram.messenger", Color(0xFF26A5E4), R.drawable.ic_telegram);
 
-    /** Icon tint: black for Snapchat (yellow bg), white for everything else */
+    /** Icon tint: black for Snapchat (yellow bg), unspecified for Gmail (multicolor), white for rest */
     val iconTint: Color
-        get() = if (this == SNAPCHAT) Color.Black else Color.White
+        get() = when (this) {
+            SNAPCHAT -> Color.Black
+            GMAIL -> Color.Unspecified
+            else -> Color.White
+        }
 }
