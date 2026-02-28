@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,16 +18,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -98,17 +91,17 @@ fun WriteFirstNoteScreen(
         }
     }
 
-    // Celebration screen
+    // Celebration screen — warm background
     if (state.isSent || inviteSent) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
+                .background(OnboardingScreenBg),
             contentAlignment = Alignment.Center
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(24.dp)
+                modifier = Modifier.padding(OnboardingHorizontalPadding)
             ) {
                 Text(
                     text = "You just made someone's day!",
@@ -119,18 +112,10 @@ fun WriteFirstNoteScreen(
                     lineHeight = 36.sp
                 )
                 Spacer(modifier = Modifier.height(24.dp))
-                Button(
-                    onClick = onContinue,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    ),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp)
-                ) {
-                    Text("Continue", fontSize = 16.sp)
-                }
+                OnboardingPrimaryButton(
+                    text = "Continue",
+                    onClick = onContinue
+                )
             }
         }
         return
@@ -139,13 +124,13 @@ fun WriteFirstNoteScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(OnboardingScreenBg)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(24.dp),
+                .padding(OnboardingHorizontalPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(24.dp))
@@ -161,12 +146,17 @@ fun WriteFirstNoteScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Envelope note area
+            // Note compose area — white card with hairline border on linen bg
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surface)
+                    .background(Color.White)
+                    .border(
+                        width = 0.5.dp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(12.dp)
+                    )
                     .padding(16.dp)
             ) {
                 Column {
@@ -198,7 +188,7 @@ fun WriteFirstNoteScreen(
                         horizontalArrangement = Arrangement.End
                     ) {
                         Text(
-                            text = "${state.charCount}/${com.proactivediary.ui.notes.ComposeNoteViewModel.MAX_CHARS}",
+                            text = "${state.charCount}/${ComposeNoteViewModel.MAX_CHARS}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -224,7 +214,7 @@ fun WriteFirstNoteScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                        .background(OnboardingInk.copy(alpha = 0.08f))
                         .padding(12.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -245,31 +235,16 @@ fun WriteFirstNoteScreen(
 
                 // In-app send (recipient on app)
                 if (state.recipientId != null) {
-                    Button(
+                    OnboardingPrimaryButton(
+                        text = "Seal & Send",
                         onClick = { viewModel.sendNote() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
                         enabled = state.content.isNotBlank() && !state.isSending,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        if (state.isSending) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                color = Color.White,
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Icon(Icons.AutoMirrored.Filled.Send, null, modifier = Modifier.size(20.dp))
-                            Text("  Seal & Send", fontSize = 16.sp)
-                        }
-                    }
+                        isLoading = state.isSending
+                    )
                 } else if (state.isRecipientOnApp == false) {
                     // Recipient not on app — show invite via share
-                    OutlinedButton(
+                    OnboardingSecondaryButton(
+                        text = "Share Invite Link",
                         onClick = {
                             analyticsService.logNoteInviteSent()
                             val shareText = ShareIntentLauncher.buildShareText(state.content)
@@ -282,40 +257,20 @@ fun WriteFirstNoteScreen(
                                 android.content.Intent.createChooser(sendIntent, "Invite via")
                             )
                             inviteSent = true
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(52.dp),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Icon(Icons.Default.Share, null, modifier = Modifier.size(20.dp))
-                        Text(
-                            "  Share Invite Link",
-                            fontSize = 16.sp,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
+                        }
+                    )
                 }
             } else {
                 // Default: single Send button that opens channel picker
-                Button(
+                OnboardingPrimaryButton(
+                    text = "Send",
                     onClick = {
                         if (viewModel.moderateContent()) {
                             showChannelPicker = true
                         }
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    enabled = state.content.isNotBlank(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.Send, null, modifier = Modifier.size(20.dp))
-                    Text("  Send", fontSize = 16.sp)
-                }
+                    enabled = state.content.isNotBlank()
+                )
             }
 
             if (state.error != null) {

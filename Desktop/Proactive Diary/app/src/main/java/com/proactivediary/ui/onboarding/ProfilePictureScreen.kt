@@ -3,6 +3,7 @@ package com.proactivediary.ui.onboarding
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -14,18 +15,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -80,9 +74,8 @@ fun ProfilePictureScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp),
+            .background(OnboardingScreenBg)
+            .padding(horizontal = OnboardingHorizontalPadding),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -109,12 +102,13 @@ fun ProfilePictureScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Avatar preview — 120dp circle
+        // Avatar preview — 120dp circle with warm border
         Box(
             modifier = Modifier
                 .size(120.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surface),
+                .border(2.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.15f), CircleShape)
+                .background(Color(0xFFFAF8F5)),
             contentAlignment = Alignment.Center
         ) {
             when {
@@ -152,66 +146,33 @@ fun ProfilePictureScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Choose Photo button
-        OutlinedButton(
+        // Choose Photo button — secondary outlined
+        OnboardingSecondaryButton(
+            text = if (state.selectedImageUri != null) "Change Photo" else "Choose Photo",
             onClick = { galleryLauncher.launch("image/*") },
-            modifier = Modifier.fillMaxWidth().height(48.dp),
-            shape = RoundedCornerShape(16.dp),
             enabled = !state.isUploading
-        ) {
-            Text(
-                text = if (state.selectedImageUri != null) "Change Photo" else "Choose Photo",
-                color = MaterialTheme.colorScheme.onBackground,
-                fontSize = 16.sp
-            )
-        }
+        )
 
         // Use Google Photo button (if available)
         if (state.googlePhotoUrl != null && state.selectedImageUri == null) {
             Spacer(modifier = Modifier.height(12.dp))
-            Button(
+            OnboardingPrimaryButton(
+                text = "Use Google Photo",
                 onClick = { viewModel.useGooglePhoto() },
-                modifier = Modifier.fillMaxWidth().height(48.dp),
                 enabled = !state.isUploading,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                ),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                if (state.isUploading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text("Use Google Photo", fontSize = 16.sp)
-                }
-            }
+                isLoading = state.isUploading
+            )
         }
 
         // Upload Photo button (after image selection)
         if (state.selectedImageUri != null) {
             Spacer(modifier = Modifier.height(12.dp))
-            Button(
+            OnboardingPrimaryButton(
+                text = "Upload Photo",
                 onClick = { viewModel.uploadSelectedPhoto() },
-                modifier = Modifier.fillMaxWidth().height(56.dp),
                 enabled = !state.isUploading,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                ),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                if (state.isUploading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(24.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text("Upload Photo", fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                }
-            }
+                isLoading = state.isUploading
+            )
         }
 
         // Error

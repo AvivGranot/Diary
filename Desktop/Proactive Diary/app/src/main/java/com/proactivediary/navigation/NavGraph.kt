@@ -67,6 +67,7 @@ private val onboardingRoutes = setOf(
     Routes.QuotesPreview.route,
     Routes.OnboardingGoals.route,
     Routes.NotificationPermission.route,
+    Routes.NotificationPermission.route,
     Routes.NotificationFallback.route
 )
 
@@ -136,13 +137,13 @@ fun ProactiveDiaryNavHost(
             popExitTransition = { DiaryMotion.NavPopExitTransition }
         ) {
             // ── Onboarding ──
-            // Flow: Typewriter → QuickAuth → Welcome → WriteFirstNote → QuotesPreview →
-            //       OnboardingGoals → NotificationPermission → Main
+            // Flow: Typewriter → PhoneAuth → WriteFirstNote → OnboardingGoals →
+            //       NotificationPermission → Main
 
             composable(Routes.Typewriter.route) {
                 TypewriterScreen(
                     onNavigateToDesignStudio = {
-                        navController.navigate(Routes.WriteFirstNote.create("onboarding_goals")) {
+                        navController.navigate(Routes.PhoneAuth.route) {
                             popUpTo(Routes.Typewriter.route) { inclusive = true }
                         }
                     },
@@ -180,10 +181,8 @@ fun ProactiveDiaryNavHost(
                         }
                     },
                     onSkip = {
-                        // "Don't Allow" tapped → show fallback screen
-                        navController.navigate(Routes.NotificationFallback.route) {
-                            popUpTo(Routes.NotificationPermission.route) { inclusive = true }
-                        }
+                        // "Don't Allow" tapped → show fallback screen (keep NotificationPermission in back stack)
+                        navController.navigate(Routes.NotificationFallback.route)
                     },
                     analyticsService = analyticsService
                 )
@@ -200,7 +199,9 @@ fun ProactiveDiaryNavHost(
                         }
                     },
                     onBack = {
-                        navController.popBackStack()
+                        navController.navigate(Routes.NotificationPermission.route) {
+                            popUpTo(Routes.NotificationFallback.route) { inclusive = true }
+                        }
                     },
                     onNotNow = {
                         // Skip notifications entirely
@@ -400,14 +401,14 @@ fun ProactiveDiaryNavHost(
                         navController.navigate(Routes.OtpVerification.route)
                     },
                     onSignedIn = {
-                        // Auto-verified or Google sign-in — go to notifications
-                        navController.navigate(Routes.NotificationPermission.route) {
+                        // Auto-verified or Google sign-in — continue onboarding
+                        navController.navigate(Routes.WriteFirstNote.create("onboarding_goals")) {
                             popUpTo(Routes.PhoneAuth.route) { inclusive = true }
                         }
                     },
                     onGoogleSignIn = {
                         // Google sign-in completed
-                        navController.navigate(Routes.NotificationPermission.route) {
+                        navController.navigate(Routes.WriteFirstNote.create("onboarding_goals")) {
                             popUpTo(Routes.PhoneAuth.route) { inclusive = true }
                         }
                     },
@@ -420,7 +421,7 @@ fun ProactiveDiaryNavHost(
                 val phoneAuthEntry = remember { navController.getBackStackEntry(Routes.PhoneAuth.route) }
                 OtpVerificationScreen(
                     onVerified = {
-                        navController.navigate(Routes.NotificationPermission.route) {
+                        navController.navigate(Routes.WriteFirstNote.create("onboarding_goals")) {
                             popUpTo(Routes.PhoneAuth.route) { inclusive = true }
                         }
                     },

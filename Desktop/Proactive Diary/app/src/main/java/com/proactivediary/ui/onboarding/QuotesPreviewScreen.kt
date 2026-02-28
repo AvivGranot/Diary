@@ -1,6 +1,7 @@
 package com.proactivediary.ui.onboarding
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,26 +13,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.social.Quote
 import com.proactivediary.data.social.QuotesRepository
@@ -50,25 +48,29 @@ fun QuotesPreviewScreen(
 
     LaunchedEffect(Unit) {
         analyticsService.logOnboardingQuotesShown()
-        val result = quotesRepository.getLeaderboard("weekly", 5)
-        result.onSuccess { topQuotes = it }
+        try {
+            val result = quotesRepository.getLeaderboard("weekly", 5)
+            result.onSuccess { topQuotes = it }
+        } catch (_: Exception) { /* Continue — button works regardless */ }
 
-        val (_, quotes) = userProfileRepository.getGlobalCounters()
-        quoteCount = quotes
+        try {
+            val (_, quotes) = userProfileRepository.getGlobalCounters()
+            quoteCount = quotes
+        } catch (_: Exception) { /* Continue — button works regardless */ }
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(OnboardingScreenBg)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(OnboardingHorizontalPadding),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = "Top Quotes\nThis Week",
@@ -96,11 +98,17 @@ fun QuotesPreviewScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(topQuotes, key = { it.id }) { quote ->
+                        // White card with hairline border on linen bg
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(MaterialTheme.colorScheme.surface)
+                                .background(Color.White)
+                                .border(
+                                    width = 0.5.dp,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
                                 .padding(16.dp)
                         ) {
                             Column {
@@ -146,27 +154,16 @@ fun QuotesPreviewScreen(
                 )
             }
 
-            Button(
+            // Ink primary button, 48dp
+            OnboardingPrimaryButton(
+                text = "I\u2019m In",
                 onClick = {
                     analyticsService.logOnboardingQuotesComplete(
                         System.currentTimeMillis() - screenStartTime
                     )
                     onContinue()
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                ),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Text(
-                    text = "I\u2019m In",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+                }
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
         }

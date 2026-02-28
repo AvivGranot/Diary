@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -75,12 +74,12 @@ fun OtpVerificationScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 20.dp)
+            .background(OnboardingScreenBg)
+            .padding(horizontal = OnboardingHorizontalPadding)
             .imePadding()
     ) {
         // Push content ~20% down the screen
-        Spacer(modifier = Modifier.weight(0.25f))
+        Spacer(modifier = Modifier.weight(0.5f))
 
         // Back button
         IconButton(
@@ -99,15 +98,11 @@ fun OtpVerificationScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Title
+        // Title — InstrumentSerif via headlineSmall
         Text(
             text = "Enter the confirmation\ncode",
-            style = TextStyle(
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                lineHeight = 30.sp
-            )
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -138,7 +133,10 @@ fun OtpVerificationScreen(
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = state.error!!,
-                style = TextStyle(fontSize = 13.sp, color = Color(0xFFEF4444)),
+                style = TextStyle(
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.error
+                ),
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center
             )
@@ -200,12 +198,12 @@ private fun OtpInputField(
     focusRequester: FocusRequester
 ) {
     val borderColor = if (isError) {
-        Color(0xFFEF4444)
+        MaterialTheme.colorScheme.error
     } else {
         MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f)
     }
     val filledBorderColor = if (isError) {
-        Color(0xFFEF4444)
+        MaterialTheme.colorScheme.error
     } else {
         MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
     }
@@ -227,7 +225,7 @@ private fun OtpInputField(
                 .focusRequester(focusRequester)
         )
 
-        // Visual OTP boxes
+        // Visual OTP boxes — white fill on linen bg
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
@@ -240,12 +238,7 @@ private fun OtpInputField(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(RoundedCornerShape(8.dp))
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                        .then(
-                            if (isFilled) {
-                                Modifier.background(Color.Transparent)
-                            } else Modifier
-                        )
+                        .background(Color.White)
                         .clickable { focusRequester.requestFocus() },
                     contentAlignment = Alignment.Center
                 ) {

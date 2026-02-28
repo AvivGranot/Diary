@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -89,12 +88,12 @@ fun PhoneAuthScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 20.dp)
+            .background(OnboardingScreenBg)
+            .padding(horizontal = OnboardingHorizontalPadding)
             .imePadding()
     ) {
         // Push content ~20% down the screen
-        Spacer(modifier = Modifier.weight(0.25f))
+        Spacer(modifier = Modifier.weight(0.5f))
 
         if (state.isPhoneMode) {
             PhoneModeContent(
@@ -135,15 +134,11 @@ private fun PhoneModeContent(
     onNext: () -> Unit,
     onToggleMode: () -> Unit
 ) {
-    // Title
+    // Title — InstrumentSerif via headlineSmall
     Text(
         text = "What's your name?",
-        style = TextStyle(
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
-            lineHeight = 30.sp
-        )
+        style = MaterialTheme.typography.headlineSmall,
+        color = MaterialTheme.colorScheme.onBackground
     )
 
     Spacer(modifier = Modifier.height(12.dp))
@@ -281,23 +276,26 @@ private fun PhoneModeContent(
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = state.error,
-            style = TextStyle(fontSize = 13.sp, color = Color(0xFFEF4444))
+            style = TextStyle(
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.error
+            )
         )
     }
 
     Spacer(modifier = Modifier.height(24.dp))
 
-    // Next button
-    NextButton(
+    // Next button — ink fill
+    OnboardingPrimaryButton(
         text = "Next",
-        isLoading = state.isSending,
-        onClick = onNext
+        onClick = onNext,
+        isLoading = state.isSending
     )
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    // Toggle to email/Google mode
-    ToggleModeButton(
+    // Toggle to email/Google mode — outlined
+    OnboardingSecondaryButton(
         text = "Sign up with email or Google",
         onClick = onToggleMode
     )
@@ -313,14 +311,11 @@ private fun EmailModeContent(
     onToggleMode: () -> Unit,
     onGoogleSignIn: () -> Unit
 ) {
+    // Title — InstrumentSerif via headlineSmall
     Text(
         text = "Sign up with email\nor Google",
-        style = TextStyle(
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
-            lineHeight = 30.sp
-        )
+        style = MaterialTheme.typography.headlineSmall,
+        color = MaterialTheme.colorScheme.onBackground
     )
 
     Spacer(modifier = Modifier.height(12.dp))
@@ -414,16 +409,20 @@ private fun EmailModeContent(
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = state.error,
-            style = TextStyle(fontSize = 13.sp, color = Color(0xFFEF4444))
+            style = TextStyle(
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.error
+            )
         )
     }
 
     Spacer(modifier = Modifier.height(20.dp))
 
-    NextButton(
+    // Next button — ink fill
+    OnboardingPrimaryButton(
         text = "Next",
-        isLoading = state.isSending,
-        onClick = onNext
+        onClick = onNext,
+        isLoading = state.isSending
     )
 
     Spacer(modifier = Modifier.height(16.dp))
@@ -433,76 +432,16 @@ private fun EmailModeContent(
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    // Prominent Google sign-in button
+    // Prominent Google sign-in button — 12dp corners
     GoogleSignInButton(onClick = onGoogleSignIn)
 
     Spacer(modifier = Modifier.height(16.dp))
 
-    ToggleModeButton(
+    // Toggle to phone mode — outlined
+    OnboardingSecondaryButton(
         text = "Sign up with mobile number",
         onClick = onToggleMode
     )
-}
-
-@Composable
-private fun NextButton(
-    text: String,
-    isLoading: Boolean,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(MaterialTheme.colorScheme.primary)
-            .clickable(enabled = !isLoading, onClick = onClick),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (isLoading) {
-            CircularProgressIndicator(
-                color = Color.White,
-                strokeWidth = 2.dp,
-                modifier = Modifier.height(20.dp).width(20.dp)
-            )
-        } else {
-            Text(
-                text = text,
-                style = TextStyle(
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White
-                )
-            )
-        }
-    }
-}
-
-@Composable
-private fun ToggleModeButton(
-    text: String,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .border(1.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
-            .clickable(onClick = onClick),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = text,
-            style = TextStyle(
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-        )
-    }
 }
 
 @Composable
@@ -540,8 +479,8 @@ private fun GoogleSignInButton(onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(48.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .border(1.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f), RoundedCornerShape(8.dp))
+            .clip(OnboardingButtonShape)
+            .border(1.dp, MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.25f), OnboardingButtonShape)
             .clickable(onClick = onClick),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically

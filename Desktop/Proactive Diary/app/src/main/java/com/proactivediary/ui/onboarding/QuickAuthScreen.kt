@@ -1,10 +1,11 @@
 package com.proactivediary.ui.onboarding
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,18 +17,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.FormatQuote
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -35,8 +31,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -46,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.analytics.AnalyticsService
+import com.proactivediary.ui.components.VintageLeatherBook
 import com.proactivediary.ui.theme.InstrumentSerif
 import com.proactivediary.ui.theme.PlusJakartaSans
 
@@ -59,6 +54,12 @@ fun QuickAuthScreen(
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
     val screenStartTime = remember { System.currentTimeMillis() }
+
+    // Animate the book opening
+    val bookProgress = remember { Animatable(0f) }
+    LaunchedEffect(Unit) {
+        bookProgress.animateTo(1f, animationSpec = tween(durationMillis = 1200))
+    }
 
     LaunchedEffect(Unit) {
         analyticsService.logOnboardingStart()
@@ -78,14 +79,22 @@ fun QuickAuthScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(OnboardingScreenBg)
             .statusBarsPadding()
             .navigationBarsPadding()
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = OnboardingHorizontalPadding),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // ── Top breathing room ──
-        Spacer(modifier = Modifier.weight(0.6f))
+        Spacer(modifier = Modifier.weight(0.4f))
+
+        // ── Small leather book illustration ──
+        VintageLeatherBook(
+            openProgress = bookProgress.value,
+            modifier = Modifier.size(60.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // ── App name — big serif, the hero ──
         Text(
@@ -138,36 +147,13 @@ fun QuickAuthScreen(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // ── Google CTA button ──
-        Button(
+        // ── Google CTA button — ink fill, white text ──
+        OnboardingPrimaryButton(
+            text = "Continue with Google",
             onClick = { viewModel.signInWithGoogle(context) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp),
             enabled = !state.isSigningIn,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = Color.Black
-            ),
-            shape = RoundedCornerShape(14.dp)
-        ) {
-            if (state.isSigningIn) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(20.dp),
-                    color = Color.Black,
-                    strokeWidth = 2.dp
-                )
-            } else {
-                Text(
-                    text = "Continue with Google",
-                    style = TextStyle(
-                        fontFamily = PlusJakartaSans,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                )
-            }
-        }
+            isLoading = state.isSigningIn
+        )
 
         // ── Error message ──
         if (state.error != null) {
@@ -207,7 +193,7 @@ fun QuickAuthScreen(
     }
 }
 
-// ── Feature row with mint icon circle ──
+// ── Feature row with bare icon (no circle badge) ──
 
 @Composable
 private fun FeatureRow(
@@ -218,20 +204,12 @@ private fun FeatureRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Box(
-            modifier = Modifier
-                .size(36.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(18.dp)
-            )
-        }
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
+            modifier = Modifier.size(22.dp)
+        )
         Spacer(modifier = Modifier.width(14.dp))
         Text(
             text = text,

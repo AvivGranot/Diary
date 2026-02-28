@@ -226,7 +226,7 @@ class QuotesViewModel @Inject constructor(
             Quote(id = "sample_7", authorId = "s7", authorName = "Tom Barak", authorPhotoUrl = "file:///android_asset/avatars/tom.jpg", content = "Trust the process.", likeCount = 33, commentCount = 1, createdAt = System.currentTimeMillis() - 25_200_000),
             Quote(id = "sample_8", authorId = "s8", authorName = "Ella Friedman", authorPhotoUrl = "file:///android_asset/avatars/ella.jpg", content = "Growth begins where comfort ends.", likeCount = 28, commentCount = 2, createdAt = System.currentTimeMillis() - 28_800_000),
             Quote(id = "sample_9", authorId = "s9", authorName = "Amit Peretz", authorPhotoUrl = "file:///android_asset/avatars/amit.jpg", content = "Small steps still move you forward.", likeCount = 22, commentCount = 0, createdAt = System.currentTimeMillis() - 32_400_000),
-            Quote(id = "sample_10", authorId = "s10", authorName = "Yael Dayan", authorPhotoUrl = "file:///android_asset/avatars/yael.jpg", content = "You are braver than you believe.", likeCount = 19, commentCount = 1, createdAt = System.currentTimeMillis() - 36_000_000),
+            Quote(id = "sample_10", authorId = "s10", authorName = "Lily Chen", authorPhotoUrl = "file:///android_asset/avatars/yael.jpg", content = "You are braver than you believe.", likeCount = 19, commentCount = 1, createdAt = System.currentTimeMillis() - 36_000_000),
         )
     }
 }

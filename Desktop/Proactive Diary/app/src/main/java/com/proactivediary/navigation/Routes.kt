@@ -40,8 +40,6 @@ sealed class Routes(val route: String) {
 
     // Social onboarding (DesignStudio removed from flow)
     object QuickAuth : Routes("quick_auth")
-    object Welcome : Routes("welcome")
-    object ProfilePicture : Routes("profile_picture")
     object WriteFirstNote : Routes("write_first_note?next={next}") {
         fun create(next: String = "quotes_preview"): String =
             "write_first_note?next=$next"
