@@ -6,275 +6,233 @@
   <title>Notebook Animation</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     html, body {
       width: 100%; height: 100%;
       overflow: hidden;
       background: #F5F3F0;
+      font-family: Georgia, 'Times New Roman', serif;
+      -webkit-font-smoothing: antialiased;
     }
-    canvas {
-      display: block;
+
+    #scene {
       width: 100%; height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Warm light overlay */
+    #warm-light {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: radial-gradient(ellipse at 25% 15%, rgba(255,240,200,0.12) 0%, transparent 55%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* Floating page */
+    #page {
+      width: 52vmin;
+      max-width: 240px;
+      height: 74vmin;
+      max-height: 340px;
+      position: relative;
+      z-index: 2;
+      background: linear-gradient(160deg, #FDFBF7 0%, #F8F5EF 100%);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.05);
+      opacity: 0;
+      transform: scale(0.94);
+      animation: fadeIn 0.8s ease-out forwards, hover 3.5s ease-in-out 0.8s infinite;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes hover {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-4px) scale(1.004); }
+    }
+
+    /* Ruled lines */
+    #ruled {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background:
+        repeating-linear-gradient(to bottom,
+          transparent, transparent 19px,
+          rgba(140,160,190,0.12) 19px, rgba(140,160,190,0.12) 20px
+        );
+      background-position: 0 16px;
+    }
+    #ruled::before {
+      content: '';
+      position: absolute;
+      left: 12%; top: 0; bottom: 0;
+      width: 1px;
+      background: rgba(200,120,120,0.1);
+    }
+
+    /* Ribbon */
+    #ribbon {
+      position: absolute;
+      top: -2px; left: 18%;
+      width: 6px; height: 55%;
+      background: linear-gradient(180deg, #3D8B8F 0%, #2D7B7F 100%);
+      z-index: 10;
+      clip-path: polygon(0 0, 100% 0, 100% 90%, 50% 82%, 0 90%);
+      opacity: 0;
+      animation: fadeIn 0.8s ease-out 0.4s forwards;
+    }
+
+    /* Quote content */
+    #quote-content {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 18% 10%;
+      z-index: 5;
+    }
+
+    #quote-mark {
+      font-size: 40px; line-height: 1;
+      color: rgba(58,53,48,0.18);
+      margin-bottom: 4px;
+      opacity: 0;
+      animation: fadeIn 0.6s ease-out 1.0s forwards;
+    }
+
+    #quote-text {
+      font-style: italic;
+      font-size: 13px; line-height: 1.8;
+      color: #3A3530;
+      text-align: center;
+      letter-spacing: 0.02em;
+      min-height: 48px;
+    }
+
+    #cursor {
+      display: inline-block;
+      width: 1.5px; height: 15px;
+      background: #3A3530;
+      vertical-align: middle;
+      margin-left: 1px;
+      animation: blink 0.8s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    #quote-author {
+      margin-top: 12px;
+      font-size: 10px;
+      color: rgba(58,53,48,0.45);
+      letter-spacing: 0.06em;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+    #quote-author.visible { opacity: 1; }
+
+    #quote-line {
+      width: 36px; height: 1px;
+      background: rgba(58,53,48,0.12);
+      margin-top: 14px;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+    #quote-line.visible { opacity: 1; }
+
+    /* Dust particles */
+    .particle {
+      position: absolute;
+      background: rgba(200,180,150,0.3);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 1;
+      animation: dust linear infinite;
+    }
+    @keyframes dust {
+      0%   { transform: translateY(0) translateX(0); opacity: 0; }
+      10%  { opacity: 0.4; }
+      90%  { opacity: 0.15; }
+      100% { transform: translateY(-70vh) translateX(25px); opacity: 0; }
     }
   </style>
 </head>
 <body>
-  <canvas id="c"></canvas>
+  <div id="scene">
+    <div id="warm-light"></div>
+
+    <div id="page">
+      <div id="ruled"></div>
+      <div id="ribbon"></div>
+      <div id="quote-content">
+        <div id="quote-mark">&ldquo;</div>
+        <div id="quote-text"><span id="typed"></span><span id="cursor"></span></div>
+        <div id="quote-author">&mdash; Abraham Lincoln</div>
+        <div id="quote-line"></div>
+      </div>
+    </div>
+  </div>
+
   <script>
-  (function() {
-    var canvas = document.getElementById('c');
-    var ctx = canvas.getContext('2d');
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-    var W = 0, H = 0;
-
-    function resize() {
-      W = window.innerWidth || 360;
-      H = window.innerHeight || 640;
-      canvas.width = W * dpr;
-      canvas.height = H * dpr;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    }
-    resize();
-    window.addEventListener('resize', resize);
-
-    // --- Quote ---
-    var QUOTE_TEXT = 'The best way to predict\nyour future is to create it.';
-    var QUOTE_AUTHOR = '\u2014 Abraham Lincoln';
-    var TOTAL_CHARS = QUOTE_TEXT.replace(/\n/g, '').length;
-
-    // --- Dust particles ---
-    var particles = [];
+    // Dust particles
+    var scene = document.getElementById('scene');
     for (var i = 0; i < 8; i++) {
-      particles.push({
-        xPct: Math.random(),
-        yPct: 0.5 + Math.random() * 0.5,
-        speed: 8 + Math.random() * 12,
-        drift: (Math.random() - 0.3) * 15,
-        size: 1.5 + Math.random() * 1.5,
-        phase: Math.random() * Math.PI * 2,
-        alpha: 0.12 + Math.random() * 0.15
-      });
+      var dot = document.createElement('div');
+      dot.className = 'particle';
+      dot.style.left = (Math.random() * 100) + '%';
+      dot.style.top = (50 + Math.random() * 50) + '%';
+      dot.style.animationDuration = (12 + Math.random() * 14) + 's';
+      dot.style.animationDelay = (Math.random() * 8) + 's';
+      var sz = 2 + Math.random() * 2;
+      dot.style.width = sz + 'px';
+      dot.style.height = sz + 'px';
+      scene.appendChild(dot);
     }
 
-    // --- Draw helpers ---
-    function drawPage(px, py, pw, ph) {
-      // Cream page fill
-      var g = ctx.createLinearGradient(px, py, px + pw, py + ph);
-      g.addColorStop(0, '#FDFBF7');
-      g.addColorStop(1, '#F8F5EF');
-      ctx.fillStyle = g;
-      ctx.fillRect(px, py, pw, ph);
-
-      // Ruled lines
-      ctx.strokeStyle = 'rgba(140,160,190,0.12)';
-      ctx.lineWidth = 0.5;
-      for (var y = py + 16; y < py + ph; y += 20) {
-        ctx.beginPath();
-        ctx.moveTo(px, y);
-        ctx.lineTo(px + pw, y);
-        ctx.stroke();
-      }
-
-      // Red margin
-      ctx.strokeStyle = 'rgba(200,120,120,0.1)';
-      ctx.lineWidth = 0.7;
-      ctx.beginPath();
-      ctx.moveTo(px + pw * 0.12, py);
-      ctx.lineTo(px + pw * 0.12, py + ph);
-      ctx.stroke();
-    }
-
-    function drawRibbon(px, py, pw, ph, alpha) {
-      if (alpha <= 0) return;
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      var rx = px + pw * 0.18;
-      var ry = py - 2;
-      var rw = 6;
-      var rh = ph * 0.55;
-      var g = ctx.createLinearGradient(rx, ry, rx, ry + rh);
-      g.addColorStop(0, '#3D8B8F');
-      g.addColorStop(1, '#2D7B7F');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.moveTo(rx, ry);
-      ctx.lineTo(rx + rw, ry);
-      ctx.lineTo(rx + rw, ry + rh);
-      ctx.lineTo(rx + rw / 2, ry + rh * 0.88);
-      ctx.lineTo(rx, ry + rh);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-    }
-
-    function drawQuoteTypewriter(px, py, pw, ph, chars) {
-      ctx.save();
-      var cx = px + pw / 2;
-      var startY = py + ph * 0.28;
-
-      // Opening quote mark
-      var markAlpha = Math.min(chars / 3, 1) * 0.18;
-      ctx.fillStyle = 'rgba(58,53,48,' + markAlpha + ')';
-      ctx.font = '38px Georgia, serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('\u201C', cx, startY);
-
-      // Text
-      ctx.font = 'italic 13px Georgia, serif';
-      ctx.fillStyle = '#3A3530';
-      var lines = QUOTE_TEXT.split('\n');
-      var lineY = startY + 24;
-      var count = 0;
-
-      for (var l = 0; l < lines.length; l++) {
-        var line = lines[l];
-        var lineW = ctx.measureText(line).width;
-        var charX = cx - lineW / 2;
-        ctx.textAlign = 'left';
-        for (var c = 0; c < line.length; c++) {
-          if (count >= chars) break;
-          ctx.fillText(line[c], charX, lineY);
-          charX += ctx.measureText(line[c]).width;
-          count++;
-        }
-        if (count >= chars) break;
-        lineY += 22;
-      }
-
-      // Blinking cursor
-      if (chars < TOTAL_CHARS) {
-        if ((Date.now() % 800) < 500) {
-          var total = 0;
-          var curX = cx, curY = startY + 24;
-          for (var l = 0; l < lines.length; l++) {
-            var rem = chars - total;
-            if (rem <= lines[l].length) {
-              ctx.textAlign = 'left';
-              var sub = lines[l].substring(0, rem);
-              var fullW = ctx.measureText(lines[l]).width;
-              var subW = ctx.measureText(sub).width;
-              curX = cx - fullW / 2 + subW;
-              curY = startY + 24 + l * 22;
-              break;
-            }
-            total += lines[l].length;
-          }
-          ctx.fillStyle = '#3A3530';
-          ctx.fillRect(curX + 1, curY - 11, 1.5, 14);
-        }
-      }
-
-      // Author
-      if (chars >= TOTAL_CHARS) {
-        var aAlpha = Math.min((chars - TOTAL_CHARS) / 5, 1);
-        ctx.globalAlpha = aAlpha;
-        ctx.textAlign = 'center';
-        ctx.font = '10px Georgia, serif';
-        ctx.fillStyle = 'rgba(58,53,48,0.45)';
-        ctx.fillText(QUOTE_AUTHOR, cx, lineY + 20);
-        if (aAlpha > 0.5) {
-          ctx.strokeStyle = 'rgba(58,53,48,0.12)';
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(cx - 18, lineY + 36);
-          ctx.lineTo(cx + 18, lineY + 36);
-          ctx.stroke();
-        }
-      }
-
-      ctx.restore();
-    }
-
-    function drawParticles(t) {
-      for (var i = 0; i < particles.length; i++) {
-        var p = particles[i];
-        var cycle = ((t * p.speed * 0.01 + p.phase) % 1 + 1) % 1;
-        var py = p.yPct * H - cycle * H * 0.8;
-        var px = p.xPct * W + Math.sin(cycle * Math.PI * 2 + p.phase) * p.drift;
-        var a = p.alpha * Math.sin(cycle * Math.PI);
-        if (a > 0.01) {
-          ctx.fillStyle = 'rgba(200,180,150,' + a + ')';
-          ctx.beginPath();
-          ctx.arc(px, py, p.size, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-    }
-
-    // --- Main loop ---
-    var animStart = null;
+    // Typewriter
+    var text = 'The best way to predict\nyour future is to create it.';
+    var typed = document.getElementById('typed');
+    var cursor = document.getElementById('cursor');
+    var author = document.getElementById('quote-author');
+    var line = document.getElementById('quote-line');
+    var charIndex = 0;
     var signaled = false;
 
-    function tick(ts) {
-      if (!animStart) animStart = ts;
-      var t = (ts - animStart) / 1000;
-
-      // Recalc each frame (handles late layout)
-      W = window.innerWidth || 360;
-      H = window.innerHeight || 640;
-
-      // Page dimensions
-      var pw = Math.min(W * 0.52, 240);
-      var ph = Math.min(H * 0.52, 340);
-      var px = (W - pw) / 2;
-      var py = (H - ph) / 2 - 10;
-
-      // Clear
-      ctx.clearRect(0, 0, W, H);
-
-      // Background
-      ctx.fillStyle = '#F5F3F0';
-      ctx.fillRect(0, 0, W, H);
-
-      // Warm light (simple overlay, no radialGradient for perf)
-      ctx.fillStyle = 'rgba(255,240,200,0.06)';
-      ctx.fillRect(0, 0, W * 0.5, H * 0.4);
-
-      // Particles
-      drawParticles(t);
-
-      // --- Fade in 0–0.8s ---
-      var fadeIn = Math.min(t / 0.8, 1);
-      var alpha = fadeIn * fadeIn * (3 - 2 * fadeIn);
-
-      // Hover float
-      var hoverY = Math.sin(t * 1.4) * 4;
-      var hoverScale = 1 + Math.sin(t * 1.8) * 0.004;
-      var entranceScale = 0.94 + 0.06 * Math.min(t / 0.8, 1);
-      var sc = entranceScale * hoverScale;
-
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.translate(W / 2, H / 2 - 10 + hoverY);
-      ctx.scale(sc, sc);
-      ctx.translate(-W / 2, -(H / 2 - 10));
-
-      // Shadow under page (simple rect, no filter/ellipse)
-      ctx.save();
-      ctx.globalAlpha = 0.07;
-      ctx.fillStyle = '#000';
-      var shW = pw * 0.8;
-      ctx.fillRect(px + (pw - shW) / 2, py + ph + 4, shW, 6);
-      ctx.restore();
-
-      // Page
-      drawPage(px, py, pw, ph);
-
-      // Ribbon
-      var ribbonAlpha = Math.min(t / 1.2, 1);
-      drawRibbon(px, py, pw, ph, ribbonAlpha);
-
-      // Typewriter quote — start at 1.0s
-      if (t > 1.0) {
-        var chars = Math.floor((t - 1.0) / 0.05);
-        chars = Math.min(chars, TOTAL_CHARS + 10);
-        if (chars > 0) drawQuoteTypewriter(px, py, pw, ph, chars);
+    function typeNext() {
+      if (charIndex < text.length) {
+        var ch = text[charIndex];
+        if (ch === '\n') {
+          typed.innerHTML += '<br>';
+        } else {
+          typed.appendChild(document.createTextNode(ch));
+        }
+        charIndex++;
+        setTimeout(typeNext, 50);
+      } else {
+        // Done typing — show author, hide cursor
+        cursor.style.display = 'none';
+        author.classList.add('visible');
+        setTimeout(function() {
+          line.classList.add('visible');
+        }, 400);
       }
+    }
 
-      ctx.restore();
+    // Start typewriter after page fades in (1.2s delay)
+    setTimeout(typeNext, 1200);
 
-      // Signal Android at 5.5s
-      if (t >= 5.5 && !signaled) {
+    // Signal Android at 5.5s
+    setTimeout(function() {
+      if (!signaled) {
         signaled = true;
         try {
           if (typeof Android !== 'undefined' && Android.onAnimationComplete) {
@@ -285,13 +243,7 @@
           window.dispatchEvent(new CustomEvent('notebookAnimationComplete'));
         } catch(e) {}
       }
-
-      if (t < 12) requestAnimationFrame(tick);
-    }
-
-    // Start on first frame (ensures WebView is laid out)
-    requestAnimationFrame(tick);
-  })();
+    }, 5500);
   </script>
 </body>
 </html>
