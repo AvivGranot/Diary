@@ -21,7 +21,6 @@ object ShareIntentLauncher {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, shareText)
             setPackage(channel.packageName)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             if (channel == ShareChannel.GMAIL) {
                 putExtra(Intent.EXTRA_SUBJECT, "Someone sent you an anonymous note!")
             }
@@ -36,7 +35,6 @@ object ShareIntentLauncher {
                 val fallback = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
                     putExtra(Intent.EXTRA_TEXT, shareText)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 context.startActivity(Intent.createChooser(fallback, "Share via"))
                 true
