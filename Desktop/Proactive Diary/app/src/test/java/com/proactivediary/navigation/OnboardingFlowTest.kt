@@ -4,8 +4,9 @@ import org.junit.Assert.*
 import org.junit.Test
 
 /**
- * Verifies the onboarding flow contract after the routing fix.
- * Target flow: Typewriter → PhoneAuth → WriteFirstNote → OnboardingGoals → NotificationPermission → Main
+ * Verifies the onboarding flow contract.
+ * Current flow (UX acceleration): Typewriter → PhoneAuth → NotificationPermission → Main
+ * Legacy routes (WriteFirstNote, OnboardingGoals, QuotesPreview) kept for backwards compat.
  */
 class OnboardingFlowTest {
 

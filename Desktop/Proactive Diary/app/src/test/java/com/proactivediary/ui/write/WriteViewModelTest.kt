@@ -57,7 +57,7 @@ class WriteViewModelTest {
         assertNull(state.saveError)
         assertFalse(state.isLoaded)
         assertTrue(state.isNewEntry)
-        assertEquals("cream", state.colorKey)
+        assertEquals("paper", state.colorKey)
         assertEquals("focused", state.form)
         assertEquals("paper", state.texture)
         assertEquals("lined", state.canvas)

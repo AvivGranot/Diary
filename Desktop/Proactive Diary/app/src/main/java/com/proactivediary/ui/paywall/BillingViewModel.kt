@@ -51,9 +51,6 @@ class BillingViewModel @Inject constructor(
     val isFirstPaywallView: StateFlow<Boolean> = _isFirstPaywallView
 
     companion object {
-        /** Show paywall after this many free entries */
-        const val ENTRY_GATE_THRESHOLD = 30
-
         // Preference keys for offline cache
         private const val KEY_CACHED_PLAN = "billing_cached_plan"
         private const val KEY_CACHED_ACTIVE = "billing_cached_active"
@@ -99,20 +96,17 @@ class BillingViewModel @Inject constructor(
 
             if (cachedPlan != null && cachedActive != null) {
                 val plan = try { Plan.valueOf(cachedPlan) } catch (_: Exception) { Plan.TRIAL }
-                val isActive = cachedActive == "true"
                 val entryCount = entryRepository.getTotalEntryCountSync()
                 val totalWords = entryRepository.getTotalWordCountSync()
-                val entriesLeft = if (plan == Plan.TRIAL) (ENTRY_GATE_THRESHOLD - entryCount).coerceAtLeast(0) else 0
 
                 _subscriptionState.value = SubscriptionState(
-                    isActive = isActive,
+                    isActive = true, // Writing is always free
                     plan = plan,
-                    trialDaysLeft = entriesLeft,
+                    trialDaysLeft = 0,
                     entryCount = entryCount,
                     totalWords = totalWords
                 )
             } else {
-                // No cache yet — compute from entry count (works offline, no billing needed)
                 val state = getSubscriptionState()
                 _subscriptionState.value = state
             }
@@ -134,36 +128,30 @@ class BillingViewModel @Inject constructor(
     }
 
     private fun getSubscriptionState(): SubscriptionState {
-        // First check if user has an active paid subscription
-        if (billingService.hasActiveSubscription()) {
-            val plan = Plan.ANNUAL
-            return SubscriptionState(isActive = true, plan = plan, trialDaysLeft = 0)
-        }
-
-        // Entry-count-gated trial: free until they hit ENTRY_GATE_THRESHOLD entries
         val entryCount = entryRepository.getTotalEntryCountSync()
         val totalWords = entryRepository.getTotalWordCountSync()
 
-        if (entryCount < ENTRY_GATE_THRESHOLD) {
-            val entriesLeft = ENTRY_GATE_THRESHOLD - entryCount
-            // Log trial milestones (deduplicated)
-            if (entryCount in listOf(5, 10, 15, 20, 25) && entryCount !in loggedTrialMilestones) {
-                loggedTrialMilestones.add(entryCount)
-                analyticsService.logTrialMilestone(entryCount, entriesLeft)
-            }
+        // Check if user has an active paid subscription
+        if (billingService.hasActiveSubscription()) {
             return SubscriptionState(
                 isActive = true,
-                plan = Plan.TRIAL,
-                trialDaysLeft = entriesLeft, // Repurposed: entries left, not days
+                plan = Plan.ANNUAL,
+                trialDaysLeft = 0,
                 entryCount = entryCount,
                 totalWords = totalWords
             )
         }
 
-        // User has hit the gate — expired
+        // Free tier: writing is always free, premium features gated
+        // Log milestones (deduplicated)
+        if (entryCount in listOf(5, 10, 15, 20, 25, 50, 100) && entryCount !in loggedTrialMilestones) {
+            loggedTrialMilestones.add(entryCount)
+            analyticsService.logTrialMilestone(entryCount, 0)
+        }
+
         return SubscriptionState(
-            isActive = false,
-            plan = Plan.EXPIRED,
+            isActive = true, // Writing always active
+            plan = Plan.TRIAL,
             trialDaysLeft = 0,
             entryCount = entryCount,
             totalWords = totalWords
@@ -187,7 +175,9 @@ class BillingViewModel @Inject constructor(
         _purchaseResult.value = PurchaseResult.Idle
     }
 
-    fun canWrite(): Boolean = _subscriptionState.value.isActive
+    fun canWrite(): Boolean = true // Writing is always free
+
+    fun isPremium(): Boolean = billingService.hasActiveSubscription()
 
     fun launchPurchase(activity: Activity, sku: String) {
         billingService.launchPurchaseFlow(activity, sku)

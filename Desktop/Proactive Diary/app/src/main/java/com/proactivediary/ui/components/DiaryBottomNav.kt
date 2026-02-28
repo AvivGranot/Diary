@@ -22,18 +22,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChatBubble
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.EditNote
-import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material.icons.outlined.MailOutline
 import androidx.compose.material.icons.outlined.PersonOutline
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -62,10 +56,8 @@ data class DiaryTab(
 )
 
 val diaryTabs = listOf(
-    DiaryTab("Quotes", Icons.Filled.ChatBubble, Icons.Outlined.ChatBubbleOutline),
-    DiaryTab("Notes", Icons.Filled.Mail, Icons.Outlined.MailOutline),
+    DiaryTab("Journal", Icons.AutoMirrored.Filled.MenuBook, Icons.AutoMirrored.Outlined.MenuBook),
     DiaryTab("Diary", Icons.Filled.Edit, Icons.Outlined.EditNote, isCenter = true),
-    DiaryTab("Activity", Icons.Filled.Favorite, Icons.Outlined.FavoriteBorder),
     DiaryTab("Profile", Icons.Filled.Person, Icons.Outlined.PersonOutline),
 )
 
@@ -73,9 +65,7 @@ val diaryTabs = listOf(
 fun DiaryBottomNav(
     selectedIndex: Int,
     onTabSelected: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-    activityBadgeCount: Int = 0,
-    notesBadgeCount: Int = 0
+    modifier: Modifier = Modifier
 ) {
     val extendedColors = LocalDiaryExtendedColors.current
     val haptic = LocalHapticFeedback.current
@@ -103,11 +93,6 @@ fun DiaryBottomNav(
         ) {
             diaryTabs.forEachIndexed { index, tab ->
                 val selected = selectedIndex == index
-                val badgeCount = when (index) {
-                    1 -> notesBadgeCount  // Notes tab
-                    3 -> activityBadgeCount  // Activity tab
-                    else -> 0
-                }
 
                 val iconColor by animateColorAsState(
                     targetValue = if (selected) extendedColors.accent
@@ -140,37 +125,12 @@ fun DiaryBottomNav(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        // Tab icon with optional badge
-                        if (badgeCount > 0) {
-                            BadgedBox(
-                                badge = {
-                                    Badge(
-                                        containerColor = extendedColors.accent,
-                                        contentColor = MaterialTheme.colorScheme.onPrimary
-                                    ) {
-                                        Text(
-                                            text = if (badgeCount > 99) "99+" else "$badgeCount",
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
-                                    contentDescription = tab.label,
-                                    modifier = Modifier.size(24.dp),
-                                    tint = iconColor
-                                )
-                            }
-                        } else {
-                            Icon(
-                                imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
-                                contentDescription = tab.label,
-                                modifier = Modifier.size(24.dp),
-                                tint = iconColor
-                            )
-                        }
+                        Icon(
+                            imageVector = if (selected) tab.selectedIcon else tab.unselectedIcon,
+                            contentDescription = tab.label,
+                            modifier = Modifier.size(24.dp),
+                            tint = iconColor
+                        )
 
                         Spacer(modifier = Modifier.height(2.dp))
 

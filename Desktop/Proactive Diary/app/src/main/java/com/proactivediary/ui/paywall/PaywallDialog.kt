@@ -139,20 +139,20 @@ fun PaywallDialog(
                     ) {
                         FeatureShowcaseCard(
                             icon = { Icon(Icons.Outlined.AllInclusive, null, Modifier.size(32.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                            title = "Unlimited writing",
-                            description = "Photos, voice notes, templates, and more",
+                            title = "Edit past entries",
+                            description = "Go back and refine your thoughts anytime",
                             delayMs = 0
                         )
                         FeatureShowcaseCard(
                             icon = { Icon(Icons.Outlined.Psychology, null, Modifier.size(32.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                             title = "Weekly insights",
-                            description = "Patterns and gentle suggestions from your journal",
+                            description = "Patterns, themes, and custom prompts from your journal",
                             delayMs = 100
                         )
                         FeatureShowcaseCard(
                             icon = { Icon(Icons.Outlined.Shield, null, Modifier.size(32.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-                            title = "Privacy-first",
-                            description = "Your data stays on your device. Always.",
+                            title = "Custom themes & export",
+                            description = "Design your diary and export to PDF",
                             delayMs = 200
                         )
                     }

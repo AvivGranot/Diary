@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.proactivediary.data.db.dao.PreferenceDao
 import com.proactivediary.data.db.entities.PreferenceEntity
-import com.proactivediary.data.social.NotesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,8 +12,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class NavViewModel @Inject constructor(
-    private val preferenceDao: PreferenceDao,
-    private val notesRepository: NotesRepository
+    private val preferenceDao: PreferenceDao
 ) : ViewModel() {
 
     private val _startDestination = MutableStateFlow<String?>(null)
@@ -69,8 +67,8 @@ class NavViewModel @Inject constructor(
                 }
             }
 
-            // First launch: full onboarding starting at Typewriter
-            // Returning users: go straight to Main (Quotes tab)
+            // First launch: onboarding starting at Typewriter
+            // Returning users: go straight to Main (Diary tab)
             _startDestination.value = if (typewriterCompleted) {
                 Routes.Main.route
             } else {
@@ -82,17 +80,6 @@ class NavViewModel @Inject constructor(
     fun markOnboardingComplete() {
         viewModelScope.launch {
             preferenceDao.insert(PreferenceEntity("first_launch_completed", "true"))
-            // Seed a welcome note so the inbox isn't empty on first launch
-            if (preferenceDao.get("welcome_note_seeded") == null) {
-                val uid = notesRepository.currentUserId()
-                if (uid.isNotEmpty()) {
-                    notesRepository.sendNote(
-                        recipientId = uid,
-                        content = "I know how hard you work. Stay focused, enjoy what you have, and everything will work out!"
-                    )
-                    preferenceDao.insert(PreferenceEntity("welcome_note_seeded", "true"))
-                }
-            }
         }
     }
 }

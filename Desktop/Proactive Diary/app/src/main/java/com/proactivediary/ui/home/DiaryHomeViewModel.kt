@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken
 import com.proactivediary.data.db.dao.InsightDao
 import com.proactivediary.data.db.entities.EntryEntity
 import com.proactivediary.data.repository.EntryRepository
+import com.proactivediary.data.repository.StreakRepository
 import com.proactivediary.ui.journal.AIInsightData
 import com.proactivediary.ui.journal.DiaryCardData
 import com.proactivediary.ui.write.WritingPrompts
@@ -28,13 +29,15 @@ data class DiaryHomeUiState(
     val groupedEntries: Map<String, List<DiaryCardData>> = emptyMap(),
     val aiInsight: AIInsightData = AIInsightData(),
     val isLoading: Boolean = true,
-    val isEmpty: Boolean = false
+    val isEmpty: Boolean = false,
+    val streakMessage: String? = null
 )
 
 @HiltViewModel
 class DiaryHomeViewModel @Inject constructor(
     private val entryRepository: EntryRepository,
-    private val insightDao: InsightDao
+    private val insightDao: InsightDao,
+    private val streakRepository: StreakRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DiaryHomeUiState())
@@ -45,6 +48,14 @@ class DiaryHomeViewModel @Inject constructor(
     init {
         loadEntries()
         loadAIInsight()
+        loadStreak()
+    }
+
+    private fun loadStreak() {
+        viewModelScope.launch {
+            val message = streakRepository.getCompassionateMessage()
+            _uiState.value = _uiState.value.copy(streakMessage = message)
+        }
     }
 
     private fun loadEntries() {

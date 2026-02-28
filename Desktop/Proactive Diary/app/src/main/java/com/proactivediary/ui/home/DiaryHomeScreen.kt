@@ -144,6 +144,25 @@ fun DiaryHomeScreen(
             }
         }
 
+        // ── Streak banner ────────────────────────────────────────────────
+        uiState.streakMessage?.let { message ->
+            Text(
+                text = message,
+                style = TextStyle(
+                    fontFamily = InstrumentSerif,
+                    fontSize = 14.sp,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = DiarySpacing.screenHorizontal,
+                        vertical = DiarySpacing.xs
+                    )
+            )
+        }
+
         // ── Scrollable content ──────────────────────────────────────────
         if (uiState.isLoading) {
             // Skeleton placeholder

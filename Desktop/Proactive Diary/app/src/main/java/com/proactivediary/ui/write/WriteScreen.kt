@@ -220,10 +220,14 @@ fun WriteScreen(
         }
     }
 
+    // Post-save share prompt
+    var showPostSaveShare by remember { mutableStateOf(false) }
+
     // Notify parent when a new entry is saved (for billing refresh)
     LaunchedEffect(state.newEntrySaved) {
         if (state.newEntrySaved) {
             onEntrySaved?.invoke()
+            showPostSaveShare = true
             viewModel.clearNewEntrySaved()
         }
     }
@@ -834,6 +838,26 @@ fun WriteScreen(
                 contactPickerLauncher.launch(null)
             },
             onDismiss = { showChannelPicker = false }
+        )
+    }
+
+    // Post-save "Share as Story" prompt
+    if (showPostSaveShare && state.content.isNotBlank()) {
+        val excerpt = state.content.take(120).let {
+            val dot = it.indexOf('.')
+            if (dot in 10..119) it.substring(0, dot + 1) else it
+        }
+        ShareCardDialog(
+            data = ShareCardData(
+                excerpt = excerpt,
+                title = state.title,
+                colorKey = state.colorKey
+            ),
+            onDismiss = { showPostSaveShare = false },
+            onShare = { bitmap ->
+                shareCardAsImage(context, bitmap)
+                showPostSaveShare = false
+            }
         )
     }
 }

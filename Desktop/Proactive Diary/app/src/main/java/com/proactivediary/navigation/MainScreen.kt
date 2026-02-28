@@ -28,26 +28,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.proactivediary.analytics.AnalyticsService
-import com.proactivediary.ui.activity.ActivityScreen
-import com.proactivediary.ui.activity.ActivityViewModel
 import com.proactivediary.ui.home.DiaryHomeScreen
-import com.proactivediary.ui.notes.NoteInboxScreen
-import com.proactivediary.ui.notes.NoteInboxViewModel
+import com.proactivediary.ui.journal.JournalScreen
 import com.proactivediary.ui.paywall.BillingViewModel
 import com.proactivediary.ui.paywall.PaywallDialog
 import com.proactivediary.ui.paywall.PurchaseResult
 import com.proactivediary.ui.profile.ProfileScreen
-import com.proactivediary.ui.quotes.QuotesScreen
 import com.proactivediary.ui.settings.GoalsAndRemindersScreen
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
-// 5-tab layout: Quotes | Notes | Diary (center) | Activity | Profile
-private const val PAGE_QUOTES = 0
-private const val PAGE_NOTES = 1
-private const val PAGE_DIARY = 2
-private const val PAGE_ACTIVITY = 3
-private const val PAGE_PROFILE = 4
+// 3-tab layout: Journal | Diary (center) | Profile
+private const val PAGE_JOURNAL = 0
+private const val PAGE_DIARY = 1
+private const val PAGE_PROFILE = 2
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,9 +54,7 @@ fun MainScreen(
     onDeepLinkConsumed: () -> Unit = {},
     onTabChanged: (Int) -> Unit = {},
     billingViewModel: BillingViewModel = hiltViewModel(),
-    mainScreenViewModel: MainScreenViewModel = hiltViewModel(),
-    noteInboxViewModel: NoteInboxViewModel = hiltViewModel(),
-    activityViewModel: ActivityViewModel = hiltViewModel()
+    mainScreenViewModel: MainScreenViewModel = hiltViewModel()
 ) {
     val subscriptionState by billingViewModel.subscriptionState.collectAsState()
     val isFirstPaywallView by billingViewModel.isFirstPaywallView.collectAsState()
@@ -71,26 +63,21 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     val activity = context as? Activity
-    val unreadNoteCount by noteInboxViewModel.unreadCount.collectAsState(initial = 0)
-    val activityBadgeCount by activityViewModel.unreadCount.collectAsState()
 
     // Overlay sub-screen (Goals & Reminders) — shown on top of pager
     var showGoalsAndReminders by remember { mutableStateOf(false) }
 
-    // Compose tab request from QuotesScreen "Send a note" CTA
-    var composeTabRequested by remember { mutableStateOf(false) }
-
     // Notification prompt carried through deep link
     var activeNotificationPrompt by remember { mutableStateOf<String?>(null) }
 
-    // 5-page pager — starts on Quotes tab (social first)
+    // 3-page pager — starts on Diary tab (center)
     val pagerState = rememberPagerState(
-        initialPage = PAGE_QUOTES,
-        pageCount = { 5 }
+        initialPage = PAGE_DIARY,
+        pageCount = { 3 }
     )
 
     // Track last valid page for paywall bounce
-    var lastValidPage by remember { mutableStateOf(PAGE_QUOTES) }
+    var lastValidPage by remember { mutableStateOf(PAGE_DIARY) }
 
     // Observe savedStateHandle for tab navigation requests (from NavGraph bottom nav)
     LaunchedEffect(Unit) {
@@ -111,10 +98,8 @@ fun MainScreen(
                 lastValidPage = page
                 onTabChanged(page)
                 val tabName = when (page) {
-                    PAGE_QUOTES -> "quotes"
-                    PAGE_NOTES -> "notes"
+                    PAGE_JOURNAL -> "journal"
                     PAGE_DIARY -> "diary"
-                    PAGE_ACTIVITY -> "activity"
                     PAGE_PROFILE -> "profile"
                     else -> "unknown"
                 }
@@ -142,9 +127,6 @@ fun MainScreen(
                 "goals" -> {
                     showGoalsAndReminders = true
                 }
-                "note_inbox" -> {
-                    pagerState.animateScrollToPage(PAGE_NOTES)
-                }
             }
             onDeepLinkConsumed()
         }
@@ -152,41 +134,41 @@ fun MainScreen(
 
     Scaffold { padding ->
         Box(modifier = Modifier.fillMaxSize()) {
-            // 5-tab swipeable pager
+            // 3-tab swipeable pager
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
-                beyondViewportPageCount = 2,
+                beyondViewportPageCount = 1,
                 key = { it }
             ) { page ->
                 when (page) {
-                    PAGE_QUOTES -> {
-                        QuotesScreen(
-                            onQuoteClick = { quoteId ->
-                                rootNavController.navigate(Routes.QuoteDetail.createRoute(quoteId))
+                    PAGE_JOURNAL -> {
+                        JournalScreen(
+                            onEntryClick = { entryId ->
+                                rootNavController.navigate(Routes.EntryDetail.createRoute(entryId))
                             },
-                            onSendNote = {
-                                composeTabRequested = true
-                                scope.launch { pagerState.animateScrollToPage(PAGE_NOTES) }
+                            onEditEntry = { entryId ->
+                                rootNavController.navigate(Routes.Write.create(entryId))
                             },
-                            unreadNoteCount = unreadNoteCount,
-                            onNotificationBellClick = {
-                                analyticsService.logNoteInboxOpened(unreadNoteCount)
-                                scope.launch { pagerState.animateScrollToPage(PAGE_NOTES) }
-                            }
-                        )
-                    }
-                    PAGE_NOTES -> {
-                        NoteInboxScreen(
-                            onBack = null,
-                            composeRequested = composeTabRequested,
-                            onComposeRequestHandled = { composeTabRequested = false }
+                            onNavigateToWrite = {
+                                scope.launch { pagerState.animateScrollToPage(PAGE_DIARY) }
+                            },
+                            onNavigateToOnThisDay = {
+                                rootNavController.navigate(Routes.OnThisDay.route)
+                            },
+                            onNavigateToRecentlyDeleted = {
+                                rootNavController.navigate(Routes.RecentlyDeleted.route)
+                            },
+                            onNavigateToMap = {
+                                rootNavController.navigate(Routes.PlacesMap.route)
+                            },
+                            onBack = null
                         )
                     }
                     PAGE_DIARY -> {
                         DiaryHomeScreen(
                             onSearchClick = {
-                                rootNavController.navigate(Routes.Journal.route)
+                                scope.launch { pagerState.animateScrollToPage(PAGE_JOURNAL) }
                             },
                             onWriteClick = {
                                 rootNavController.navigate(Routes.Write.create())
@@ -198,12 +180,9 @@ fun MainScreen(
                                 rootNavController.navigate(Routes.Write.create(entryId))
                             },
                             onNavigateToJournal = {
-                                rootNavController.navigate(Routes.Journal.route)
+                                scope.launch { pagerState.animateScrollToPage(PAGE_JOURNAL) }
                             }
                         )
-                    }
-                    PAGE_ACTIVITY -> {
-                        ActivityScreen()
                     }
                     PAGE_PROFILE -> {
                         ProfileScreen(
@@ -224,7 +203,7 @@ fun MainScreen(
                                 rootNavController.navigate(Routes.ThemeEvolution.route)
                             },
                             onNavigateToJournal = {
-                                rootNavController.navigate(Routes.Journal.route)
+                                scope.launch { pagerState.animateScrollToPage(PAGE_JOURNAL) }
                             },
                             onSignOut = {
                                 com.google.firebase.auth.FirebaseAuth.getInstance().signOut()

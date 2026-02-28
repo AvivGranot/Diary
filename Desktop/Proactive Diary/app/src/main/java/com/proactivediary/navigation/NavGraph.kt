@@ -30,10 +30,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.ui.theme.DiaryMotion
-import com.proactivediary.ui.activity.ActivityViewModel
 import com.proactivediary.ui.components.DiaryBottomNav
 import com.proactivediary.ui.journal.EntryDetailScreen
-import com.proactivediary.ui.notes.NoteInboxViewModel
 import com.proactivediary.ui.onboarding.NotificationFallbackScreen
 import com.proactivediary.ui.onboarding.NotificationPermissionScreen
 import com.proactivediary.ui.onboarding.OnboardingGoalsScreen
@@ -89,14 +87,8 @@ fun ProactiveDiaryNavHost(
     val context = LocalContext.current
     val activity = context as? Activity
 
-    // Badge counts for bottom nav
-    val noteInboxViewModel: NoteInboxViewModel = hiltViewModel()
-    val activityViewModel: ActivityViewModel = hiltViewModel()
-    val unreadNoteCount by noteInboxViewModel.unreadCount.collectAsState(initial = 0)
-    val activityBadgeCount by activityViewModel.unreadCount.collectAsState()
-
     // Track selected tab index for the bottom nav
-    var selectedTabIndex by remember { mutableIntStateOf(2) } // Default: Diary (center)
+    var selectedTabIndex by remember { mutableIntStateOf(1) } // Default: Diary (center)
 
     // Observe current route to decide whether to show bottom nav
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -137,8 +129,7 @@ fun ProactiveDiaryNavHost(
             popExitTransition = { DiaryMotion.NavPopExitTransition }
         ) {
             // ── Onboarding ──
-            // Flow: Typewriter → PhoneAuth → WriteFirstNote → OnboardingGoals →
-            //       NotificationPermission → Main
+            // Flow: Typewriter → PhoneAuth → NotificationPermission → Main
 
             composable(Routes.Typewriter.route) {
                 TypewriterScreen(
@@ -215,7 +206,7 @@ fun ProactiveDiaryNavHost(
                 )
             }
 
-            // ── Main (5-tab) ──
+            // ── Main (3-tab) ──
 
             composable(Routes.Main.route) {
                 MainScreen(
@@ -242,7 +233,7 @@ fun ProactiveDiaryNavHost(
                     },
                     onNavigateToWrite = {
                         navController.previousBackStackEntry
-                            ?.savedStateHandle?.set("navigateToTab", 2) // PAGE_DIARY
+                            ?.savedStateHandle?.set("navigateToTab", 1) // PAGE_DIARY
                         navController.popBackStack()
                     },
                     onNavigateToOnThisDay = {
@@ -272,7 +263,7 @@ fun ProactiveDiaryNavHost(
                     onCreateStory = { entryId ->
                         navController.navigate(Routes.StoryGenerator.createRoute(entryId))
                     },
-                    canEdit = subscriptionState.isActive
+                    canEdit = billingViewModel.isPremium()
                 )
             }
 
@@ -401,14 +392,14 @@ fun ProactiveDiaryNavHost(
                         navController.navigate(Routes.OtpVerification.route)
                     },
                     onSignedIn = {
-                        // Auto-verified or Google sign-in — continue onboarding
-                        navController.navigate(Routes.WriteFirstNote.create("onboarding_goals")) {
+                        // Auto-verified or Google sign-in → skip to notifications
+                        navController.navigate(Routes.NotificationPermission.route) {
                             popUpTo(Routes.PhoneAuth.route) { inclusive = true }
                         }
                     },
                     onGoogleSignIn = {
-                        // Google sign-in completed
-                        navController.navigate(Routes.WriteFirstNote.create("onboarding_goals")) {
+                        // Google sign-in completed → skip to notifications
+                        navController.navigate(Routes.NotificationPermission.route) {
                             popUpTo(Routes.PhoneAuth.route) { inclusive = true }
                         }
                     },
@@ -421,7 +412,7 @@ fun ProactiveDiaryNavHost(
                 val phoneAuthEntry = remember { navController.getBackStackEntry(Routes.PhoneAuth.route) }
                 OtpVerificationScreen(
                     onVerified = {
-                        navController.navigate(Routes.WriteFirstNote.create("onboarding_goals")) {
+                        navController.navigate(Routes.NotificationPermission.route) {
                             popUpTo(Routes.PhoneAuth.route) { inclusive = true }
                         }
                     },
@@ -591,9 +582,7 @@ fun ProactiveDiaryNavHost(
                     // Set the tab via savedStateHandle
                     navController.currentBackStackEntry
                         ?.savedStateHandle?.set("navigateToTab", index)
-                },
-                activityBadgeCount = activityBadgeCount,
-                notesBadgeCount = unreadNoteCount
+                }
             )
         }
     }
