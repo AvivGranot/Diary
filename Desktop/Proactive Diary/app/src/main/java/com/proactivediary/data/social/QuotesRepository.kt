@@ -1,5 +1,6 @@
 package com.proactivediary.data.social
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -192,6 +193,7 @@ class QuotesRepository @Inject constructor(
             .limit(limit.toLong())
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
+                    Log.w("QuotesRepository", "observeNewQuotes listener error", error)
                     trySend(emptyList())
                     return@addSnapshotListener
                 }
@@ -221,6 +223,7 @@ class QuotesRepository @Inject constructor(
             .orderBy("createdAt", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
+                    Log.w("QuotesRepository", "observeMyQuotes listener error", error)
                     trySend(emptyList())
                     return@addSnapshotListener
                 }
@@ -245,6 +248,7 @@ class QuotesRepository @Inject constructor(
             .orderBy("createdAt", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
+                    Log.w("QuotesRepository", "observeComments listener error", error)
                     trySend(emptyList())
                     return@addSnapshotListener
                 }

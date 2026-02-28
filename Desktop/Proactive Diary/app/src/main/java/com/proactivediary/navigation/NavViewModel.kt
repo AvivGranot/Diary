@@ -69,12 +69,12 @@ class NavViewModel @Inject constructor(
                 }
             }
 
-            // First launch: phone auth onboarding
+            // First launch: full onboarding starting at Typewriter
             // Returning users: go straight to Main (Quotes tab)
             _startDestination.value = if (typewriterCompleted) {
                 Routes.Main.route
             } else {
-                Routes.PhoneAuth.route
+                Routes.Typewriter.route
             }
         }
     }

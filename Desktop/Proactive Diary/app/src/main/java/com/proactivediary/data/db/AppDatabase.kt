@@ -44,7 +44,7 @@ import com.proactivediary.data.db.entities.WritingReminderEntity
         JournalEntryJoin::class,
         ActivitySignalEntity::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -285,6 +285,20 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try {
+                    db.execSQL("ALTER TABLE entries ADD COLUMN word_count INTEGER NOT NULL DEFAULT 0")
+                } catch (_: Exception) { /* column may already exist */ }
+                try {
+                    db.execSQL("ALTER TABLE writing_reminders ADD COLUMN fallback_enabled INTEGER NOT NULL DEFAULT 1")
+                } catch (_: Exception) { /* column may already exist */ }
+                try {
+                    db.execSQL("ALTER TABLE writing_reminders ADD COLUMN label TEXT NOT NULL DEFAULT 'Write in your diary'")
+                } catch (_: Exception) { /* column may already exist */ }
+            }
+        }
+
         val MIGRATIONS: Array<Migration> = arrayOf(
             MIGRATION_1_2,
             MIGRATION_2_3,
@@ -296,6 +310,7 @@ abstract class AppDatabase : RoomDatabase() {
             MIGRATION_8_9,
             MIGRATION_9_10,
             MIGRATION_10_11,
+            MIGRATION_11_12,
         )
 
         fun createCallback(): Callback {

@@ -110,84 +110,107 @@ class RestoreService @Inject constructor(
         val userDoc = firestore.collection("users").document(uid)
         var entriesRestored = 0
         var goalsRestored = 0
+        var entriesSnap: com.google.firebase.firestore.QuerySnapshot? = null
 
         // 1. Restore entries
-        val entriesSnap = userDoc.collection(SyncService.ENTRIES)
-            .whereNotEqualTo("_deleted", true)
-            .get().await()
+        try {
+            entriesSnap = userDoc.collection(SyncService.ENTRIES)
+                .whereNotEqualTo("_deleted", true)
+                .get().await()
 
-        for (doc in entriesSnap.documents) {
-            val entry = FirestoreMapper.documentToEntry(doc) ?: continue
-            entryDao.insert(entry)
-            entriesRestored++
-        }
-
-        // Rebuild FTS index after bulk insert
-        if (entriesRestored > 0) {
-            try {
-                entryDao.rawExec(SimpleSQLiteQuery("INSERT INTO entries_fts(entries_fts) VALUES('rebuild')"))
-            } catch (e: Exception) {
-                Log.w(TAG, "FTS rebuild failed: ${e.message}")
+            for (doc in entriesSnap.documents) {
+                val entry = FirestoreMapper.documentToEntry(doc) ?: continue
+                entryDao.insert(entry)
+                entriesRestored++
             }
+
+            // Rebuild FTS index after bulk insert
+            if (entriesRestored > 0) {
+                try {
+                    entryDao.rawExec(SimpleSQLiteQuery("INSERT INTO entries_fts(entries_fts) VALUES('rebuild')"))
+                } catch (e: Exception) {
+                    Log.w(TAG, "FTS rebuild failed: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Entries restore failed: ${e.message}")
         }
 
         // 2. Restore goals
-        val goalsSnap = userDoc.collection(SyncService.GOALS)
-            .whereNotEqualTo("_deleted", true)
-            .get().await()
+        try {
+            val goalsSnap = userDoc.collection(SyncService.GOALS)
+                .whereNotEqualTo("_deleted", true)
+                .get().await()
 
-        for (doc in goalsSnap.documents) {
-            val goal = FirestoreMapper.documentToGoal(doc) ?: continue
-            goalDao.insert(goal)
-            goalsRestored++
+            for (doc in goalsSnap.documents) {
+                val goal = FirestoreMapper.documentToGoal(doc) ?: continue
+                goalDao.insert(goal)
+                goalsRestored++
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Goals restore failed: ${e.message}")
         }
 
         // 3. Restore goal check-ins
-        val checkInsSnap = userDoc.collection(SyncService.GOAL_CHECKINS)
-            .whereNotEqualTo("_deleted", true)
-            .get().await()
+        try {
+            val checkInsSnap = userDoc.collection(SyncService.GOAL_CHECKINS)
+                .whereNotEqualTo("_deleted", true)
+                .get().await()
 
-        for (doc in checkInsSnap.documents) {
-            val checkIn = FirestoreMapper.documentToCheckIn(doc) ?: continue
-            try {
-                goalCheckInDao.insert(checkIn)
-            } catch (_: Exception) {
-                // Ignore duplicate constraint violations
+            for (doc in checkInsSnap.documents) {
+                val checkIn = FirestoreMapper.documentToCheckIn(doc) ?: continue
+                try {
+                    goalCheckInDao.insert(checkIn)
+                } catch (_: Exception) {
+                    // Ignore duplicate constraint violations
+                }
             }
+        } catch (e: Exception) {
+            Log.w(TAG, "Check-ins restore failed: ${e.message}")
         }
 
         // 4. Restore reminders
-        val remindersSnap = userDoc.collection(SyncService.REMINDERS)
-            .whereNotEqualTo("_deleted", true)
-            .get().await()
+        try {
+            val remindersSnap = userDoc.collection(SyncService.REMINDERS)
+                .whereNotEqualTo("_deleted", true)
+                .get().await()
 
-        for (doc in remindersSnap.documents) {
-            val reminder = FirestoreMapper.documentToReminder(doc) ?: continue
-            reminderDao.insert(reminder)
+            for (doc in remindersSnap.documents) {
+                val reminder = FirestoreMapper.documentToReminder(doc) ?: continue
+                reminderDao.insert(reminder)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Reminders restore failed: ${e.message}")
         }
 
         // 5. Restore syncable preferences
-        val prefsSnap = userDoc.collection(SyncService.PREFERENCES)
-            .get().await()
+        try {
+            val prefsSnap = userDoc.collection(SyncService.PREFERENCES)
+                .get().await()
 
-        for (doc in prefsSnap.documents) {
-            val key = doc.id
-            val value = doc.getString("value") ?: continue
-            if (key in SyncService.SYNCABLE_PREF_KEYS) {
-                preferenceDao.insert(PreferenceEntity(key, value))
+            for (doc in prefsSnap.documents) {
+                val key = doc.id
+                val value = doc.getString("value") ?: continue
+                if (key in SyncService.SYNCABLE_PREF_KEYS) {
+                    preferenceDao.insert(PreferenceEntity(key, value))
+                }
             }
+        } catch (e: Exception) {
+            Log.w(TAG, "Preferences restore failed: ${e.message}")
         }
 
         // 6. Download images in background (non-blocking)
-        CoroutineScope(Dispatchers.IO).launch {
-            for (doc in entriesSnap.documents) {
-                val imagesJson = doc.getString("images") ?: "[]"
-                val audioPath = doc.getString("audioPath")
-                if (imagesJson != "[]") {
-                    imageSyncService.downloadEntryImages(doc.id, imagesJson)
-                }
-                if (!audioPath.isNullOrBlank()) {
-                    imageSyncService.downloadEntryAudio(doc.id, audioPath)
+        if (entriesSnap != null) {
+            CoroutineScope(Dispatchers.IO).launch {
+                for (doc in entriesSnap.documents) {
+                    val imagesJson = doc.getString("images") ?: "[]"
+                    val audioPath = doc.getString("audioPath")
+                    if (imagesJson != "[]") {
+                        imageSyncService.downloadEntryImages(doc.id, imagesJson)
+                    }
+                    if (!audioPath.isNullOrBlank()) {
+                        imageSyncService.downloadEntryAudio(doc.id, audioPath)
+                    }
                 }
             }
         }

@@ -131,7 +131,7 @@ class MainActivity : ComponentActivity() {
             val (streak, goalCount, onboardingDone, designDone) = withContext(Dispatchers.IO) {
                 val s = streakRepository.calculateWritingStreak()
                 val g = goalRepository.getActiveGoalCount()
-                val ob = preferenceDao.getSync("onboarding_completed")?.value == "true"
+                val ob = preferenceDao.getSync("first_launch_completed")?.value == "true"
                 val dc = preferenceDao.getSync("design_completed")?.value == "true"
                 data class Props(val streak: Int, val goals: Int, val onboarding: Boolean, val design: Boolean)
                 Props(s, g, ob, dc)

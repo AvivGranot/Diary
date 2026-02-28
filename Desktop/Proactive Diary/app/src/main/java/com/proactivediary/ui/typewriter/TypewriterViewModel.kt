@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.proactivediary.analytics.AnalyticsService
 import com.proactivediary.data.db.dao.PreferenceDao
-import com.proactivediary.data.db.entities.PreferenceEntity
 import com.proactivediary.data.repository.StreakRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -233,8 +232,6 @@ class TypewriterViewModel @Inject constructor(
     private suspend fun navigateAway() {
         if (_uiState.value.isNavigating) return
         _uiState.value = _uiState.value.copy(isNavigating = true)
-
-        preferenceDao.insert(PreferenceEntity(PREF_KEY, "true"))
 
         val fadeSteps = 20
         val fadeStepDuration = SCREEN_FADE_MS / fadeSteps

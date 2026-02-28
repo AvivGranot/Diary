@@ -3,9 +3,7 @@ package com.proactivediary.ui.onboarding
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.proactivediary.analytics.AnalyticsService
-import com.proactivediary.data.db.dao.PreferenceDao
 import com.proactivediary.data.db.entities.GoalEntity
-import com.proactivediary.data.db.entities.PreferenceEntity
 import com.proactivediary.data.db.entities.WritingReminderEntity
 import com.proactivediary.data.repository.GoalRepository
 import com.proactivediary.data.repository.ReminderRepository
@@ -22,7 +20,6 @@ import javax.inject.Inject
 class OnboardingGoalsViewModel @Inject constructor(
     private val goalRepository: GoalRepository,
     private val reminderRepository: ReminderRepository,
-    private val preferenceDao: PreferenceDao,
     private val notificationService: NotificationService,
     private val analyticsService: AnalyticsService
 ) : ViewModel() {
@@ -73,24 +70,15 @@ class OnboardingGoalsViewModel @Inject constructor(
                     }
                 }
 
-                // Mark onboarding as completed only after all saves succeed
-                preferenceDao.insert(PreferenceEntity("onboarding_completed", "true"))
-                preferenceDao.insert(PreferenceEntity("goals_onboarding_completed", "true"))
                 analyticsService.logOnboardingGoalsCompleted(goals.size)
-            } catch (e: Exception) {
-                // Still mark completed to avoid stuck onboarding, but goals/reminders may be partial
-                try {
-                    preferenceDao.insert(PreferenceEntity("onboarding_completed", "true"))
-                    preferenceDao.insert(PreferenceEntity("goals_onboarding_completed", "true"))
-                } catch (_: Exception) { }
+            } catch (_: Exception) {
+                // Goals/reminders may be partial but onboarding continues
             }
         }
     }
 
     suspend fun skipOnboarding() {
         withContext(Dispatchers.IO) {
-            preferenceDao.insert(PreferenceEntity("onboarding_completed", "true"))
-            preferenceDao.insert(PreferenceEntity("goals_onboarding_completed", "true"))
             analyticsService.logOnboardingGoalsSkipped()
         }
     }
