@@ -2,7 +2,9 @@ package com.proactivediary.ui.journal
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -62,10 +64,12 @@ data class DiaryCardData(
     val capsuleOpenDate: Long? = null
 )
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun DiaryCard(
     data: DiaryCardData,
     onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     // All entries use blue accent (mood feature removed)
@@ -129,10 +133,11 @@ fun DiaryCard(
     ) {
         Row(
             modifier = Modifier
-                .clickable(
+                .combinedClickable(
                     interactionSource = interactionSource,
                     indication = null,
-                    onClick = onClick
+                    onClick = onClick,
+                    onLongClick = onLongClick
                 )
                 .height(IntrinsicSize.Min)
         ) {

@@ -24,7 +24,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -54,10 +58,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material3.Surface
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -75,6 +80,7 @@ import com.proactivediary.data.db.entities.JournalEntity
 @Composable
 fun JournalScreen(
     onEntryClick: (String) -> Unit = {},
+    onEditEntry: (String) -> Unit = {},
     onNavigateToWrite: (() -> Unit)? = null,
     onNavigateToOnThisDay: (() -> Unit)? = null,
     onNavigateToRecentlyDeleted: (() -> Unit)? = null,
@@ -85,7 +91,9 @@ fun JournalScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val journalManageState by journalManageVM.uiState.collectAsState()
+    val context = LocalContext.current
     var entryToDelete by remember { mutableStateOf<DiaryCardData?>(null) }
+    var contextMenuEntry by remember { mutableStateOf<DiaryCardData?>(null) }
     var viewMode by remember { mutableStateOf("list") } // "list", "calendar", "gallery"
     var selectedDate by remember { mutableStateOf<java.time.LocalDate?>(null) }
     var showSidebar by remember { mutableStateOf(false) }
@@ -268,10 +276,55 @@ fun JournalScreen(
 
                                 items(filteredEntries, key = { it.id }) { cardData ->
                                     val onClick = remember(cardData.id) { { onEntryClick(cardData.id) } }
-                                    DiaryCard(
-                                        data = cardData,
-                                        onClick = onClick
-                                    )
+                                    Box {
+                                        DiaryCard(
+                                            data = cardData,
+                                            onClick = onClick,
+                                            onLongClick = { contextMenuEntry = cardData }
+                                        )
+                                        DropdownMenu(
+                                            expanded = contextMenuEntry?.id == cardData.id,
+                                            onDismissRequest = { contextMenuEntry = null }
+                                        ) {
+                                            DropdownMenuItem(
+                                                text = { Text("Edit") },
+                                                leadingIcon = { Icon(Icons.Outlined.Edit, contentDescription = null) },
+                                                onClick = {
+                                                    val id = contextMenuEntry?.id ?: return@DropdownMenuItem
+                                                    contextMenuEntry = null
+                                                    onEditEntry(id)
+                                                }
+                                            )
+                                            DropdownMenuItem(
+                                                text = { Text("Share") },
+                                                leadingIcon = { Icon(Icons.Outlined.Share, contentDescription = null) },
+                                                onClick = {
+                                                    val entry = contextMenuEntry ?: return@DropdownMenuItem
+                                                    contextMenuEntry = null
+                                                    val text = buildString {
+                                                        if (entry.title.isNotBlank()) {
+                                                            appendLine(entry.title)
+                                                            appendLine()
+                                                        }
+                                                        append(entry.content.take(500))
+                                                    }
+                                                    val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                                        putExtra(Intent.EXTRA_TEXT, text)
+                                                        type = "text/plain"
+                                                    }
+                                                    context.startActivity(Intent.createChooser(sendIntent, null))
+                                                }
+                                            )
+                                            DropdownMenuItem(
+                                                text = { Text("Delete", color = Color(0xFFD32F2F)) },
+                                                leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null, tint = Color(0xFFD32F2F)) },
+                                                onClick = {
+                                                    entryToDelete = contextMenuEntry
+                                                    contextMenuEntry = null
+                                                }
+                                            )
+                                        }
+                                    }
                                 }
 
                                 if (filteredEntries.isEmpty()) {
@@ -410,10 +463,55 @@ fun JournalScreen(
                                 modifier = Modifier.padding(horizontal = 16.dp)
                             ) {
                                 val cardOnClick = remember(cardData.id) { { onEntryClick(cardData.id) } }
-                                DiaryCard(
-                                    data = cardData,
-                                    onClick = cardOnClick
-                                )
+                                Box {
+                                    DiaryCard(
+                                        data = cardData,
+                                        onClick = cardOnClick,
+                                        onLongClick = { contextMenuEntry = cardData }
+                                    )
+                                    DropdownMenu(
+                                        expanded = contextMenuEntry?.id == cardData.id,
+                                        onDismissRequest = { contextMenuEntry = null }
+                                    ) {
+                                        DropdownMenuItem(
+                                            text = { Text("Edit") },
+                                            leadingIcon = { Icon(Icons.Outlined.Edit, contentDescription = null) },
+                                            onClick = {
+                                                val id = contextMenuEntry?.id ?: return@DropdownMenuItem
+                                                contextMenuEntry = null
+                                                onEditEntry(id)
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text("Share") },
+                                            leadingIcon = { Icon(Icons.Outlined.Share, contentDescription = null) },
+                                            onClick = {
+                                                val entry = contextMenuEntry ?: return@DropdownMenuItem
+                                                contextMenuEntry = null
+                                                val text = buildString {
+                                                    if (entry.title.isNotBlank()) {
+                                                        appendLine(entry.title)
+                                                        appendLine()
+                                                    }
+                                                    append(entry.content.take(500))
+                                                }
+                                                val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                                    putExtra(Intent.EXTRA_TEXT, text)
+                                                    type = "text/plain"
+                                                }
+                                                context.startActivity(Intent.createChooser(sendIntent, null))
+                                            }
+                                        )
+                                        DropdownMenuItem(
+                                            text = { Text("Delete", color = Color(0xFFD32F2F)) },
+                                            leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null, tint = Color(0xFFD32F2F)) },
+                                            onClick = {
+                                                entryToDelete = contextMenuEntry
+                                                contextMenuEntry = null
+                                            }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

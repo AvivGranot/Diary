@@ -236,6 +236,9 @@ fun ProactiveDiaryNavHost(
                     onEntryClick = { entryId ->
                         navController.navigate(Routes.EntryDetail.createRoute(entryId))
                     },
+                    onEditEntry = { entryId ->
+                        navController.navigate(Routes.Write.create(entryId))
+                    },
                     onNavigateToWrite = {
                         navController.previousBackStackEntry
                             ?.savedStateHandle?.set("navigateToTab", 2) // PAGE_DIARY

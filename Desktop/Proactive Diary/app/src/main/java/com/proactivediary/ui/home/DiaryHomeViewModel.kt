@@ -122,6 +122,12 @@ class DiaryHomeViewModel @Inject constructor(
         )
     }
 
+    fun deleteEntry(entryId: String) {
+        viewModelScope.launch {
+            entryRepository.softDelete(entryId)
+        }
+    }
+
     private fun groupByDate(cards: List<DiaryCardData>): Map<String, List<DiaryCardData>> {
         val zone = ZoneId.systemDefault()
         val today = LocalDate.now()

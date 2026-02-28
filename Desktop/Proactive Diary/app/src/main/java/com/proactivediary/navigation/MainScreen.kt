@@ -194,6 +194,9 @@ fun MainScreen(
                             onEntryClick = { entryId ->
                                 rootNavController.navigate(Routes.EntryDetail.createRoute(entryId))
                             },
+                            onEditEntry = { entryId ->
+                                rootNavController.navigate(Routes.Write.create(entryId))
+                            },
                             onNavigateToJournal = {
                                 rootNavController.navigate(Routes.Journal.route)
                             }
