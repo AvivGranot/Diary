@@ -77,7 +77,6 @@ fun SettingsScreen(
 
     val isStreakEnabled by viewModel.isStreakEnabled.collectAsState()
     val isAIEnabled by viewModel.isAIEnabled.collectAsState()
-    val isSydneyEnabled by viewModel.isSydneyEnabled.collectAsState()
     val entryCount by viewModel.entryCount.collectAsState()
     val exportMessage by viewModel.exportMessage.collectAsState()
     val exportUri by viewModel.exportUri.collectAsState()
@@ -211,45 +210,6 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     ),
                     modifier = Modifier.padding(bottom = 8.dp)
-                )
-            }
-            SettingsDivider()
-
-            // -- Sydney Voice Capture --
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 14.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Sydney Voice Capture",
-                        style = TextStyle(
-                            fontFamily = PlusJakartaSans,
-                            fontSize = 15.sp,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    )
-                    Text(
-                        text = "Say \u201CHi Sydney\u201D to capture thoughts hands-free",
-                        style = TextStyle(
-                            fontFamily = PlusJakartaSans,
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    )
-                }
-                Switch(
-                    checked = isSydneyEnabled,
-                    onCheckedChange = { viewModel.toggleSydney(it) },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colorScheme.primary,
-                        checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                        uncheckedThumbColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                        uncheckedTrackColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
                 )
             }
             SettingsDivider()

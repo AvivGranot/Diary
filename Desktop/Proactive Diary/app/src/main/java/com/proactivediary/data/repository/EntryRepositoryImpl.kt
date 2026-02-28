@@ -8,7 +8,6 @@ import com.proactivediary.data.media.ImageStorageManager
 import com.proactivediary.data.sync.SyncService
 import com.proactivediary.data.sync.SyncStatus
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -19,7 +18,8 @@ import javax.inject.Inject
 class EntryRepositoryImpl @Inject constructor(
     private val entryDao: EntryDao,
     private val imageStorageManager: ImageStorageManager,
-    private val syncService: SyncService
+    private val syncService: SyncService,
+    private val appScope: CoroutineScope
 ) : EntryRepository {
 
     override fun getAllEntries(): Flow<List<EntryEntity>> =
@@ -55,7 +55,7 @@ class EntryRepositoryImpl @Inject constructor(
     override suspend fun insert(entry: EntryEntity) {
         entryDao.insert(entry)
         // Fire-and-forget cloud push
-        CoroutineScope(Dispatchers.IO).launch {
+        appScope.launch {
             try { syncService.pushEntry(entry) } catch (_: Exception) { }
         }
     }
@@ -63,7 +63,7 @@ class EntryRepositoryImpl @Inject constructor(
     override suspend fun update(entry: EntryEntity) {
         entryDao.update(entry)
         // Fire-and-forget cloud push
-        CoroutineScope(Dispatchers.IO).launch {
+        appScope.launch {
             try { syncService.pushEntry(entry) } catch (_: Exception) { }
         }
     }
@@ -119,14 +119,14 @@ class EntryRepositoryImpl @Inject constructor(
 
     override suspend fun softDelete(entryId: String) {
         entryDao.softDelete(entryId)
-        CoroutineScope(Dispatchers.IO).launch {
+        appScope.launch {
             try { syncService.pushEntry(entryDao.getByIdSync(entryId) ?: return@launch) } catch (_: Exception) { }
         }
     }
 
     override suspend fun restore(entryId: String) {
         entryDao.restore(entryId)
-        CoroutineScope(Dispatchers.IO).launch {
+        appScope.launch {
             try { syncService.pushEntry(entryDao.getByIdSync(entryId) ?: return@launch) } catch (_: Exception) { }
         }
     }
@@ -135,7 +135,7 @@ class EntryRepositoryImpl @Inject constructor(
         try { imageStorageManager.deleteAllImages(entryId) } catch (_: Exception) { }
         try {
             entryDao.updateSyncStatus(entryId, SyncStatus.PENDING_DELETE)
-            CoroutineScope(Dispatchers.IO).launch {
+            appScope.launch {
                 try { syncService.pushEntryDeletion(entryId) } catch (_: Exception) { }
             }
         } catch (_: SQLiteException) {

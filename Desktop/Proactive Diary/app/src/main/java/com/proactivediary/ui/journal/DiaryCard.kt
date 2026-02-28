@@ -1,7 +1,10 @@
 package com.proactivediary.ui.journal
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,17 +26,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.proactivediary.ui.theme.DarkPalette
+import com.proactivediary.ui.theme.DiaryMotion
 import com.proactivediary.ui.theme.PlusJakartaSans
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -64,49 +71,69 @@ fun DiaryCard(
     // All entries use blue accent (mood feature removed)
     val accentColor = DarkPalette.primary
 
+    // Press animation — instant visual feedback on tap
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) DiaryMotion.CARD_PRESS_SCALE else 1f,
+        animationSpec = DiaryMotion.SnappySpring,
+        label = "card_press"
+    )
+
     val isSealed = data.capsuleOpenDate != null && data.capsuleOpenDate > System.currentTimeMillis()
 
-    val displayTitle = if (isSealed) {
-        "\u2709\uFE0F  Time Capsule"
-    } else {
-        data.title.ifBlank {
-            data.content.lines().firstOrNull()?.take(60) ?: ""
-        }
-    }
-
-    val contentPreview = if (isSealed) {
-        val sdf = SimpleDateFormat("MMM d, yyyy", Locale.US)
-        "Opens on ${sdf.format(Date(data.capsuleOpenDate!!))}"
-    } else if (data.title.isNotBlank()) {
-        data.content.trimStart().take(200)
-    } else {
-        val lines = data.content.lines()
-        if (lines.size > 1) {
-            lines.drop(1).joinToString("\n").trimStart().take(200)
+    val displayTitle = remember(data.id, data.title, data.content, data.capsuleOpenDate) {
+        if (isSealed) {
+            "\u2709\uFE0F  Time Capsule"
         } else {
-            ""
+            data.title.ifBlank {
+                data.content.lines().firstOrNull()?.take(60) ?: ""
+            }
         }
     }
 
-    val dateText = try {
-        val sdf = SimpleDateFormat("MMM d", Locale.US)
-        sdf.format(Date(data.createdAt))
-    } catch (_: Exception) { "" }
+    val contentPreview = remember(data.id, data.content, data.title, data.capsuleOpenDate) {
+        if (data.capsuleOpenDate != null && data.capsuleOpenDate > System.currentTimeMillis()) {
+            val sdf = SimpleDateFormat("MMM d, yyyy", Locale.US)
+            "Opens on ${sdf.format(Date(data.capsuleOpenDate))}"
+        } else if (data.title.isNotBlank()) {
+            data.content.trimStart().take(200)
+        } else {
+            val lines = data.content.lines()
+            if (lines.size > 1) {
+                lines.drop(1).joinToString("\n").trimStart().take(200)
+            } else {
+                ""
+            }
+        }
+    }
 
-    // Mood emoji removed — mood feature deleted
-    val moodEmoji: String? = null
+    val dateText = remember(data.createdAt) {
+        try {
+            val sdf = SimpleDateFormat("MMM d", Locale.US)
+            sdf.format(Date(data.createdAt))
+        } catch (_: Exception) { "" }
+    }
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 4.dp),
+            .padding(horizontal = 4.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            },
         shape = RoundedCornerShape(16.dp),
         shadowElevation = 2.dp,
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.85f)
     ) {
         Row(
             modifier = Modifier
-                .clickable(onClick = onClick)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onClick
+                )
                 .height(IntrinsicSize.Min)
         ) {
             // Blue accent strip (all entries)
@@ -144,13 +171,6 @@ fun DiaryCard(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f)
-                        )
-                    }
-                    if (moodEmoji != null) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = moodEmoji,
-                            fontSize = 16.sp
                         )
                     }
                 }

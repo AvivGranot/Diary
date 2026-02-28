@@ -1,5 +1,9 @@
 package com.proactivediary.ui.home
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,8 +37,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -226,19 +233,27 @@ fun DiaryHomeScreen(
                         )
                     }
 
-                    // Entry cards
+                    // Entry cards with staggered entrance
                     items(
                         items = entries,
                         key = { it.id }
                     ) { cardData ->
-                        DiaryCard(
-                            data = cardData,
-                            onClick = { onEntryClick(cardData.id) },
-                            modifier = Modifier.padding(
-                                horizontal = DiarySpacing.md,
-                                vertical = 4.dp
+                        val onClick = remember(cardData.id) { { onEntryClick(cardData.id) } }
+                        val visible = remember { mutableStateOf(false) }
+                        LaunchedEffect(Unit) { visible.value = true }
+                        AnimatedVisibility(
+                            visible = visible.value,
+                            enter = fadeIn(tween(150)) + slideInVertically(tween(200)) { it / 4 }
+                        ) {
+                            DiaryCard(
+                                data = cardData,
+                                onClick = onClick,
+                                modifier = Modifier.padding(
+                                    horizontal = DiarySpacing.md,
+                                    vertical = 4.dp
+                                )
                             )
-                        )
+                        }
                     }
                 }
 

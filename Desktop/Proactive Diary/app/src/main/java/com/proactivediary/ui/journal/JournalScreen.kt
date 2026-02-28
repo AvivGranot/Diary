@@ -43,6 +43,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -266,9 +267,10 @@ fun JournalScreen(
                                 }
 
                                 items(filteredEntries, key = { it.id }) { cardData ->
+                                    val onClick = remember(cardData.id) { { onEntryClick(cardData.id) } }
                                     DiaryCard(
                                         data = cardData,
-                                        onClick = { onEntryClick(cardData.id) }
+                                        onClick = onClick
                                     )
                                 }
 
@@ -299,7 +301,7 @@ fun JournalScreen(
                                 val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
                                 val totalItems = listState.layoutInfo.totalItemsCount
                                 lastVisible >= totalItems - 5
-                            }.collect { nearEnd ->
+                            }.distinctUntilChanged().collect { nearEnd ->
                                 if (nearEnd && state.hasMoreEntries && !state.isLoadingMore) {
                                     viewModel.loadMoreEntries()
                                 }
@@ -407,9 +409,10 @@ fun JournalScreen(
                                 enableDismissFromStartToEnd = false,
                                 modifier = Modifier.padding(horizontal = 16.dp)
                             ) {
+                                val cardOnClick = remember(cardData.id) { { onEntryClick(cardData.id) } }
                                 DiaryCard(
                                     data = cardData,
-                                    onClick = { onEntryClick(cardData.id) }
+                                    onClick = cardOnClick
                                 )
                             }
                         }

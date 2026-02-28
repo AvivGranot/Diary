@@ -8,6 +8,7 @@ import com.proactivediary.data.social.ContentModerator
 import com.proactivediary.data.social.Quote
 import com.proactivediary.data.social.QuoteComment
 import com.proactivediary.data.social.QuotesRepository
+import com.google.firebase.auth.FirebaseAuth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -74,6 +75,7 @@ class QuoteDetailViewModel @Inject constructor(
     }
 
     private fun observeComments() {
+        if (quoteId.startsWith("sample_")) return
         viewModelScope.launch {
             quotesRepository.observeComments(quoteId).collect { comments ->
                 _state.value = _state.value.copy(comments = comments)
@@ -114,6 +116,26 @@ class QuoteDetailViewModel @Inject constructor(
         val modResult = contentModerator.check(text)
         if (!modResult.isAllowed) {
             _state.value = _state.value.copy(commentError = modResult.reason)
+            return
+        }
+
+        // Sample quotes: local-only comment (no Firestore)
+        if (quoteId.startsWith("sample_")) {
+            val user = FirebaseAuth.getInstance().currentUser
+            val localComment = QuoteComment(
+                id = "local_${System.currentTimeMillis()}",
+                authorId = user?.uid ?: "local",
+                authorName = user?.displayName ?: "You",
+                content = text,
+                createdAt = System.currentTimeMillis()
+            )
+            _state.value = _state.value.copy(
+                commentText = "",
+                comments = _state.value.comments + localComment,
+                quote = _state.value.quote?.copy(
+                    commentCount = (_state.value.quote?.commentCount ?: 0) + 1
+                )
+            )
             return
         }
 

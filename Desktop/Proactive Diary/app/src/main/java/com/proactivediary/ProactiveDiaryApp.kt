@@ -17,17 +17,20 @@ import com.proactivediary.notifications.LapsedUserWorker
 import com.proactivediary.notifications.WeeklyDigestWorker
 import com.proactivediary.notifications.NotificationChannels
 import com.proactivediary.data.repository.TemplateRepository
+import coil.ImageLoader
+import coil.ImageLoaderFactory
 import com.proactivediary.data.sync.SyncWorker
 import com.proactivediary.notifications.NotificationService
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @HiltAndroidApp
-class ProactiveDiaryApp : Application(), Configuration.Provider {
+class ProactiveDiaryApp : Application(), Configuration.Provider, ImageLoaderFactory {
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
@@ -38,6 +41,11 @@ class ProactiveDiaryApp : Application(), Configuration.Provider {
     @Inject
     lateinit var templateRepository: TemplateRepository
 
+    @Inject
+    lateinit var imageLoader: ImageLoader
+
+    override fun newImageLoader(): ImageLoader = imageLoader
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
@@ -45,29 +53,35 @@ class ProactiveDiaryApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        // Only notification channels are needed before first frame
         try {
             NotificationChannels.createChannels(this)
         } catch (e: Exception) {
             Log.e("ProactiveDiaryApp", "Failed to create notification channels", e)
         }
-        try {
-            scheduleLapsedUserCheck()
-            scheduleAIInsightGeneration()
-            scheduleWeeklyDigest()
-            scheduleCloudSync()
-            schedulePurgeDeleted()
-            scheduleSignalCollection()
-        } catch (e: Exception) {
-            Log.e("ProactiveDiaryApp", "Failed to schedule workers", e)
+
+        // Defer everything else — let the first frame render fast
+        CoroutineScope(Dispatchers.IO).launch {
+            delay(1500)
+            try {
+                scheduleLapsedUserCheck()
+                scheduleAIInsightGeneration()
+                scheduleWeeklyDigest()
+                scheduleCloudSync()
+                schedulePurgeDeleted()
+                scheduleSignalCollection()
+            } catch (e: Exception) {
+                Log.e("ProactiveDiaryApp", "Failed to schedule workers", e)
+            }
+            rescheduleAlarms()
+            try {
+                initializeCrashlytics()
+            } catch (e: Exception) {
+                Log.e("ProactiveDiaryApp", "Failed to initialize Crashlytics", e)
+            }
+            initializeTemplates()
+            initializePlaces()
         }
-        rescheduleAlarms()
-        try {
-            initializeCrashlytics()
-        } catch (e: Exception) {
-            Log.e("ProactiveDiaryApp", "Failed to initialize Crashlytics", e)
-        }
-        initializeTemplates()
-        initializePlaces()
     }
 
     private fun rescheduleAlarms() {

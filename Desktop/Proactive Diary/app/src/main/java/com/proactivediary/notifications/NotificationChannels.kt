@@ -10,7 +10,6 @@ object NotificationChannels {
     const val CHANNEL_LAPSED = "lapsed_user"
     const val CHANNEL_DIGEST = "weekly_digest"
     const val CHANNEL_NOTES = "anonymous_notes"
-    const val CHANNEL_SYDNEY = "sydney_listener"
     const val CHANNEL_MEMORIES = "on_this_day_memories"
 
     fun createChannels(context: Context) {
@@ -75,13 +74,7 @@ object NotificationChannels {
         }
         notificationManager.createNotificationChannel(memoriesChannel)
 
-        val sydneyChannel = NotificationChannel(
-            CHANNEL_SYDNEY,
-            "Sydney Voice Capture",
-            NotificationManager.IMPORTANCE_LOW
-        ).apply {
-            description = "Persistent notification while Sydney is listening"
-        }
-        notificationManager.createNotificationChannel(sydneyChannel)
+        // Clean up removed Sydney channel for users upgrading from pre-v1
+        notificationManager.deleteNotificationChannel("sydney_listener")
     }
 }

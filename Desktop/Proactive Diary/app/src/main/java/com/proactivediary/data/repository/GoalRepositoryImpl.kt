@@ -7,7 +7,6 @@ import com.proactivediary.data.db.entities.GoalEntity
 import com.proactivediary.data.sync.SyncService
 import com.proactivediary.data.sync.SyncStatus
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -15,7 +14,8 @@ import javax.inject.Inject
 class GoalRepositoryImpl @Inject constructor(
     private val goalDao: GoalDao,
     private val goalCheckInDao: GoalCheckInDao,
-    private val syncService: SyncService
+    private val syncService: SyncService,
+    private val appScope: CoroutineScope
 ) : GoalRepository {
 
     override fun getActiveGoals(): Flow<List<GoalEntity>> =
@@ -44,28 +44,28 @@ class GoalRepositoryImpl @Inject constructor(
 
     override suspend fun insertGoal(goal: GoalEntity) {
         goalDao.insert(goal)
-        CoroutineScope(Dispatchers.IO).launch {
+        appScope.launch {
             try { syncService.pushGoal(goal) } catch (_: Exception) { }
         }
     }
 
     override suspend fun updateGoal(goal: GoalEntity) {
         goalDao.update(goal)
-        CoroutineScope(Dispatchers.IO).launch {
+        appScope.launch {
             try { syncService.pushGoal(goal) } catch (_: Exception) { }
         }
     }
 
     override suspend fun deleteGoal(goalId: String) {
         goalDao.updateSyncStatus(goalId, SyncStatus.PENDING_DELETE)
-        CoroutineScope(Dispatchers.IO).launch {
+        appScope.launch {
             try { syncService.pushGoalDeletion(goalId) } catch (_: Exception) { }
         }
     }
 
     override suspend fun insertCheckIn(checkIn: GoalCheckInEntity) {
         goalCheckInDao.insert(checkIn)
-        CoroutineScope(Dispatchers.IO).launch {
+        appScope.launch {
             try { syncService.pushCheckIn(checkIn) } catch (_: Exception) { }
         }
     }

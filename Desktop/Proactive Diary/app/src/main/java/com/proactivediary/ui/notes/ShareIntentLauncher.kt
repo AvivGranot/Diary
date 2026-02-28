@@ -14,27 +14,35 @@ object ShareIntentLauncher {
         }
     }
 
-    fun launch(context: Context, channel: ShareChannel, noteContent: String) {
+    fun launch(context: Context, channel: ShareChannel, noteContent: String): Boolean {
         val shareText = buildShareText(noteContent)
 
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, shareText)
             setPackage(channel.packageName)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             if (channel == ShareChannel.GMAIL) {
                 putExtra(Intent.EXTRA_SUBJECT, "Someone sent you an anonymous note!")
             }
         }
 
-        try {
+        return try {
             context.startActivity(intent)
+            true
         } catch (_: Exception) {
             // App not installed or can't handle intent — fallback to chooser
-            val fallback = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, shareText)
+            try {
+                val fallback = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, shareText)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(Intent.createChooser(fallback, "Share via"))
+                true
+            } catch (_: Exception) {
+                false
             }
-            context.startActivity(Intent.createChooser(fallback, "Share via"))
         }
     }
 }

@@ -18,6 +18,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FormatBold
@@ -37,14 +39,7 @@ import androidx.compose.material.icons.filled.FormatStrikethrough
 import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.CameraAlt
 import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Mic
-import androidx.compose.material.icons.outlined.AutoAwesome
-import androidx.compose.material.icons.outlined.Brush
-import androidx.compose.material.icons.outlined.HourglassEmpty
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.filled.FormatColorText
 
 import androidx.compose.material3.AlertDialog
@@ -71,6 +66,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mohamedrejeb.richeditor.model.RichTextState
@@ -161,72 +158,38 @@ fun WriteToolbar(
                         exit = shrinkHorizontally() + fadeOut()
                     ) {
                         Row(
+                            modifier = Modifier.horizontalScroll(rememberScrollState()),
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            InlineFeatureButton(
-                                icon = Icons.Outlined.CameraAlt,
-                                label = "Photo",
-                                color = textColor,
-                                onClick = {
-                                    onPhotoClick?.invoke()
-                                    isExpanded = false
-                                }
-                            )
-                            InlineFeatureButton(
-                                icon = Icons.Outlined.Mic,
-                                label = "Dictate",
-                                color = textColor,
-                                onClick = {
-                                    onDictateClick?.invoke()
-                                    isExpanded = false
-                                }
-                            )
-                            InlineFeatureButton(
-                                icon = Icons.Outlined.Description,
-                                label = "Templates",
-                                color = textColor,
-                                onClick = {
-                                    onTemplatesClick?.invoke()
-                                    isExpanded = false
-                                }
-                            )
-                            InlineFeatureButton(
-                                icon = Icons.Outlined.Person,
-                                label = "Share",
-                                color = textColor,
-                                onClick = {
-                                    onShareClick?.invoke()
-                                    isExpanded = false
-                                }
-                            )
-                            InlineFeatureButton(
-                                icon = Icons.Outlined.Brush,
-                                label = "Draw",
-                                color = textColor,
-                                onClick = {
-                                    onDrawClick?.invoke()
-                                    isExpanded = false
-                                }
-                            )
-                            InlineFeatureButton(
-                                icon = Icons.Outlined.AutoAwesome,
-                                label = "Inspire",
-                                color = textColor,
-                                onClick = {
-                                    onSuggestionsClick?.invoke()
-                                    isExpanded = false
-                                }
-                            )
-                            InlineFeatureButton(
-                                icon = Icons.Outlined.HourglassEmpty,
-                                label = "Timer",
-                                color = textColor,
-                                onClick = {
-                                    onTimerClick?.invoke()
-                                    isExpanded = false
-                                }
-                            )
+                            EmojiButton(emoji = "\uD83D\uDCF7", contentDescription = "Photo") {
+                                onPhotoClick?.invoke()
+                                isExpanded = false
+                            }
+                            EmojiButton(emoji = "\uD83C\uDF99\uFE0F", contentDescription = "Dictate") {
+                                onDictateClick?.invoke()
+                                isExpanded = false
+                            }
+                            EmojiButton(emoji = "\uD83D\uDCDD", contentDescription = "Templates") {
+                                onTemplatesClick?.invoke()
+                                isExpanded = false
+                            }
+                            EmojiButton(emoji = "\uD83D\uDC64", contentDescription = "Share") {
+                                onShareClick?.invoke()
+                                isExpanded = false
+                            }
+                            EmojiButton(emoji = "\uD83C\uDFA8", contentDescription = "Draw") {
+                                onDrawClick?.invoke()
+                                isExpanded = false
+                            }
+                            EmojiButton(emoji = "\u2728", contentDescription = "Inspire") {
+                                onSuggestionsClick?.invoke()
+                                isExpanded = false
+                            }
+                            EmojiButton(emoji = "\u23F3", contentDescription = "Timer") {
+                                onTimerClick?.invoke()
+                                isExpanded = false
+                            }
                         }
                     }
 
@@ -461,34 +424,16 @@ fun WriteToolbar(
 }
 
 @Composable
-private fun InlineFeatureButton(
-    icon: ImageVector,
-    label: String,
-    color: Color,
-    onClick: () -> Unit
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+private fun EmojiButton(emoji: String, contentDescription: String, onClick: () -> Unit) {
+    Text(
+        text = emoji,
+        fontSize = 22.sp,
         modifier = Modifier
+            .semantics { this.contentDescription = contentDescription }
             .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 4.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            modifier = Modifier.size(20.dp),
-            tint = color.copy(alpha = 0.7f)
-        )
-        Text(
-            text = label,
-            style = TextStyle(
-                fontFamily = FontFamily.Default,
-                fontSize = 10.sp,
-                color = color.copy(alpha = 0.5f)
-            )
-        )
-    }
+            .padding(horizontal = 8.dp, vertical = 6.dp)
+    )
 }
 
 @Composable

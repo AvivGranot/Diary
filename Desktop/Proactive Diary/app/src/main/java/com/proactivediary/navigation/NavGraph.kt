@@ -29,6 +29,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.proactivediary.analytics.AnalyticsService
+import com.proactivediary.ui.theme.DiaryMotion
 import com.proactivediary.ui.activity.ActivityViewModel
 import com.proactivediary.ui.components.DiaryBottomNav
 import com.proactivediary.ui.journal.EntryDetailScreen
@@ -128,7 +129,11 @@ fun ProactiveDiaryNavHost(
     Box(modifier = Modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
-            startDestination = startDestination!!
+            startDestination = startDestination!!,
+            enterTransition = { DiaryMotion.NavEnterTransition },
+            exitTransition = { DiaryMotion.NavExitTransition },
+            popEnterTransition = { DiaryMotion.NavPopEnterTransition },
+            popExitTransition = { DiaryMotion.NavPopExitTransition }
         ) {
             // ── Onboarding ──
             // Flow: Typewriter → QuickAuth → Welcome → WriteFirstNote → QuotesPreview →

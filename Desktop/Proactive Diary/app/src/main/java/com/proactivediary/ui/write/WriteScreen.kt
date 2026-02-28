@@ -636,7 +636,7 @@ fun WriteScreen(
             exit = fadeOut(tween(600)),
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(top = 8.dp, end = 12.dp)
+                .padding(top = 48.dp, end = 12.dp)
         ) {
             FocusTimerBadge(
                 remainingSeconds = state.focusTimerSeconds,

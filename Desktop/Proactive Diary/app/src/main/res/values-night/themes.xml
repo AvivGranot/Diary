@@ -9,7 +9,7 @@
     <style name="Theme.ProactiveDiary.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#1A1A1A</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/avd_splash_icon</item>
-        <item name="windowSplashScreenAnimationDuration">800</item>
+        <item name="windowSplashScreenAnimationDuration">400</item>
         <item name="postSplashScreenTheme">@style/Theme.ProactiveDiary</item>
     </style>
 </resources>

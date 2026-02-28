@@ -40,6 +40,9 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,6 +56,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.ui.quotes.components.AuthorAvatar
+import com.proactivediary.ui.quotes.components.ProfileDialogData
+import com.proactivediary.ui.quotes.components.ProfilePhotoDialog
 import com.proactivediary.ui.theme.InstrumentSerif
 
 private val Gold = Color(0xFFFFD700)
@@ -67,6 +72,11 @@ fun QuoteDetailScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
+    var profileDialogData by remember { mutableStateOf<ProfileDialogData?>(null) }
+
+    if (profileDialogData != null) {
+        ProfilePhotoDialog(data = profileDialogData!!, onDismiss = { profileDialogData = null })
+    }
 
     Scaffold(
         topBar = {
@@ -165,7 +175,8 @@ fun QuoteDetailScreen(
                             AuthorAvatar(
                                 photoUrl = quote.authorPhotoUrl,
                                 authorName = quote.authorName,
-                                size = 36
+                                size = 36,
+                                onClick = { profileDialogData = ProfileDialogData(quote.authorName, quote.authorPhotoUrl) }
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
@@ -256,7 +267,8 @@ fun QuoteDetailScreen(
                                 AuthorAvatar(
                                     photoUrl = null,
                                     authorName = comment.authorName,
-                                    size = 28
+                                    size = 28,
+                                    onClick = { profileDialogData = ProfileDialogData(comment.authorName, null) }
                                 )
                                 Spacer(modifier = Modifier.width(10.dp))
                                 Column {

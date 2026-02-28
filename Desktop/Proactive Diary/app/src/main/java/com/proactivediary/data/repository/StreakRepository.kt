@@ -16,17 +16,26 @@ class StreakRepository @Inject constructor(
     private val zone: ZoneId get() = ZoneId.systemDefault()
 
     /**
-     * Backfill-aware day range: uses COALESCE(entry_date, created_at).
+     * Fetch all writing days since `sinceDate` in a single query, return as Set of epoch days.
      */
-    private suspend fun hasDayEntryWithBackfill(date: LocalDate): Boolean {
-        val startOfDay = date.atStartOfDay(zone).toInstant().toEpochMilli()
-        val endOfDay = date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli() - 1
-        return entryDao.countEntriesForDayWithBackfill(startOfDay, endOfDay) > 0
+    private suspend fun getWritingDays(sinceDate: LocalDate): Set<Long> {
+        val sinceMs = sinceDate.atStartOfDay(zone).toInstant().toEpochMilli()
+        return entryDao.getDistinctWritingDayEpochs(sinceMs).toSet()
+    }
+
+    /**
+     * Convert a LocalDate to the same epoch-day integer used by the SQL query.
+     * The query does: COALESCE(entry_date, created_at) / 86400000
+     * We replicate that by using the start-of-day millis in UTC-equivalent.
+     */
+    private fun LocalDate.toQueryEpochDay(): Long {
+        val millis = this.atStartOfDay(zone).toInstant().toEpochMilli()
+        return millis / 86400000L
     }
 
     /**
      * Compassionate streak: walks backward from today, allows configurable grace gaps.
-     * Grace days: 1-2 days can be skipped without breaking the streak.
+     * Now uses a single batch query instead of one query per day.
      */
     suspend fun calculateWritingStreak(): Int {
         val graceDays = try {
@@ -34,12 +43,15 @@ class StreakRepository @Inject constructor(
         } catch (_: Exception) { 1 }
 
         val today = LocalDate.now()
+        val writingDays = getWritingDays(today.minusDays(365))
+
         var streak = 0
         var checkDate = today
         var gapDays = 0
 
         while (true) {
-            if (hasDayEntryWithBackfill(checkDate)) {
+            val epochDay = checkDate.toQueryEpochDay()
+            if (epochDay in writingDays) {
                 streak++
                 gapDays = 0
                 checkDate = checkDate.minusDays(1)
@@ -113,12 +125,16 @@ class StreakRepository @Inject constructor(
     /**
      * Compassionate streak: counts how many of the last N weeks
      * the user hit their weekly writing target (default: 4 days/week).
+     * Now uses a single batch query instead of one query per day.
      */
     suspend fun calculateWeeklyConsistency(
         weekTarget: Int = 4,
         weeksToCheck: Int = 12
     ): Pair<Int, Int> {
         val today = LocalDate.now()
+        val earliestDate = today.minusWeeks(weeksToCheck.toLong()).with(DayOfWeek.MONDAY)
+        val writingDays = getWritingDays(earliestDate)
+
         var weeksOnTarget = 0
         var weeksChecked = 0
 
@@ -130,7 +146,7 @@ class StreakRepository @Inject constructor(
             var daysWithEntries = 0
             var d = weekStart
             while (!d.isAfter(effectiveEnd)) {
-                if (hasDayEntryWithBackfill(d)) {
+                if (d.toQueryEpochDay() in writingDays) {
                     daysWithEntries++
                 }
                 d = d.plusDays(1)
@@ -153,14 +169,17 @@ class StreakRepository @Inject constructor(
 
     /**
      * How many days this week the user has written (backfill-aware).
+     * Now uses batch query instead of per-day queries.
      */
     suspend fun getDaysWrittenThisWeek(): Int {
         val today = LocalDate.now()
         val monday = today.with(DayOfWeek.MONDAY)
+        val writingDays = getWritingDays(monday)
+
         var count = 0
         var d = monday
         while (!d.isAfter(today)) {
-            if (hasDayEntryWithBackfill(d)) {
+            if (d.toQueryEpochDay() in writingDays) {
                 count++
             }
             d = d.plusDays(1)

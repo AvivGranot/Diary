@@ -119,11 +119,6 @@ class ComposeNoteViewModel @Inject constructor(
         return true
     }
 
-    /** Mark note as sent via an external channel (WhatsApp, Instagram, etc.) */
-    fun markSentViaChannel() {
-        _state.value = _state.value.copy(isSent = true)
-    }
-
     fun clearError() {
         _state.value = _state.value.copy(error = null, moderationError = null)
     }

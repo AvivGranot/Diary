@@ -40,7 +40,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,6 +57,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.data.social.Quote
 import com.proactivediary.ui.quotes.components.AuthorAvatar
+import com.proactivediary.ui.quotes.components.ProfileDialogData
+import com.proactivediary.ui.quotes.components.ProfilePhotoDialog
 import com.proactivediary.ui.theme.InstrumentSerif
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -290,6 +294,12 @@ private fun LeaderboardCardsRow(
     quotes: List<Quote>,
     onQuoteClick: (Quote) -> Unit
 ) {
+    var profileDialogData by remember { mutableStateOf<ProfileDialogData?>(null) }
+
+    if (profileDialogData != null) {
+        ProfilePhotoDialog(data = profileDialogData!!, onDismiss = { profileDialogData = null })
+    }
+
     LazyRow(
         contentPadding = PaddingValues(horizontal = 20.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -340,7 +350,8 @@ private fun LeaderboardCardsRow(
                 AuthorAvatar(
                     photoUrl = quote.authorPhotoUrl,
                     authorName = quote.authorName,
-                    size = 44
+                    size = 44,
+                    onClick = { profileDialogData = ProfileDialogData(quote.authorName, quote.authorPhotoUrl) }
                 )
 
                 Spacer(modifier = Modifier.height(4.dp))
@@ -391,6 +402,12 @@ private fun FeedPostCard(
     onClick: () -> Unit,
     onShare: () -> Unit = {}
 ) {
+    var profileDialogData by remember { mutableStateOf<ProfileDialogData?>(null) }
+
+    if (profileDialogData != null) {
+        ProfilePhotoDialog(data = profileDialogData!!, onDismiss = { profileDialogData = null })
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -405,7 +422,8 @@ private fun FeedPostCard(
             AuthorAvatar(
                 photoUrl = quote.authorPhotoUrl,
                 authorName = quote.authorName,
-                size = 32
+                size = 32,
+                onClick = { profileDialogData = ProfileDialogData(quote.authorName, quote.authorPhotoUrl) }
             )
             Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {

@@ -5,14 +5,14 @@ import com.proactivediary.data.db.entities.WritingReminderEntity
 import com.proactivediary.data.sync.SyncService
 import com.proactivediary.data.sync.SyncStatus
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ReminderRepositoryImpl @Inject constructor(
     private val reminderDao: WritingReminderDao,
-    private val syncService: SyncService
+    private val syncService: SyncService,
+    private val appScope: CoroutineScope
 ) : ReminderRepository {
 
     override fun getActiveReminders(): Flow<List<WritingReminderEntity>> =
@@ -29,21 +29,21 @@ class ReminderRepositoryImpl @Inject constructor(
 
     override suspend fun insert(reminder: WritingReminderEntity) {
         reminderDao.insert(reminder)
-        CoroutineScope(Dispatchers.IO).launch {
+        appScope.launch {
             try { syncService.pushReminder(reminder) } catch (_: Exception) { }
         }
     }
 
     override suspend fun update(reminder: WritingReminderEntity) {
         reminderDao.update(reminder)
-        CoroutineScope(Dispatchers.IO).launch {
+        appScope.launch {
             try { syncService.pushReminder(reminder) } catch (_: Exception) { }
         }
     }
 
     override suspend fun delete(reminderId: String) {
         reminderDao.updateSyncStatus(reminderId, SyncStatus.PENDING_DELETE)
-        CoroutineScope(Dispatchers.IO).launch {
+        appScope.launch {
             try { syncService.pushReminderDeletion(reminderId) } catch (_: Exception) { }
         }
     }

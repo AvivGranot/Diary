@@ -153,6 +153,9 @@ interface EntryDao {
     @Query("SELECT COUNT(*) FROM entries WHERE sync_status != 2 AND deleted_at IS NULL AND COALESCE(entry_date, created_at) BETWEEN :startOfDay AND :endOfDay")
     suspend fun countEntriesForDayWithBackfill(startOfDay: Long, endOfDay: Long): Int
 
+    @Query("SELECT DISTINCT CAST(COALESCE(entry_date, created_at) / 86400000 AS INTEGER) as day_epoch FROM entries WHERE sync_status != 2 AND deleted_at IS NULL AND COALESCE(entry_date, created_at) >= :sinceMs ORDER BY day_epoch DESC")
+    suspend fun getDistinctWritingDayEpochs(sinceMs: Long): List<Long>
+
     // ── Sync methods ──
 
     @Query("SELECT * FROM entries WHERE sync_status != 0")

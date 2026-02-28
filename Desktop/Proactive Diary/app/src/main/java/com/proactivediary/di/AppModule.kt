@@ -18,7 +18,15 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import javax.inject.Qualifier
 import javax.inject.Singleton
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class ApplicationScope
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -26,26 +34,35 @@ object AppModule {
 
     @Provides
     @Singleton
+    @ApplicationScope
+    fun provideApplicationScope(): CoroutineScope =
+        CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    @Provides
+    @Singleton
     fun provideEntryRepository(
         entryDao: EntryDao,
         imageStorageManager: ImageStorageManager,
-        syncService: SyncService
-    ): EntryRepository = EntryRepositoryImpl(entryDao, imageStorageManager, syncService)
+        syncService: SyncService,
+        @ApplicationScope appScope: CoroutineScope
+    ): EntryRepository = EntryRepositoryImpl(entryDao, imageStorageManager, syncService, appScope)
 
     @Provides
     @Singleton
     fun provideGoalRepository(
         goalDao: GoalDao,
         goalCheckInDao: GoalCheckInDao,
-        syncService: SyncService
-    ): GoalRepository = GoalRepositoryImpl(goalDao, goalCheckInDao, syncService)
+        syncService: SyncService,
+        @ApplicationScope appScope: CoroutineScope
+    ): GoalRepository = GoalRepositoryImpl(goalDao, goalCheckInDao, syncService, appScope)
 
     @Provides
     @Singleton
     fun provideReminderRepository(
         reminderDao: WritingReminderDao,
-        syncService: SyncService
-    ): ReminderRepository = ReminderRepositoryImpl(reminderDao, syncService)
+        syncService: SyncService,
+        @ApplicationScope appScope: CoroutineScope
+    ): ReminderRepository = ReminderRepositoryImpl(reminderDao, syncService, appScope)
 
     @Provides
     @Singleton

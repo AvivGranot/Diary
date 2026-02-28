@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -122,10 +123,12 @@ fun GalleryView(
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             items(galleryImages, key = { it.imageMetadata.id }) { galleryImage ->
-                val thumbnailFile = viewModel.imageStorageManager.getThumbnailFile(
-                    galleryImage.entryId,
-                    galleryImage.imageMetadata.filename
-                )
+                val thumbnailFile = remember(galleryImage.entryId, galleryImage.imageMetadata.filename) {
+                    viewModel.imageStorageManager.getThumbnailFile(
+                        galleryImage.entryId,
+                        galleryImage.imageMetadata.filename
+                    )
+                }
 
                 AsyncImage(
                     model = thumbnailFile,

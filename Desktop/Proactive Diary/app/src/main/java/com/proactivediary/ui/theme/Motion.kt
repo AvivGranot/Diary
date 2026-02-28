@@ -1,6 +1,10 @@
 package com.proactivediary.ui.theme
 
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.EnterTransition
@@ -10,7 +14,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -44,32 +48,40 @@ object DiaryMotion {
     // ── Stagger delay ────────────────────────────────────────────────
     const val STAGGER_DELAY_MS = 50L
 
-    // ── Navigation transitions ───────────────────────────────────────
-    val NavEnterTransition: EnterTransition = fadeIn(tween(300)) +
-        slideInHorizontally(tween(300)) { it / 4 }
+    // ── Navigation transitions (200ms = fast but directional) ────────
+    val NavEnterTransition: EnterTransition = fadeIn(tween(200)) +
+        slideInHorizontally(tween(200)) { it / 5 }
 
-    val NavExitTransition: ExitTransition = fadeOut(tween(300)) +
-        slideOutHorizontally(tween(300)) { -it / 4 }
+    val NavExitTransition: ExitTransition = fadeOut(tween(200)) +
+        slideOutHorizontally(tween(200)) { -it / 5 }
 
-    val NavPopEnterTransition: EnterTransition = fadeIn(tween(300)) +
-        slideInHorizontally(tween(300)) { -it / 4 }
+    val NavPopEnterTransition: EnterTransition = fadeIn(tween(200)) +
+        slideInHorizontally(tween(200)) { -it / 5 }
 
-    val NavPopExitTransition: ExitTransition = fadeOut(tween(300)) +
-        slideOutHorizontally(tween(300)) { it / 4 }
+    val NavPopExitTransition: ExitTransition = fadeOut(tween(200)) +
+        slideOutHorizontally(tween(200)) { it / 5 }
 }
 
-// ── Shimmer brush for loading states ─────────────────────────────────
+// ── Animated shimmer brush for loading states ───────────────────────
 @Composable
 fun rememberShimmerBrush(
     baseColor: Color = LocalDiaryExtendedColors.current.shimmerBase,
     highlightColor: Color = LocalDiaryExtendedColors.current.shimmerHighlight,
-    shimmerWidth: Float = 400f
+    shimmerWidth: Float = 800f
 ): Brush {
-    return remember(baseColor, highlightColor) {
-        Brush.linearGradient(
-            colors = listOf(baseColor, highlightColor, baseColor),
-            start = Offset.Zero,
-            end = Offset(shimmerWidth, shimmerWidth)
-        )
-    }
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val translateAnim by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = shimmerWidth * 2,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1000),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmer_offset"
+    )
+    return Brush.linearGradient(
+        colors = listOf(baseColor, highlightColor, baseColor),
+        start = Offset(translateAnim - shimmerWidth, 0f),
+        end = Offset(translateAnim, 0f)
+    )
 }

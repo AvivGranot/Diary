@@ -51,7 +51,7 @@ class QuotesRepository @Inject constructor(
                 "content" to content.trim(),
                 "likeCount" to 0,
                 "commentCount" to 0,
-                "createdAt" to FieldValue.serverTimestamp(),
+                "createdAt" to com.google.firebase.Timestamp.now(),
                 "reported" to false
             )
 
@@ -59,17 +59,11 @@ class QuotesRepository @Inject constructor(
                 .add(quoteData)
                 .await()
 
-            // Increment global quote counter (best-effort)
+            // Increment global quote counter (fire-and-forget, never block)
             try {
                 firestore.collection("counters").document("global")
                     .update("quoteCount", FieldValue.increment(1))
-                    .await()
-            } catch (_: Exception) {
-                // Counter doc may not exist yet — create it
-                firestore.collection("counters").document("global")
-                    .set(hashMapOf("quoteCount" to 1, "userCount" to 0), com.google.firebase.firestore.SetOptions.merge())
-                    .await()
-            }
+            } catch (_: Exception) { /* best-effort */ }
 
             Result.success(docRef.id)
         } catch (e: Exception) {

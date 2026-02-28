@@ -86,11 +86,15 @@ class JournalViewModel @Inject constructor(
     init {
         loadInitialEntries()
         observeEntryChanges()
-        loadInsights()
-        loadWeeklyDigest()
-        loadOnThisDay()
-        loadAIInsight()
-        logJournalOpened()
+        // Defer non-critical loads so the entry list renders first
+        viewModelScope.launch {
+            delay(500)
+            loadInsights()
+            loadWeeklyDigest()
+            loadOnThisDay()
+            loadAIInsight()
+            logJournalOpened()
+        }
     }
 
     private fun logJournalOpened() {
@@ -105,22 +109,22 @@ class JournalViewModel @Inject constructor(
         currentOffset = 0
         loadJob = viewModelScope.launch {
             try {
-                val (entries, total) = withContext(Dispatchers.IO) {
+                val (cards, grouped, total) = withContext(Dispatchers.IO) {
                     if (filterJournalId != null) {
                         val entryIds = journalDao.getEntryIdsForJournal(filterJournalId!!).first()
                         val idSet = entryIds.toSet()
                         val all = entryRepository.getAllSync().filter { it.id in idSet }
-                        Pair(all, all.size)
+                        val c = all.map { it.toCardData() }
+                        Triple(c, groupByDate(c), all.size)
                     } else {
                         val page = entryRepository.getPage(PAGE_SIZE, 0)
-                        val total = entryRepository.getTotalCount()
-                        Pair(page, total)
+                        val t = entryRepository.getTotalCount()
+                        val c = page.map { it.toCardData() }
+                        Triple(c, groupByDate(c), t)
                     }
                 }
                 totalEntryCount = total
-                currentOffset = entries.size
-                val cards = entries.map { it.toCardData() }
-                val grouped = groupByDate(cards)
+                currentOffset = cards.size
                 _uiState.value = _uiState.value.copy(
                     entries = cards,
                     groupedEntries = grouped,
@@ -182,13 +186,13 @@ class JournalViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(isLoadingMore = true)
         viewModelScope.launch {
             try {
-                val moreEntries = withContext(Dispatchers.IO) {
-                    entryRepository.getPage(PAGE_SIZE, currentOffset)
+                val (newCards, allCards, grouped) = withContext(Dispatchers.IO) {
+                    val moreEntries = entryRepository.getPage(PAGE_SIZE, currentOffset)
+                    val nc = moreEntries.map { it.toCardData() }
+                    val ac = _uiState.value.entries + nc
+                    Triple(nc, ac, groupByDate(ac))
                 }
-                currentOffset += moreEntries.size
-                val newCards = moreEntries.map { it.toCardData() }
-                val allCards = _uiState.value.entries + newCards
-                val grouped = groupByDate(allCards)
+                currentOffset += newCards.size
                 _uiState.value = _uiState.value.copy(
                     entries = allCards,
                     groupedEntries = grouped,

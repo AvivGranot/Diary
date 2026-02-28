@@ -76,17 +76,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.proactivediary.data.social.Note
 import com.proactivediary.ui.theme.InstrumentSerif
+import com.proactivediary.ui.theme.LocalDiaryExtendedColors
 import com.proactivediary.ui.write.resolveContact
-
-// Notes brand colors
-private val Mint = Color(0xFF4ADE80)
-private val MintDark = Color(0xFF059669)
-private val MintGlow = Color(0xFF4ADE80).copy(alpha = 0.15f)
-private val MintDim = Color(0xFF4ADE80).copy(alpha = 0.5f)
-private val TextMuted = Color(0xFFF5F5F5).copy(alpha = 0.28f)
-private val TextSecondary = Color(0xFFF5F5F5).copy(alpha = 0.55f)
-
-private val MintGradient = Brush.linearGradient(listOf(Mint, MintDark))
 
 private const val TAB_INBOX = 0
 private const val TAB_COMPOSE = 1
@@ -175,6 +166,7 @@ fun NoteInboxScreen(
 
 @Composable
 private fun NotesHeader(unreadCount: Int) {
+    val accent = MaterialTheme.colorScheme.primary
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -191,12 +183,12 @@ private fun NotesHeader(unreadCount: Int) {
         if (unreadCount > 0) {
             Box(
                 modifier = Modifier
-                    .background(MintGlow, RoundedCornerShape(50))
+                    .background(accent.copy(alpha = 0.15f), RoundedCornerShape(50))
                     .padding(horizontal = 12.dp, vertical = 4.dp)
             ) {
                 Text(
                     text = "$unreadCount new",
-                    color = Mint,
+                    color = accent,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -207,6 +199,7 @@ private fun NotesHeader(unreadCount: Int) {
 
 @Composable
 private fun TabPills(selectedTab: Int, onTabSelected: (Int) -> Unit) {
+    val accent = MaterialTheme.colorScheme.primary
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -219,7 +212,7 @@ private fun TabPills(selectedTab: Int, onTabSelected: (Int) -> Unit) {
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(if (isSelected) Mint.copy(alpha = 0.15f) else Color.Transparent)
+                    .background(if (isSelected) accent.copy(alpha = 0.15f) else Color.Transparent)
                     .clickable { onTabSelected(index) }
                     .padding(horizontal = 16.dp, vertical = 6.dp)
             ) {
@@ -227,7 +220,7 @@ private fun TabPills(selectedTab: Int, onTabSelected: (Int) -> Unit) {
                     text = label,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = if (isSelected) Mint else TextMuted,
+                    color = if (isSelected) accent else MaterialTheme.colorScheme.onSurfaceVariant,
                     letterSpacing = 1.sp
                 )
             }
@@ -263,7 +256,7 @@ private fun NotesInboxContent(
                 text = "Kindness starts with you.\nSend your first note.",
                 style = MaterialTheme.typography.bodySmall,
                 fontStyle = FontStyle.Italic,
-                color = TextSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
         }
@@ -288,6 +281,8 @@ private fun NotesInboxContent(
 
 @Composable
 private fun SendCtaCard(onClick: () -> Unit) {
+    val accent = MaterialTheme.colorScheme.primary
+    val accentDark = LocalDiaryExtendedColors.current.accentDark
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -298,17 +293,17 @@ private fun SendCtaCard(onClick: () -> Unit) {
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Mint gradient circle with envelope icon
+        // Accent gradient circle with envelope icon
         Box(
             modifier = Modifier
                 .size(40.dp)
-                .background(MintGradient, CircleShape),
+                .background(Brush.linearGradient(listOf(Color(0xFFFF6B7F), Color(0xFFFF3B5C))), CircleShape),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 Icons.Filled.Mail,
                 contentDescription = null,
-                tint = Color.Black,
+                tint = Color.White,
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -325,14 +320,14 @@ private fun SendCtaCard(onClick: () -> Unit) {
             Text(
                 text = "Anonymous \u00B7 Takes 10 seconds",
                 fontSize = 11.sp,
-                color = TextMuted
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
         Icon(
             Icons.Filled.ChevronRight,
             contentDescription = null,
-            tint = TextMuted,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(18.dp)
         )
     }
@@ -341,6 +336,8 @@ private fun SendCtaCard(onClick: () -> Unit) {
 @Composable
 private fun NoteListItem(note: Note, onClick: () -> Unit) {
     val isUnread = note.status != "read"
+    val accent = MaterialTheme.colorScheme.primary
+    val notificationRed = Color(0xFFFF3B5C)
 
     Row(
         modifier = Modifier
@@ -354,13 +351,13 @@ private fun NoteListItem(note: Note, onClick: () -> Unit) {
             modifier = Modifier
                 .size(44.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(if (isUnread) MintGlow else MaterialTheme.colorScheme.surfaceVariant),
+                .background(if (isUnread) notificationRed.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 if (isUnread) Icons.Filled.Mail else Icons.Filled.MailOutline,
                 contentDescription = null,
-                tint = if (isUnread) Mint else TextSecondary,
+                tint = if (isUnread) notificationRed else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(22.dp)
             )
         }
@@ -373,20 +370,20 @@ private fun NoteListItem(note: Note, onClick: () -> Unit) {
                 text = "From: Anonymous",
                 fontSize = 13.sp,
                 fontWeight = if (isUnread) FontWeight.Bold else FontWeight.SemiBold,
-                color = if (isUnread) MaterialTheme.colorScheme.onSurface else TextSecondary
+                color = if (isUnread) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(2.dp))
             if (isUnread) {
                 Text(
                     text = "Tap to reveal \u2728",
                     fontSize = 11.sp,
-                    color = Mint
+                    color = accent
                 )
             } else {
                 Text(
                     text = note.content.take(50),
                     fontSize = 11.sp,
-                    color = TextMuted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -400,7 +397,7 @@ private fun NoteListItem(note: Note, onClick: () -> Unit) {
             Text(
                 text = formatRelativeTime(note.createdAt),
                 fontSize = 10.sp,
-                color = TextMuted
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             if (isUnread) {
                 Spacer(modifier = Modifier.height(4.dp))
@@ -412,6 +409,7 @@ private fun NoteListItem(note: Note, onClick: () -> Unit) {
 
 @Composable
 private fun PulsingDot() {
+    val accent = MaterialTheme.colorScheme.primary
     val infiniteTransition = rememberInfiniteTransition(label = "dot")
     val alpha by infiniteTransition.animateFloat(
         initialValue = 0.4f,
@@ -425,7 +423,7 @@ private fun PulsingDot() {
     Box(
         modifier = Modifier
             .size(8.dp)
-            .background(Mint.copy(alpha = alpha), CircleShape)
+            .background(accent.copy(alpha = alpha), CircleShape)
     )
 }
 
@@ -456,7 +454,7 @@ private fun NoteRevealSheet(
                 text = "From: Anonymous",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = TextSecondary
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -475,18 +473,19 @@ private fun NoteRevealSheet(
             Text(
                 text = formatRelativeTime(note.createdAt),
                 fontSize = 11.sp,
-                color = TextMuted
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            val accent = MaterialTheme.colorScheme.primary
             Button(
                 onClick = onSendOneBack,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Mint
+                    containerColor = accent
                 ),
                 shape = RoundedCornerShape(50)
             ) {
@@ -510,8 +509,9 @@ private fun ComposeTabContent(
 ) {
     val state by composeViewModel.state.collectAsState()
     val context = LocalContext.current
+    val accent = MaterialTheme.colorScheme.primary
     var showChannelPicker by remember { mutableStateOf(false) }
-    var browseContactsMode by remember { mutableStateOf(false) }
+    var inAppContactMode by remember { mutableStateOf(false) }
 
     val contactPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickContact()
@@ -523,7 +523,7 @@ private fun ComposeTabContent(
                 phone = contact?.phone,
                 email = contact?.email
             )
-            browseContactsMode = true
+            inAppContactMode = true
         }
     }
 
@@ -553,7 +553,7 @@ private fun ComposeTabContent(
                     text = "They\u2019ll never know it was you.",
                     fontSize = 13.sp,
                     fontStyle = FontStyle.Italic,
-                    color = TextSecondary
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -575,7 +575,7 @@ private fun ComposeTabContent(
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
-                    tint = TextSecondary,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp)
                 )
             }
@@ -611,7 +611,7 @@ private fun ComposeTabContent(
                         Text(
                             "Write something kind...",
                             fontStyle = FontStyle.Italic,
-                            color = TextMuted,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 13.sp
                         )
                     },
@@ -622,7 +622,7 @@ private fun ComposeTabContent(
                         unfocusedIndicatorColor = Color.Transparent,
                         focusedTextColor = MaterialTheme.colorScheme.onSurface,
                         unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                        cursorColor = Mint
+                        cursorColor = accent
                     )
                 )
 
@@ -636,12 +636,12 @@ private fun ComposeTabContent(
                         text = "${state.charCount}/${ComposeNoteViewModel.MAX_CHARS}",
                         fontSize = 10.sp,
                         color = if (state.charCount >= ComposeNoteViewModel.MAX_CHARS)
-                            MaterialTheme.colorScheme.error else TextMuted
+                            MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Icon(
                         Icons.Outlined.EmojiEmotions,
                         contentDescription = "Emoji",
-                        tint = TextMuted,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -661,13 +661,13 @@ private fun ComposeTabContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Browse Contacts path: recipient card + action buttons
-        if (browseContactsMode && state.recipientName != null) {
+        // In-app contact path: recipient card + Seal & Send
+        if (inAppContactMode && state.recipientName != null) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Mint.copy(alpha = 0.1f))
+                    .background(accent.copy(alpha = 0.1f))
                     .padding(12.dp)
             ) {
                 Column(
@@ -682,19 +682,19 @@ private fun ComposeTabContent(
                     )
                     AnimatedVisibility(visible = !state.isResolving) {
                         when (state.isRecipientOnApp) {
-                            true -> Text("Ready to send!", color = Mint, fontSize = 11.sp, modifier = Modifier.padding(top = 4.dp))
-                            false -> Text("Tap below to share with them", color = TextSecondary, fontSize = 11.sp, modifier = Modifier.padding(top = 4.dp))
+                            true -> Text("Ready to send!", color = accent, fontSize = 11.sp, modifier = Modifier.padding(top = 4.dp))
+                            false -> Text("Not on the app yet \u2014 invite them!", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, modifier = Modifier.padding(top = 4.dp))
                             null -> {}
                         }
                     }
                     if (state.isResolving) {
-                        CircularProgressIndicator(modifier = Modifier.size(16.dp).padding(top = 4.dp), strokeWidth = 2.dp, color = Mint)
+                        CircularProgressIndicator(modifier = Modifier.size(16.dp).padding(top = 4.dp), strokeWidth = 2.dp, color = accent)
                     }
                 }
             }
             Text(
                 text = "Change recipient",
-                color = Mint,
+                color = accent,
                 fontSize = 11.sp,
                 modifier = Modifier
                     .padding(top = 4.dp)
@@ -704,7 +704,6 @@ private fun ComposeTabContent(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // In-app send or share
             if (state.isRecipientOnApp == true) {
                 SealAndSendButton(
                     enabled = state.content.isNotBlank() && !state.isSending,
@@ -713,28 +712,20 @@ private fun ComposeTabContent(
                 )
             } else if (state.isRecipientOnApp == false) {
                 Button(
-                    onClick = {
-                        val shareText = ShareIntentLauncher.buildShareText(state.content)
-                        val sendIntent = Intent().apply {
-                            action = Intent.ACTION_SEND
-                            putExtra(Intent.EXTRA_TEXT, shareText)
-                            type = "text/plain"
-                        }
-                        context.startActivity(Intent.createChooser(sendIntent, "Invite via"))
-                        composeViewModel.markSentViaChannel()
-                    },
+                    onClick = { showChannelPicker = true },
                     modifier = Modifier.fillMaxWidth().height(48.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onSurface),
+                    enabled = state.content.isNotBlank(),
+                    colors = ButtonDefaults.buttonColors(containerColor = accent, disabledContainerColor = accent.copy(alpha = 0.3f)),
                     shape = RoundedCornerShape(50)
                 ) {
-                    Icon(Icons.Default.Share, "Share", modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.surface)
+                    Icon(Icons.Default.Share, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Share Note", fontSize = 14.sp, color = MaterialTheme.colorScheme.surface, fontWeight = FontWeight.Bold)
+                    Text("Invite via...", color = Color.Black, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                 }
             }
         } else {
-            // Default: Choose recipient + Seal & Send
-            OutlinedButton(
+            // Default: Share via... (primary) + Send in-app (secondary)
+            Button(
                 onClick = {
                     if (composeViewModel.moderateContent()) {
                         showChannelPicker = true
@@ -742,21 +733,31 @@ private fun ComposeTabContent(
                 },
                 modifier = Modifier.fillMaxWidth().height(48.dp),
                 enabled = state.content.isNotBlank(),
-                border = androidx.compose.foundation.BorderStroke(1.5.dp, if (state.content.isNotBlank()) MintDim else TextMuted),
+                colors = ButtonDefaults.buttonColors(containerColor = accent, disabledContainerColor = accent.copy(alpha = 0.3f)),
                 shape = RoundedCornerShape(50)
             ) {
-                Icon(Icons.Default.Person, contentDescription = null, tint = Mint, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Share, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Choose recipient", color = Mint, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Text("Share via...", color = Color.Black, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            SealAndSendButton(
-                enabled = state.content.isNotBlank() && browseContactsMode && state.isRecipientOnApp == true && !state.isSending,
-                isSending = state.isSending,
-                onClick = { composeViewModel.sendNote() }
-            )
+            OutlinedButton(
+                onClick = {
+                    if (composeViewModel.moderateContent()) {
+                        contactPicker.launch(null)
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                enabled = state.content.isNotBlank(),
+                border = androidx.compose.foundation.BorderStroke(1.5.dp, if (state.content.isNotBlank()) accent.copy(alpha = 0.5f) else MaterialTheme.colorScheme.onSurfaceVariant),
+                shape = RoundedCornerShape(50)
+            ) {
+                Icon(Icons.Default.Person, contentDescription = null, tint = accent, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(6.dp))
+                Text("Send in-app", color = accent, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            }
         }
 
         // Error display
@@ -776,7 +777,7 @@ private fun ComposeTabContent(
         Text(
             text = "Anonymous \u00B7 Reviewed for kindness",
             fontSize = 10.sp,
-            color = TextMuted,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center
         )
@@ -790,7 +791,6 @@ private fun ComposeTabContent(
             onChannelSelected = { channel ->
                 showChannelPicker = false
                 ShareIntentLauncher.launch(context, channel, state.content)
-                composeViewModel.markSentViaChannel()
             },
             onBrowseContacts = {
                 showChannelPicker = false
@@ -807,6 +807,7 @@ private fun SealAndSendButton(
     isSending: Boolean,
     onClick: () -> Unit
 ) {
+    val accent = MaterialTheme.colorScheme.primary
     Button(
         onClick = onClick,
         modifier = Modifier
@@ -814,8 +815,8 @@ private fun SealAndSendButton(
             .height(48.dp),
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(
-            containerColor = Mint,
-            disabledContainerColor = Mint.copy(alpha = 0.3f)
+            containerColor = accent,
+            disabledContainerColor = accent.copy(alpha = 0.3f)
         ),
         shape = RoundedCornerShape(50)
     ) {
