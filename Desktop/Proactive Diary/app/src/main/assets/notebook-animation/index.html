@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Notebook Animation</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #F5F3F0;
+    }
+    canvas {
+      display: block;
+      width: 100%; height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+  <script>
+  (function() {
+    var canvas = document.getElementById('c');
+    var ctx = canvas.getContext('2d');
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    function resize() {
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    var W, H, BOOK_W, BOOK_H, PAGE_W, PAGE_H, BOOK_X, BOOK_Y, PAGE_X, PAGE_Y;
+
+    function calcDimensions() {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      BOOK_W = Math.min(W * 0.52, 240);
+      BOOK_H = Math.min(H * 0.52, 340);
+      PAGE_W = BOOK_W - 4;
+      PAGE_H = BOOK_H - 6;
+      BOOK_X = (W - BOOK_W) / 2;
+      BOOK_Y = (H - BOOK_H) / 2 - 10;
+      PAGE_X = BOOK_X + 2;
+      PAGE_Y = BOOK_Y + 3;
+    }
+    calcDimensions();
+
+    // --- Seeded random ---
+    var seed = 42;
+    function seededRand() {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    }
+
+    // --- Pre-render textures ---
+    function createOffscreen(w, h) {
+      var c = document.createElement('canvas');
+      c.width = Math.ceil(w * dpr);
+      c.height = Math.ceil(h * dpr);
+      var cx = c.getContext('2d');
+      cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { canvas: c, ctx: cx };
+    }
+
+    function addNoise(cx, w, h) {
+      var imgData = cx.getImageData(0, 0, w * dpr, h * dpr);
+      var d = imgData.data;
+      for (var i = 0; i < d.length; i += 4) {
+        var n = (seededRand() - 0.5) * 8;
+        d[i] = Math.min(255, Math.max(0, d[i] + n));
+        d[i+1] = Math.min(255, Math.max(0, d[i+1] + n));
+        d[i+2] = Math.min(255, Math.max(0, d[i+2] + n));
+      }
+      cx.putImageData(imgData, 0, 0);
+    }
+
+    // Build quote page texture
+    var pageTex = createOffscreen(PAGE_W, PAGE_H);
+    var pgGrad = pageTex.ctx.createLinearGradient(0, 0, PAGE_W, PAGE_H);
+    pgGrad.addColorStop(0, '#FDFBF7');
+    pgGrad.addColorStop(1, '#FBF8F3');
+    pageTex.ctx.fillStyle = pgGrad;
+    pageTex.ctx.fillRect(0, 0, PAGE_W, PAGE_H);
+    seed = 999;
+    addNoise(pageTex.ctx, PAGE_W, PAGE_H);
+    // Ruled lines
+    pageTex.ctx.strokeStyle = 'rgba(140,160,190,0.12)';
+    pageTex.ctx.lineWidth = 0.5;
+    for (var y = 16; y < PAGE_H; y += 20) {
+      pageTex.ctx.beginPath();
+      pageTex.ctx.moveTo(0, y);
+      pageTex.ctx.lineTo(PAGE_W, y);
+      pageTex.ctx.stroke();
+    }
+    // Red margin
+    pageTex.ctx.strokeStyle = 'rgba(200,120,120,0.1)';
+    pageTex.ctx.lineWidth = 0.7;
+    pageTex.ctx.beginPath();
+    pageTex.ctx.moveTo(PAGE_W * 0.12, 0);
+    pageTex.ctx.lineTo(PAGE_W * 0.12, PAGE_H);
+    pageTex.ctx.stroke();
+
+    // --- Quote ---
+    var QUOTE_TEXT = 'The best way to predict\nyour future is to create it.';
+    var QUOTE_AUTHOR = '\u2014 Abraham Lincoln';
+    var TOTAL_CHARS = QUOTE_TEXT.replace(/\n/g, '').length; // 53
+
+    // --- Dust particles ---
+    var particles = [];
+    for (var i = 0; i < 10; i++) {
+      particles.push({
+        x: Math.random() * W,
+        y: H * 0.5 + Math.random() * H * 0.5,
+        speed: 8 + Math.random() * 12,
+        drift: (Math.random() - 0.3) * 15,
+        size: 1.5 + Math.random() * 1.5,
+        phase: Math.random() * Math.PI * 2,
+        alpha: 0.15 + Math.random() * 0.2
+      });
+    }
+
+    function drawParticles(t) {
+      for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+        var cycle = ((t * p.speed * 0.01 + p.phase) % 1 + 1) % 1;
+        var py = p.y - cycle * H * 0.8;
+        var px = p.x + Math.sin(cycle * Math.PI * 2 + p.phase) * p.drift;
+        var a = p.alpha * Math.sin(cycle * Math.PI);
+        if (a > 0.01) {
+          ctx.fillStyle = 'rgba(200,180,150,' + a + ')';
+          ctx.beginPath();
+          ctx.arc(px, py, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    // --- Helpers ---
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function drawQuoteTypewriter(chars) {
+      ctx.save();
+      ctx.translate(PAGE_X, PAGE_Y);
+
+      var cx = PAGE_W / 2;
+      var startY = PAGE_H * 0.28;
+
+      // Opening quote mark — fades in
+      var markAlpha = Math.min(chars / 3, 1) * 0.18;
+      ctx.fillStyle = 'rgba(58,53,48,' + markAlpha + ')';
+      ctx.font = '38px Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('\u201C', cx, startY);
+
+      // Text lines
+      ctx.font = 'italic 13px Georgia, serif';
+      ctx.fillStyle = '#3A3530';
+      var lines = QUOTE_TEXT.split('\n');
+      var lineY = startY + 24;
+      var count = 0;
+
+      for (var l = 0; l < lines.length; l++) {
+        var line = lines[l];
+        var lineW = ctx.measureText(line).width;
+        var charX = cx - lineW / 2;
+        for (var c = 0; c < line.length; c++) {
+          if (count >= chars) break;
+          ctx.textAlign = 'left';
+          ctx.fillText(line[c], charX, lineY);
+          charX += ctx.measureText(line[c]).width;
+          count++;
+        }
+        if (count >= chars) break;
+        lineY += 22;
+      }
+
+      // Blinking cursor
+      if (chars < TOTAL_CHARS) {
+        if ((Date.now() % 800) < 500) {
+          var total = 0;
+          var curX = cx, curY = startY + 24;
+          for (var l = 0; l < lines.length; l++) {
+            var rem = chars - total;
+            if (rem <= lines[l].length) {
+              var sub = lines[l].substring(0, rem);
+              curX = cx - ctx.measureText(lines[l]).width / 2 + ctx.measureText(sub).width;
+              curY = startY + 24 + l * 22;
+              break;
+            }
+            total += lines[l].length;
+          }
+          ctx.fillStyle = '#3A3530';
+          ctx.fillRect(curX + 1, curY - 11, 1.5, 14);
+        }
+      }
+
+      // Author fade-in after text done
+      if (chars >= TOTAL_CHARS) {
+        var aAlpha = Math.min((chars - TOTAL_CHARS) / 5, 1);
+        ctx.globalAlpha = aAlpha;
+        ctx.textAlign = 'center';
+        ctx.font = '10px Georgia, serif';
+        ctx.fillStyle = 'rgba(58,53,48,0.45)';
+        ctx.fillText(QUOTE_AUTHOR, cx, lineY + 20);
+
+        if (aAlpha > 0.5) {
+          ctx.strokeStyle = 'rgba(58,53,48,0.12)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(cx - 18, lineY + 36);
+          ctx.lineTo(cx + 18, lineY + 36);
+          ctx.stroke();
+        }
+      }
+
+      ctx.restore();
+    }
+
+    // --- Main loop ---
+    var animStart = null;
+    var signaled = false;
+
+    function tick(ts) {
+      if (!animStart) animStart = ts;
+      var t = (ts - animStart) / 1000;
+      calcDimensions();
+
+      ctx.clearRect(0, 0, W, H);
+
+      // Background
+      ctx.fillStyle = '#F5F3F0';
+      ctx.fillRect(0, 0, W, H);
+
+      // Warm light
+      var wg = ctx.createRadialGradient(W * 0.25, H * 0.15, 0, W * 0.25, H * 0.15, W * 0.65);
+      wg.addColorStop(0, 'rgba(255,240,200,0.12)');
+      wg.addColorStop(1, 'rgba(255,240,200,0)');
+      ctx.fillStyle = wg;
+      ctx.fillRect(0, 0, W, H);
+
+      // Particles
+      drawParticles(t);
+
+      // --- Book: fade in (0–0.8s) + continuous hover ---
+      var fadeIn = Math.min(t / 0.8, 1);
+      // Smooth ease-out for fade
+      var alpha = fadeIn * fadeIn * (3 - 2 * fadeIn); // smoothstep
+
+      // Hover: gentle floating Y offset + subtle scale pulse
+      var hoverY = Math.sin(t * 1.4) * 4; // 4px up/down, slow
+      var hoverScale = 1 + Math.sin(t * 1.8) * 0.004; // 0.4% scale breathing
+      // Entrance scale: 0.94 → 1.0
+      var entranceScale = 0.94 + 0.06 * Math.min(t / 0.8, 1);
+      var totalScale = entranceScale * hoverScale;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(W / 2, H / 2 - 10 + hoverY);
+      ctx.scale(totalScale, totalScale);
+      ctx.translate(-W / 2, -(H / 2 - 10));
+
+      // Book shadow (moves with hover)
+      ctx.save();
+      var shSize = 1 + Math.sin(t * 1.4) * 0.15; // shadow grows when book rises
+      ctx.fillStyle = 'rgba(0,0,0,0.1)';
+      ctx.filter = 'blur(10px)';
+      ctx.beginPath();
+      ctx.ellipse(PAGE_X + PAGE_W / 2, PAGE_Y + PAGE_H + 8, PAGE_W * 0.45 * shSize, 8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.filter = 'none';
+      ctx.restore();
+
+      // Page (white notebook page — the main visual)
+      ctx.save();
+      // Subtle page shadow
+      ctx.shadowColor = 'rgba(0,0,0,0.08)';
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetY = 3;
+      ctx.drawImage(pageTex.canvas, 0, 0, pageTex.canvas.width, pageTex.canvas.height, PAGE_X, PAGE_Y, PAGE_W, PAGE_H);
+      ctx.restore();
+
+      // Ribbon bookmark
+      ctx.save();
+      var ribbonAlpha = Math.min(t / 1.2, 1);
+      ctx.globalAlpha = ribbonAlpha;
+      var rx = PAGE_X + PAGE_W * 0.18;
+      var ry = PAGE_Y - 2;
+      var rw = 6;
+      var rh = PAGE_H * 0.55;
+      var rg = ctx.createLinearGradient(rx, ry, rx, ry + rh);
+      rg.addColorStop(0, '#3D8B8F');
+      rg.addColorStop(1, '#2D7B7F');
+      ctx.fillStyle = rg;
+      ctx.beginPath();
+      ctx.moveTo(rx, ry);
+      ctx.lineTo(rx + rw, ry);
+      ctx.lineTo(rx + rw, ry + rh);
+      ctx.lineTo(rx + rw / 2, ry + rh * 0.88);
+      ctx.lineTo(rx, ry + rh);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // --- Typewriter quote ---
+      // Start typing at 1.0s (after book is visible)
+      var quoteStart = 1.0;
+      if (t > quoteStart) {
+        var elapsed = t - quoteStart;
+        var chars = Math.floor(elapsed / 0.05); // 50ms per char
+        chars = Math.min(chars, TOTAL_CHARS + 10); // extra ticks for author
+        if (chars > 0) drawQuoteTypewriter(chars);
+      }
+
+      ctx.restore(); // end book transform
+
+      // Vignette
+      var vg = ctx.createRadialGradient(W/2, H/2, W * 0.15, W/2, H/2, W * 0.7);
+      vg.addColorStop(0, 'rgba(255,245,225,0)');
+      vg.addColorStop(0.6, 'rgba(255,245,225,0)');
+      vg.addColorStop(1, 'rgba(200,180,140,0.08)');
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, W, H);
+
+      // Signal Android at 5.5s
+      if (t >= 5.5 && !signaled) {
+        signaled = true;
+        if (typeof Android !== 'undefined' && Android.onAnimationComplete) {
+          Android.onAnimationComplete();
+        }
+        window.dispatchEvent(new CustomEvent('notebookAnimationComplete'));
+      }
+
+      if (t < 12) requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+  })();
+  </script>
+</body>
+</html>
