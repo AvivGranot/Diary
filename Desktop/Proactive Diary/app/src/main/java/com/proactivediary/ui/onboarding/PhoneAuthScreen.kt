@@ -93,10 +93,8 @@ fun PhoneAuthScreen(
             .padding(horizontal = 20.dp)
             .imePadding()
     ) {
-        // Top bar with back arrow (hidden on first screen)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Spacer(modifier = Modifier.height(32.dp))
+        // Push content ~20% down the screen
+        Spacer(modifier = Modifier.weight(0.25f))
 
         if (state.isPhoneMode) {
             PhoneModeContent(

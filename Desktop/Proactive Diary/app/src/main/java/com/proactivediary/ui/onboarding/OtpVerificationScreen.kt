@@ -79,7 +79,8 @@ fun OtpVerificationScreen(
             .padding(horizontal = 20.dp)
             .imePadding()
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
+        // Push content ~20% down the screen
+        Spacer(modifier = Modifier.weight(0.25f))
 
         // Back button
         IconButton(
